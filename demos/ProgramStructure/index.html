@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en-US">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rectangle Drawing</title>
+	<!-- Scripts and style loaded here -->
+ 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script src="SliderScript.js" defer></script>
+    <script src="CodedEventScript.js" defer></script>
+    <script src="PointInterpScript.js" defer></script>
+    <script src="GraphDiagramScript.js" defer></script>
+    <script src="TrackLaneScript.js" defer></script>
+    <script src="PianoRollScript.js" defer></script>
+	<!-- Be sure to load the library script before the main script -->
+	<!-- This ensures Tabs.js has access to all the libraries defined in the above scripts -->
+    <script src="Tabs.js" defer></script>
+    <link href="style.css" rel="stylesheet">
+  </head>
+  <body>
+	<!-- Run tab scripts on load -->
+	<div onload="Loader()"></div>
+
+	<!--tab fields -->
+	<div>
+		<div class="tab-container" id="tab-container">
+			<button class="tab-button">
+				Play Track
+			</button>
+			<button class="tab-button">
+				Play Pattern
+			</button>
+			<button class="tab-button">
+				Pause
+			</button>
+			<button class="tab-button">
+				Stop
+			</button>
+		</div>
+		<div class="tab-container" id="tab-container">
+			<button class="tab-button" id="playlist-editor-tab" onclick="OpenTab('PlaylistEditor','playlist-editor-tab')">
+				Playlist Editor
+			</button>
+			<button class="tab-button" id="instrument-editor-tab" onclick="OpenTab('InstrumentEditor','instrument-editor-tab')">
+				Instrument Editor
+			</button>
+			<button class="tab-button" id="track-editor-tab" onclick="OpenTab('TrackEditor','track-editor-tab')">
+				Track Editor
+			</button>
+			<button class="tab-button" id="config-tab" onclick="OpenTab('Configuration','config-tab')">
+				Config
+			</button>
+		</div>
+
+		<!-- Playlist editor tab -->
+		<div id="PlaylistEditor" class="tab" style="display:none">
+			<!-- Div for track tab controls -->
+			<div class="menu-control-container">
+				<!-- Selector for choosing a pattern -->
+				<label class="lr-pad">Select Track :</label>
+				<select class="lr-pad">
+					<option value="lr-pad">Volvo</option>
+					<option value="lr-pad">Saab</option>
+					<option value="lr-pad">Mercedes</option>
+					<option value="lr-pad">Audi</option>
+				</select> 
+				<!-- Button for deleting current track -->
+				<!-- <button class="lr-pad">Delete</button> -->
+				<!-- Button for adding a track -->
+				<!--
+ 				<form class="lr-pad">
+  					<label>New Track:</label>
+  					<input type="text" id="fname" name="fname">
+				</form> 
+				<button class="lr-pad">Add</button> -->
+			</div>
+			<!-- Canvas for displaying track/lanes -->
+			<p>The master playlist widget goes here.</p>
+		</div>
+
+		<div id="TrackEditor" class="tab" style="display:none">
+			<!-- Div for track tab controls -->
+			<div class="menu-control-container">
+				<!-- Selector for choosing a pattern -->
+				<label class="lr-pad">Select Track :</label>
+				<select class="lr-pad">
+					<option value="lr-pad">Volvo</option>
+					<option value="lr-pad">Saab</option>
+					<option value="lr-pad">Mercedes</option>
+					<option value="lr-pad">Audi</option>
+				</select> 
+				<!-- Button for deleting current track -->
+				<button class="lr-pad">Delete</button>
+				<!-- Button for adding a track -->
+ 				<form class="lr-pad">
+  					<label>New Track:</label>
+  					<input type="text" id="fname" name="fname">
+				</form> 
+				<button class="lr-pad">Add</button>
+			</div>
+			<!-- Canvas elements go here -->
+			<p>The selected pattern widget goes here.</p>
+		</div>
+
+		<div id="Configuration" class="tab" style="display:none">
+			Master configuration controls go here.
+		</div>
+
+		<!-- GraphDiagram tab -->
+		<div id="InstrumentEditor" class="tab" style="display:none">
+			<!-- Div for instrument tab controls -->
+			<div class="menu-control-container">
+				<!-- Selector for choosing an instrument to edit -->
+				<label class="lr-pad">Select Instrument:</label>
+				<select class="lr-pad" onchange="InstrumentSelectDropDown(this.value)">
+					<option value="lr-pad">Volvo</option>
+					<option value="lr-pad">Saab</option>
+					<option value="lr-pad">Mercedes</option>
+					<option value="lr-pad">Audi</option>
+				</select> 
+				<!-- Button for deleting current instrument -->
+				<button class="lr-pad">Delete</button>
+				<!-- Button for adding an instrument -->
+ 				<form class="lr-pad">
+  					<label>New Instrument:</label>
+  					<input type="text" id="fname" name="fname">
+				</form> 
+				<button class="lr-pad">Add</button>
+			</div>
+			<!-- Canvas for displaying graph diagrams -->
+			<!-- the tabindex value makes the canvas focusable for catching keystrokes -->
+			<p>The selected pattern widget goes here.</p>
+		</div>
+	</div>
+  </body>
+</html>

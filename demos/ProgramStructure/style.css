@@ -1,0 +1,29 @@
+body {
+	margin: 0;
+	overflow: hidden;
+}
+.tab-button {
+	background-color: #000000;
+	color: #FFFFFF;
+	padding: 10px;
+	border-radius: 10px;
+	width: 150px;
+	height: 60px;
+	font-size: medium;
+}
+
+.tab-container {
+	align-items: center;
+	display: flex;
+}
+
+.menu-control-container {
+	align-items: center;
+	display: flex;
+}
+.lr-pad{
+  padding-top: 5px;
+  padding-right: 10px;
+  padding-bottom: 5px;
+  padding-left: 10px;
+}

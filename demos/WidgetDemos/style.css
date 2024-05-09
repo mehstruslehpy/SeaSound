@@ -1,0 +1,14 @@
+body {
+	margin: 0;
+	overflow: hidden;
+}
+.tab-button {
+	background-color: #000000;
+	color: #FFFFFF;
+	padding: 10px;
+	border-radius: 10px;
+	width: 150px;
+	height: 100px;
+	font-size: x-large;
+}
+
