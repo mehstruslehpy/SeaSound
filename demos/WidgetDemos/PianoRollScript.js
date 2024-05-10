@@ -257,10 +257,8 @@ class PianoRollCanvas
 	// Check if pt lies inside the rectangle 
 	rectangleCollision(pt,rect)
 	{
-	
 		return (rect[0].x <= pt.x && pt.x <= rect[1].x && rect[0].y <= pt.y && pt.y <= rect[1].y);
 	}
-
 }
 // Draw the divisions
 let pianoRollObject = new PianoRollCanvas(".pianoRollCanvas",20,40);

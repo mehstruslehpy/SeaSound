@@ -133,6 +133,7 @@ class SliderCanvas
 		};
 		let c2 = { // bottom right coord of rectangle
 			x: Math.max(this.leftClickStart.x,this.leftClickEnd.x),
+   			// for a piano roll we force the height of the rectangles to be a single unit 
    			y: c1.y+this.cellHeight
 		};
 
