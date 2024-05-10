@@ -1,3 +1,4 @@
+//TODO: Refactor duplicate mouse coord and leftClickUp mouse coord code into a helper function
 class PianoRollCanvas
 {
 	coord = {x:0, y:0}; // the coords of the mouse
@@ -52,8 +53,7 @@ class PianoRollCanvas
 		if (this.controlPressed) this.controlLeftClickDown();
 		else
 		{
-			this.leftClickStart.x = this.coord.x;
-			this.leftClickStart.y = this.coord.y;
+			this.leftClickStart = this.snapToGrid(this.coord);
 			this.workingRectangle = new Array(this.leftClickStart,this.leftClickStart);
 			this.mousePressed = true;
 		}
@@ -78,16 +78,17 @@ class PianoRollCanvas
 			this.controlPressed = false; // untoggle controlPressed var and return
 			return;
 		}
+
 		// set up left click coords
 		this.leftClickEnd.x = this.coord.x;
 		this.leftClickEnd.y = this.coord.y;
-		// snap to the grid
-		this.leftClickStart = this.snapToGrid(this.leftClickStart);
+
 		// Line the two x coords up to snap to the appropriate rectangle edges
 		if (this.leftClickStart.x <= this.leftClickEnd.x) 
 			this.leftClickEnd.x = this.coord.x+this.cellWidth;
 		else 
-			this.leftClickStart.x += this.cellWidth;
+			this.leftClickEnd.x = this.leftClickStart.x+this.cellWidth;
+
 		// Line the two y coords up to snap to the appropriate rectangle edges
 		if (this.leftClickStart.y <= this.leftClickEnd.y)
 			this.leftClickEnd.y = this.coord.y+this.cellHeight;
@@ -103,8 +104,6 @@ class PianoRollCanvas
 		};
 		let c2 = { // bottom right coord of rectangle
 			x: Math.max(this.leftClickStart.x,this.leftClickEnd.x),
-   			//y: Math.max(leftClickStart.y,leftClickEnd.y)
-   			// for a piano roll we force the height of the rectangles to be a single unit 
    			y: c1.y+this.cellHeight
 		};
 
@@ -136,13 +135,16 @@ class PianoRollCanvas
 			// set up left click coords
 			this.leftClickEnd.x = this.coord.x;
 			this.leftClickEnd.y = this.coord.y;
+
 			// snap to the grid
 			this.leftClickStart = this.snapToGrid(this.leftClickStart);
+
 			// Line the two x coords up to snap to the appropriate rectangle edges
 			if (this.leftClickStart.x <= this.leftClickEnd.x) 
 				this.leftClickEnd.x = this.coord.x+this.cellWidth;
 			else 
-				this.leftClickStart.x += this.cellWidth;
+				this.leftClickEnd.x = this.leftClickStart.x+this.cellWidth;
+
 			// Line the two y coords up to snap to the appropriate rectangle edges
 			if (this.leftClickStart.y <= this.leftClickEnd.y)
 				this.leftClickEnd.y = this.coord.y+this.cellHeight;
@@ -158,8 +160,6 @@ class PianoRollCanvas
 			};
 			let c2 = { // bottom right coord of rectangle
 				x: Math.max(this.leftClickStart.x,this.leftClickEnd.x),
-   				//y: Math.max(leftClickStart.y,leftClickEnd.y)
-   				// for a piano roll we force the height of the rectangles to be a single unit 
    				y: c1.y+this.cellHeight
 			};
 

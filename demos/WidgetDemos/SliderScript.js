@@ -1,4 +1,3 @@
-//TODO: Add nice animations
 //TODO: Add more draw styles
 class SliderCanvas 
 {
@@ -41,7 +40,6 @@ class SliderCanvas
 
 	buttonClick(ev)
 	{
-		console.log("Control pressed");
 		if (ev.key == "Control") this.controlPressed = true;
 	}
 
@@ -72,8 +70,7 @@ class SliderCanvas
 		if (this.controlPressed) this.controlLeftClickDown();
 		else
 		{
-			this.leftClickStart.x = this.coord.x;
-			this.leftClickStart.y = this.coord.y;
+			this.leftClickStart = this.snapToGrid(this.coord);
 			this.workingSlider = Array(this.leftClickStart,this.leftClickStart);
 			this.mousePressed = true;
 		}
@@ -119,7 +116,8 @@ class SliderCanvas
 		if (this.leftClickStart.x <= this.leftClickEnd.x) 
 			this.leftClickEnd.x = this.coord.x+this.cellWidth;
 		else 
-			this.leftClickStart.x += this.cellWidth;
+			this.leftClickEnd.x = this.leftClickStart.x+this.cellWidth;
+
 		// Line the two y coords up to snap to the appropriate rectangle edges
 		if (this.leftClickStart.y <= this.leftClickEnd.y)
 			this.leftClickEnd.y = this.coord.y+this.cellHeight;
@@ -135,8 +133,6 @@ class SliderCanvas
 		};
 		let c2 = { // bottom right coord of rectangle
 			x: Math.max(this.leftClickStart.x,this.leftClickEnd.x),
-   			//y: Math.max(leftClickStart.y,leftClickEnd.y)
-   			// for a piano roll we force the height of the rectangles to be a single unit 
    			y: c1.y+this.cellHeight
 		};
 
@@ -163,7 +159,8 @@ class SliderCanvas
 			if (this.leftClickStart.x <= this.leftClickEnd.x) 
 				this.leftClickEnd.x = this.coord.x+this.cellWidth;
 			else 
-				this.leftClickStart.x += this.cellWidth;
+				this.leftClickEnd.x = this.leftClickStart.x+this.cellWidth;
+
 			// Line the two y coords up to snap to the appropriate rectangle edges
 			if (this.leftClickStart.y <= this.leftClickEnd.y)
 				this.leftClickEnd.y = this.coord.y+this.cellHeight;
@@ -179,8 +176,6 @@ class SliderCanvas
 			};
 			let c2 = { // bottom right coord of rectangle
 				x: Math.max(this.leftClickStart.x,this.leftClickEnd.x),
-   				//y: Math.max(leftClickStart.y,leftClickEnd.y)
-   				// for a piano roll we force the height of the rectangles to be a single unit 
    				y: c1.y+this.cellHeight
 			};
 			// if mouse is pressed and held there is stuff to draw
@@ -292,7 +287,6 @@ class SliderCanvas
 
 	drawSlider(slider)
 	{
-		console.log("Draw slider");
 		let c1 = slider[0];
 		let c2 = slider[1];
 		if (this.rectangleStyle == "solid") this.solidStyle(c1,c2);
@@ -305,7 +299,6 @@ class SliderCanvas
 	}
 	solidCollision(c,slider)
 	{
-		console.log("Slider collision");
 		let horiz = slider[0].x <= c.x && c.x <= slider[1].x;
 		let vert = c.x >= slider[0].y;
 		return horiz && vert;
@@ -315,6 +308,6 @@ class SliderCanvas
 		return Math.sqrt((a.x-b.x)*(a.x-b.x)+(a.y-b.y)*(a.y-b.y));
 	}
 }
-// Draw the divisions
+
 let sliderObject = new SliderCanvas(".sliderCanvas",20,20,"lollipop");
 //let sliderObject = new SliderCanvas(".sliderCanvas",20,20,"solid");
