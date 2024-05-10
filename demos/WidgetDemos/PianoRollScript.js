@@ -203,7 +203,7 @@ class PianoRollCanvas
 		}
 
 		// Draw text showing the mode
-		let text = "Press control to delete notes with mouse.";
+		let text = "Press control to switch to delete mode.";
 		this.ctx.font = "bold 25px Arial";
 		this.ctx.fillStyle = 'black';
 		let textHeight = this.ctx.measureText('M').width; // The width of capital M approximates height

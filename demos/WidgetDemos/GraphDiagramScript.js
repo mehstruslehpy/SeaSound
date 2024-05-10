@@ -360,7 +360,7 @@ class Node
 		this.name = name;
 	}
 
-	// if collision with input/output rectangle occurs return its midpoint, else return null
+	// if collision with input rectangle occurs return its midpoint, else return null
 	collision(pt)
 	{
 		// convert input point to local coords

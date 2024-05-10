@@ -8,6 +8,7 @@ class TrackLaneCanvas
 	workingRectangle = null; // A rectangle not yet saved in the tracklist
 	collision = false; // flag tracking whether working rectangle has a collision with a rectangle in trackList
 	moveExisting = false;
+	controlPressed = false;
 	
 	// Initial set up
 	constructor(query,horizontalCells,verticalCells)
@@ -26,8 +27,16 @@ class TrackLaneCanvas
 		var that = this;
 		this.canvas.addEventListener('mousedown', function(ev) { that.leftClickDown(); }); 
 		this.canvas.addEventListener('mouseup', function(ev) { that.leftClickUp(); }); 
+		this.canvas.addEventListener('keydown', function(ev) { that.buttonClick(ev); });
 		this.canvas.addEventListener('mousemove', function(ev) { that.updateMouseCoordinates(); }); 
 		this.draw();
+	}
+
+	// Keyboard button handler
+	buttonClick(ev)
+	{
+		console.log("Control press");
+    	if (ev.key == "Control") this.controlPressed = true;
 	}
 
 	// Snap input coordinates to grid and return the resulting coord
@@ -44,24 +53,47 @@ class TrackLaneCanvas
 	leftClickDown()
 	{
 		console.log("DOWN");
-		this.leftClickStart = this.snapToGrid(this.coord);
-		this.mousePressed = true;
-		this.workingRectangle = new Array(this.leftClickStart,this.leftClickStart);
-
-		// check for collisions
-		for (let i = 0; i < this.trackList.length; i++)
+		if (this.controlPressed) this.controlLeftClickDown();
+		else
 		{
-			// The test point needs to be partially inside the cell to avoid edge case problems
-			let c = {x:this.leftClickStart.x+this.cellWidth/2, 
-						y:this.leftClickStart.y+this.cellHeight/2};
-			if (this.rectangleCollision(c,this.trackList[i])) // working in previous
-				this.collision = true;
+			this.leftClickStart = this.snapToGrid(this.coord);
+			this.mousePressed = true;
+			this.workingRectangle = new Array(this.leftClickStart,this.leftClickStart);
+	
+			// check for collisions
+			for (let i = 0; i < this.trackList.length; i++)
+			{
+				// The test point needs to be partially inside the cell to avoid edge case problems
+				let c = {x:this.leftClickStart.x+this.cellWidth/2, 
+							y:this.leftClickStart.y+this.cellHeight/2};
+				if (this.rectangleCollision(c,this.trackList[i])) // working in previous
+					this.collision = true;
+			}
 		}
+	}
+
+	controlLeftClickDown()
+	{
+		console.log("Control left click down");
+		let c = {x:this.coord.x, y:this.coord.y};
+		for (let i = 0; i < this.trackList.length; i++)
+    		if (this.rectangleCollision(c,this.trackList[i])) // if cursor lies inside a rectangle
+    		{
+        		this.trackList.splice(i,1); // remove the rectangle
+        		break;
+    		}
+		this.draw();
 	}
 
 	// Runs on release of left click of mouse
 	leftClickUp()
 	{
+		if (this.controlPressed) // if it was a control press
+		{
+    		this.controlPressed = false; // untoggle controlPressed var and return
+    		return;
+		}
+
 		// set up left click coords
 		this.leftClickEnd.x = this.coord.x;
 		this.leftClickEnd.y = this.coord.y;
@@ -194,6 +226,14 @@ class TrackLaneCanvas
 			this.ctx.lineTo(this.width,i*(this.height/this.horizontalCells));
 			this.ctx.stroke();
 		}
+
+		// Draw text showing the mode
+		let text = "Press control to switch to delete mode.";
+		this.ctx.font = "bold 25px Arial";
+		this.ctx.fillStyle = 'black';
+		let textHeight = this.ctx.measureText('M').width; // The width of capital M approximates height
+		let textWidth = this.ctx.measureText(text).width;
+		this.ctx.fillText(text,this.width-textWidth,textHeight);
 
 		for (let i = 0; i < this.trackList.length; i++)
 		{
