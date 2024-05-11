@@ -8,12 +8,14 @@ class TrackLaneCanvas
 	workingRectangle = null; // A rectangle not yet saved in the tracklist
 	collision = false; // flag tracking whether working rectangle has a collision with a rectangle in trackList
 	moveExisting = false;
+	controlPressed = false;
 	
 	// Initial set up
 	constructor(query,horizontalCells,verticalCells)
 	{
 		// Set Up the canvas
-		this.canvas = document.querySelector(query);
+		//this.canvas = document.querySelector(query);
+		this.canvas = document.getElementById(query);
 		this.ctx = this.canvas.getContext("2d");
 		let tabsHeight = document.getElementById('tab-container').offsetHeight;
 		this.width = (this.canvas.width = window.innerWidth);
@@ -26,8 +28,15 @@ class TrackLaneCanvas
 		var that = this;
 		this.canvas.addEventListener('mousedown', function(ev) { that.leftClickDown(); }); 
 		this.canvas.addEventListener('mouseup', function(ev) { that.leftClickUp(); }); 
+		this.canvas.addEventListener('keydown', function(ev) { that.buttonClick(ev); });
 		this.canvas.addEventListener('mousemove', function(ev) { that.updateMouseCoordinates(); }); 
 		this.draw();
+	}
+
+	// Keyboard button handler
+	buttonClick(ev)
+	{
+    	if (ev.key == "Control") this.controlPressed = true;
 	}
 
 	// Snap input coordinates to grid and return the resulting coord
@@ -43,25 +52,46 @@ class TrackLaneCanvas
 	// Runs on pressing down left click of mouse
 	leftClickDown()
 	{
-		console.log("DOWN");
-		this.leftClickStart = this.snapToGrid(this.coord);
-		this.mousePressed = true;
-		this.workingRectangle = new Array(this.leftClickStart,this.leftClickStart);
-
-		// check for collisions
-		for (let i = 0; i < this.trackList.length; i++)
+		if (this.controlPressed) this.controlLeftClickDown();
+		else
 		{
-			// The test point needs to be partially inside the cell to avoid edge case problems
-			let c = {x:this.leftClickStart.x+this.cellWidth/2, 
-						y:this.leftClickStart.y+this.cellHeight/2};
-			if (this.rectangleCollision(c,this.trackList[i])) // working in previous
-				this.collision = true;
+			this.leftClickStart = this.snapToGrid(this.coord);
+			this.mousePressed = true;
+			this.workingRectangle = new Array(this.leftClickStart,this.leftClickStart);
+	
+			// check for collisions
+			for (let i = 0; i < this.trackList.length; i++)
+			{
+				// The test point needs to be partially inside the cell to avoid edge case problems
+				let c = {x:this.leftClickStart.x+this.cellWidth/2, 
+							y:this.leftClickStart.y+this.cellHeight/2};
+				if (this.rectangleCollision(c,this.trackList[i])) // working in previous
+					this.collision = true;
+			}
 		}
+	}
+
+	controlLeftClickDown()
+	{
+		let c = {x:this.coord.x, y:this.coord.y};
+		for (let i = 0; i < this.trackList.length; i++)
+    		if (this.rectangleCollision(c,this.trackList[i])) // if cursor lies inside a rectangle
+    		{
+        		this.trackList.splice(i,1); // remove the rectangle
+        		break;
+    		}
+		this.draw();
 	}
 
 	// Runs on release of left click of mouse
 	leftClickUp()
 	{
+		if (this.controlPressed) // if it was a control press
+		{
+    		this.controlPressed = false; // untoggle controlPressed var and return
+    		return;
+		}
+
 		// set up left click coords
 		this.leftClickEnd.x = this.coord.x;
 		this.leftClickEnd.y = this.coord.y;
@@ -125,45 +155,47 @@ class TrackLaneCanvas
 	{
 		this.coord.x = event.clientX - this.canvas.offsetLeft; 
 		this.coord.y = event.clientY - this.canvas.offsetTop; 
+
+		if (this.mousePressed)
+		{	
+			// set up left click coords
+			this.leftClickEnd.x = this.coord.x;
+			this.leftClickEnd.y = this.coord.y;
+
+			// snap to the grid
+			// Line the two x coords up to snap to the appropriate rectangle edges
+			if (this.leftClickStart.x <= this.leftClickEnd.x) 
+				this.leftClickEnd.x = this.coord.x+this.cellWidth;
+			else 
+				this.leftClickEnd.x = this.leftClickStart.x+this.cellWidth;
+
+			// Line the two y coords up to snap to the appropriate rectangle edges
+			if (this.leftClickStart.y <= this.leftClickEnd.y)
+				this.leftClickEnd.y = this.coord.y+this.cellHeight;
+			else
+				this.leftClickStart.y += this.cellHeight;
 	
-		// set up left click coords
-		this.leftClickEnd.x = this.coord.x;
-		this.leftClickEnd.y = this.coord.y;
-
-		// snap to the grid
-		// Line the two x coords up to snap to the appropriate rectangle edges
-		if (this.leftClickStart.x <= this.leftClickEnd.x) 
-			this.leftClickEnd.x = this.coord.x+this.cellWidth;
-		else 
-			this.leftClickEnd.x = this.leftClickStart.x+this.cellWidth;
-
-		// Line the two y coords up to snap to the appropriate rectangle edges
-		if (this.leftClickStart.y <= this.leftClickEnd.y)
-			this.leftClickEnd.y = this.coord.y+this.cellHeight;
-		else
-			this.leftClickStart.y += this.cellHeight;
-
-		// snap to the grid
-		this.leftClickEnd = this.snapToGrid(this.leftClickEnd);
-
-		let c1 = { // top left coord of rectangle
-			x: Math.min(this.leftClickStart.x,this.leftClickEnd.x),
-   			y: Math.min(this.leftClickStart.y,this.leftClickEnd.y)
-		};
-		let c2 = { // bottom right coord of rectangle
-			x: Math.max(this.leftClickStart.x,this.leftClickEnd.x),
-   			y: c1.y+this.cellHeight
-		};
-
-		// If the mouse is pressed and held there is stuff to draw
-		if (this.mousePressed && this.workingRectangle != null) 
-		{
-			this.workingRectangle[0] = c1;
-			this.workingRectangle[1] = c2;
-			this.draw();
+			// snap to the grid
+			this.leftClickEnd = this.snapToGrid(this.leftClickEnd);
+	
+			let c1 = { // top left coord of rectangle
+				x: Math.min(this.leftClickStart.x,this.leftClickEnd.x),
+   				y: Math.min(this.leftClickStart.y,this.leftClickEnd.y)
+			};
+			let c2 = { // bottom right coord of rectangle
+				x: Math.max(this.leftClickStart.x,this.leftClickEnd.x),
+   				y: c1.y+this.cellHeight
+			};
+	
+			// If the mouse is pressed and held there is stuff to draw
+			if (this.mousePressed && this.workingRectangle != null) 
+			{
+				this.workingRectangle[0] = c1;
+				this.workingRectangle[1] = c2;
+				this.draw();
+			}
 		}
-	}
-
+	}	
 	// Compute+draw the cell divisions of the display
 	draw()
 	{
@@ -171,7 +203,6 @@ class TrackLaneCanvas
 		this.ctx.clearRect(0, 0, this.width, this.height);
 
 		//draw vertical divisions
-		//this.ctx.fillStyle = "rgb(255 255 255)";
 		for (var i = 0; i < this.verticalCells; i++)
 		{
 			this.ctx.strokeStyle = 'black';
@@ -192,6 +223,14 @@ class TrackLaneCanvas
 			this.ctx.lineTo(this.width,i*(this.height/this.horizontalCells));
 			this.ctx.stroke();
 		}
+
+		// Draw text showing the mode
+		let text = "Press control to switch to delete mode.";
+		this.ctx.font = "bold 25px Arial";
+		this.ctx.fillStyle = 'black';
+		let textHeight = this.ctx.measureText('M').width; // The width of capital M approximates height
+		let textWidth = this.ctx.measureText(text).width;
+		this.ctx.fillText(text,this.width-textWidth,textHeight);
 
 		for (let i = 0; i < this.trackList.length; i++)
 		{
@@ -237,3 +276,6 @@ class TrackLaneCanvas
 	}
 
 }
+// Draw the divisions
+//let trackLaneObject = new TrackLaneCanvas(".trackLaneCanvas",20,40);
+

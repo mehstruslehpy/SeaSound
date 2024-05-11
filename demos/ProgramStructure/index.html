@@ -75,7 +75,9 @@
 				<button class="lr-pad">Add</button> -->
 			</div>
 			<!-- Canvas for displaying track/lanes -->
-			<p>The master playlist widget goes here.</p>
+			<canvas class="trackLaneCanvas" tabindex="1">
+				<p>A track/lane canvas.</p>
+			</canvas>
 		</div>
 
 		<div id="TrackEditor" class="tab" style="display:none">
@@ -83,23 +85,27 @@
 			<div class="menu-control-container">
 				<!-- Selector for choosing a pattern -->
 				<label class="lr-pad">Select Track :</label>
-				<select class="lr-pad">
-					<option value="lr-pad">Volvo</option>
-					<option value="lr-pad">Saab</option>
-					<option value="lr-pad">Mercedes</option>
-					<option value="lr-pad">Audi</option>
+				<select class="lr-pad" 
+						id="track-canvases-select" 
+						onchange="SelectDropDown('track-canvases',this.value)">
 				</select> 
 				<!-- Button for deleting current track -->
 				<button class="lr-pad">Delete</button>
 				<!-- Button for adding a track -->
- 				<form class="lr-pad">
+				<div class="lr-pad">
   					<label>New Track:</label>
-  					<input type="text" id="fname" name="fname">
-				</form> 
-				<button class="lr-pad">Add</button>
+  					<input type="text submit" 
+							id="track-name" 
+							name="track-name" 
+							onkeypress="EnterHandler(event,'track-canvases',document.getElementById('track-name').value)">
+				</div>
+				<button class="lr-pad" onclick="AddCanvas('track-canvases',document.getElementById('track-name').value)">
+					Add
+				</button>
 			</div>
-			<!-- Canvas elements go here -->
-			<p>The selected pattern widget goes here.</p>
+			<!-- Canvases for track lane diagrams-->
+			<!-- the tabindex value makes the canvas focusable for catching keystrokes -->
+			<div id="track-canvases"></div>
 		</div>
 
 		<div id="Configuration" class="tab" style="display:none">
@@ -112,24 +118,29 @@
 			<div class="menu-control-container">
 				<!-- Selector for choosing an instrument to edit -->
 				<label class="lr-pad">Select Instrument:</label>
-				<select class="lr-pad" onchange="InstrumentSelectDropDown(this.value)">
-					<option value="lr-pad">Volvo</option>
-					<option value="lr-pad">Saab</option>
-					<option value="lr-pad">Mercedes</option>
-					<option value="lr-pad">Audi</option>
+				<!-- Options are added dynamically here -->
+				<select class="lr-pad" 
+						id="instrument-canvases-select" 
+						onchange="SelectDropDown('instrument-canvases',this.value)">
 				</select> 
 				<!-- Button for deleting current instrument -->
 				<button class="lr-pad">Delete</button>
 				<!-- Button for adding an instrument -->
- 				<form class="lr-pad">
+ 				<div class="lr-pad">
   					<label>New Instrument:</label>
-  					<input type="text" id="fname" name="fname">
-				</form> 
-				<button class="lr-pad">Add</button>
+  					<input type="text submit" 
+							id="instrument-name" 
+							name="instrument-name" 
+							onkeypress="EnterHandler(event,'instrument-canvases',document.getElementById('instrument-name').value)">
+	
+				</div> 
+				<button class="lr-pad" onclick="AddCanvas('instrument-canvases',document.getElementById('instrument-name').value)">
+					Add
+				</button>
 			</div>
-			<!-- Canvas for displaying graph diagrams -->
+			<!-- Canvases for displaying graph diagrams -->
 			<!-- the tabindex value makes the canvas focusable for catching keystrokes -->
-			<p>The selected pattern widget goes here.</p>
+			<div id="instrument-canvases"></div>
 		</div>
 	</div>
   </body>

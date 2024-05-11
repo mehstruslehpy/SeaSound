@@ -1,3 +1,4 @@
+//TODO: Add sharp angle dropoffs
 class PointInterpolationCanvas 
 {
 	coord = {x:0, y:0}; // the coords of the mouse
@@ -136,3 +137,6 @@ class PointInterpolationCanvas
 	}
 
 }
+// Draw the divisions
+//let pointInterpolationObject = new PointInterpolationCanvas(".pointInterpCanvas",100,100,"line");
+

@@ -1,9 +1,15 @@
+//TODO: Add more draw styles
 class SliderCanvas 
 {
 	coord = {x:0, y:0}; // the coords of the mouse
 	leftClickStart = {x:0, y:0}; // the coords of the mouse at the start of a click
 	leftClickEnd = {x:0, y:0}; // the coords of the mouse at the release of a click
-	styles = ["rectangle","lollipop"]; //implemented display styles
+	styles = ["solid","lollipop"]; //implemented display styles
+	//deleteMode = false;
+	controlPressed = false; //indicates whether we area in delete mode or not
+	mousePressed = false; //indicates whether or not we are in the middle of a mouse click
+	workingSlider = null; //the in progrerss slider
+	sliderList = new Array(); //the array of sliders to draw
 	
 	// Initial set up
 	constructor(query,horizontalCells,verticalCells,rectangleStyle)
@@ -19,6 +25,7 @@ class SliderCanvas
 		this.horizontalCells = 20;
 		this.cellWidth = this.width/this.horizontalCells;
 		this.cellHeight = this.height/this.verticalCells;
+		this.radius = this.cellWidth/6; // the radius for lollipop style
 
 		if (!this.styles.includes(rectangleStyle)) throw "Unknown draw style";
 		this.rectangleStyle = rectangleStyle;
@@ -26,8 +33,14 @@ class SliderCanvas
 		var that = this;
 		this.canvas.addEventListener('mousedown', function(ev) { that.leftClickDown(); }); 
 		this.canvas.addEventListener('mouseup', function(ev) { that.leftClickUp(); }); 
+		this.canvas.addEventListener('keydown', function(ev) { that.buttonClick(ev); });
 		this.canvas.addEventListener('mousemove', function(ev) { that.updateMouseCoordinates(); }); 
-		this.drawDivisions();
+		this.draw();
+	}
+
+	buttonClick(ev)
+	{
+		if (ev.key == "Control") this.controlPressed = true;
 	}
 
 	// Snap input coordinates to grid and return the resulting coord
@@ -43,9 +56,8 @@ class SliderCanvas
 	// Draw a circle around the input coord
 	circleCoord(c)
 	{
-		let radius = this.cellWidth/6;
 		this.ctx.beginPath();
-		this.ctx.arc(c.x, c.y, radius, 0, 2 * Math.PI, false);
+		this.ctx.arc(c.x, c.y, this.radius, 0, 2 * Math.PI, false);
 		this.ctx.fillStyle = 'green';
 		this.ctx.fill();
 		this.ctx.lineWidth = 2;
@@ -55,15 +67,46 @@ class SliderCanvas
 	// Runs on pressing down left click of mouse
 	leftClickDown()
 	{
-		this.leftClickStart.x = this.coord.x;
-		this.leftClickStart.y = this.coord.y;
-		//leftClickStart = snapToGrid(coord);
-		//console.log("Start: " + this.leftClickStart.x + " " + this.leftClickStart.y);
+		if (this.controlPressed) this.controlLeftClickDown();
+		else
+		{
+			this.leftClickStart = this.snapToGrid(this.coord);
+			this.workingSlider = Array(this.leftClickStart,this.leftClickStart);
+			this.mousePressed = true;
+		}
+	}
+
+	controlLeftClickDown()
+	{
+		let c = {x:this.coord.x, y:this.coord.y};
+		for (let i = 0; i < this.sliderList.length; i++)
+			switch (this.rectangleStyle)
+			{
+				case "lollipop":
+					if (this.lollipopCollision(c,this.sliderList[i]))
+					{
+						this.sliderList.splice(i,1);
+						break;
+					}
+				case "solid":
+					if (this.solidCollision(c,this.sliderList[i]))
+					{
+						this.sliderList.splice(i,1);
+						break;
+					}
+			}
+		this.draw();
 	}
 
 	// Runs on release of left click of mouse
 	leftClickUp()
 	{
+		if (this.controlPressed) // control clicks end here
+		{
+			this.controlPressed = false;
+			return;
+		}
+
 		// set up left click coords
 		this.leftClickEnd.x = this.coord.x;
 		this.leftClickEnd.y = this.coord.y;
@@ -73,7 +116,8 @@ class SliderCanvas
 		if (this.leftClickStart.x <= this.leftClickEnd.x) 
 			this.leftClickEnd.x = this.coord.x+this.cellWidth;
 		else 
-			this.leftClickStart.x += this.cellWidth;
+			this.leftClickEnd.x = this.leftClickStart.x+this.cellWidth;
+
 		// Line the two y coords up to snap to the appropriate rectangle edges
 		if (this.leftClickStart.y <= this.leftClickEnd.y)
 			this.leftClickEnd.y = this.coord.y+this.cellHeight;
@@ -83,26 +127,20 @@ class SliderCanvas
 		// snap to the grid
 		this.leftClickEnd = this.snapToGrid(this.leftClickEnd);
 
-		// Debugging 
-		//console.log("Start: " + this.leftClickStart.x + " " + this.leftClickStart.y);
-		//console.log("Stop: " + this.leftClickEnd.x + " " + this.leftClickEnd.y);
-		//circleCoord(leftClickStart);
-		//circleCoord(leftClickEnd);
-
 		let c1 = { // top left coord of rectangle
 			x: Math.min(this.leftClickStart.x,this.leftClickEnd.x),
    			y: Math.min(this.leftClickStart.y,this.leftClickEnd.y)
 		};
 		let c2 = { // bottom right coord of rectangle
 			x: Math.max(this.leftClickStart.x,this.leftClickEnd.x),
-   			//y: Math.max(leftClickStart.y,leftClickEnd.y)
    			// for a piano roll we force the height of the rectangles to be a single unit 
    			y: c1.y+this.cellHeight
 		};
 
-		if (this.rectangleStyle == "solid") this.solidStyle(c1,c2);
-		else if (this.rectangleStyle == "lollipop") this.lollipopStyle(c1,c2);
-		else throw("Unknown draw style");
+		this.mousePressed = false; // mouse is no longer pressed
+		this.workingSlider = null;
+		this.sliderList.push([c1,c2]);
+		this.draw();
 	}
 
 	// Update the current coordinates of the mouse
@@ -110,7 +148,46 @@ class SliderCanvas
 	{
 		this.coord.x = event.clientX - this.canvas.offsetLeft; 
 		this.coord.y = event.clientY - this.canvas.offsetTop; 
-		//console.log(coord.x + " " + coord.y);
+
+		if (this.mousePressed)
+		{
+			// set up left click coords
+			this.leftClickEnd.x = this.coord.x;
+			this.leftClickEnd.y = this.coord.y;
+			// snap to the grid
+			this.leftClickStart = this.snapToGrid(this.leftClickStart);
+			// Line the two x coords up to snap to the appropriate rectangle edges
+			if (this.leftClickStart.x <= this.leftClickEnd.x) 
+				this.leftClickEnd.x = this.coord.x+this.cellWidth;
+			else 
+				this.leftClickEnd.x = this.leftClickStart.x+this.cellWidth;
+
+			// Line the two y coords up to snap to the appropriate rectangle edges
+			if (this.leftClickStart.y <= this.leftClickEnd.y)
+				this.leftClickEnd.y = this.coord.y+this.cellHeight;
+			else
+				this.leftClickStart.y += this.cellHeight;
+	
+			// snap to the grid
+			this.leftClickEnd = this.snapToGrid(this.leftClickEnd);
+	
+			let c1 = { // top left coord of rectangle
+				x: Math.min(this.leftClickStart.x,this.leftClickEnd.x),
+   				y: Math.min(this.leftClickStart.y,this.leftClickEnd.y)
+			};
+			let c2 = { // bottom right coord of rectangle
+				x: Math.max(this.leftClickStart.x,this.leftClickEnd.x),
+   				y: c1.y+this.cellHeight
+			};
+			// if mouse is pressed and held there is stuff to draw
+			if (this.mousePressed && this.workingSlider != null)
+			{
+				this.workingSlider[0] = c1;
+				this.workingSlider[1] = c2;
+				this.draw();
+			}
+		}
+
 	}
 
 	lollipopStyle(c1,c2)
@@ -157,8 +234,11 @@ class SliderCanvas
 		this.ctx.stroke();
 	}
 	// Compute+draw the cell divisions of the display
-	drawDivisions()
+	draw()
 	{
+		// clear the screen
+		this.ctx.clearRect(0, 0, this.width, this.height);
+
 		//draw vertical divisions
 		this.ctx.strokeStyle = "black";
 		for (var i = 0; i < this.verticalCells; i++)
@@ -181,6 +261,18 @@ class SliderCanvas
 			this.ctx.lineTo(this.width,i*(this.height/this.horizontalCells));
 			this.ctx.stroke();
 		}
+		
+		// Draw text showing the mode
+		let text = "Press control to switch to delete mode.";
+		this.ctx.font = "bold 25px Arial";
+		this.ctx.fillStyle = 'black';
+		let textHeight = this.ctx.measureText('M').width; // The width of capital M approximates height
+		let textWidth = this.ctx.measureText(text).width;
+		this.ctx.fillText(text,this.width-textWidth,textHeight);
+
+		// draw the sliders
+		for (let i = 0; i < this.sliderList.length; i++) this.drawSlider(this.sliderList[i]);
+		if (this.workingSlider != null) this.drawSlider(this.workingSlider);
 
 		// Draw the outlines for the canvas too
 		this.ctx.beginPath();
@@ -194,4 +286,29 @@ class SliderCanvas
 		this.ctx.stroke();
 	}
 
+	drawSlider(slider)
+	{
+		let c1 = slider[0];
+		let c2 = slider[1];
+		if (this.rectangleStyle == "solid") this.solidStyle(c1,c2);
+		else if (this.rectangleStyle == "lollipop") this.lollipopStyle(c1,c2);
+		else throw("Unknown draw style");
+	}	
+	lollipopCollision(c,slider)
+	{
+		return this.distance(c,slider[0]) < this.radius
+	}
+	solidCollision(c,slider)
+	{
+		let horiz = slider[0].x <= c.x && c.x <= slider[1].x;
+		let vert = c.x >= slider[0].y;
+		return horiz && vert;
+	}
+	distance(a,b)
+	{
+		return Math.sqrt((a.x-b.x)*(a.x-b.x)+(a.y-b.y)*(a.y-b.y));
+	}
 }
+
+//let sliderObject = new SliderCanvas(".sliderCanvas",20,20,"lollipop");
+//let sliderObject = new SliderCanvas(".sliderCanvas",20,20,"solid");

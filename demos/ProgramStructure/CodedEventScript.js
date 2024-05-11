@@ -129,3 +129,5 @@ class CodedEventCanvas
 		this.ctx.stroke();
 	}
 }
+// Draw the divisions
+//let codedEventObject= new CodedEventCanvas(".codedEventCanvas",40);
