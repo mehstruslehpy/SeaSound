@@ -1,5 +1,8 @@
 window.onload = Loader;
 
+// There is only one track lane object for the whole program
+let trackLaneObject = new TrackLaneCanvas("trackLaneCanvas",10,20);
+
 //Selected Tab
 function OpenTab(tabName, btnID) {
 	var i;
@@ -40,28 +43,26 @@ function Loader() {
 
 function SelectDropDown(divId,value)
 {
-	console.log(value);
 	let children = document.getElementById(divId).children;
 	for (let i = 0; i < children.length; i++)
-	{
-		console.log(children[i].id);
-		console.log(value);
 		if (children[i].id == value) children[i].style.display = "inline";
 		else children[i].style.display = "none";
-	}
 }
 
-function AddCanvas(canvasDiv,name)
+function AddCanvas(canvasDiv,prefix,name)
 {
-	console.log("Canvas: "+canvasDiv);
-	console.log("Name: "+name);
 	if (canvasDiv == "" || name == "") return;
+
+	// Only add new options that don't already exist
+	let optionCount = document.getElementById(canvasDiv+"-select").options.length;
+	for (let i = 0; i < optionCount; i++)
+		if (prefix+"-"+name == document.getElementById(canvasDiv+"-select").options[i].value)
+			return;
 
 	// add the associated canvas tag
 	let ele = document.getElementById(canvasDiv);
 	let newCanvas = document.createElement("canvas");
 	newCanvas.setAttribute("tabindex","1");
-	newCanvas.style.display = "none";
 	ele.appendChild(newCanvas);
 
 	// add the associated select entry
@@ -81,9 +82,22 @@ function AddCanvas(canvasDiv,name)
 			break;
 		case "track-canvases": 
 			newCanvas.setAttribute("id","track-"+name);
-			newOption.setAttribute("value","track-"+name);
 			newCanvas.setAttribute("class","pianoRollCanvas");
-			let pianoRollObject = new PianoRollCanvas("track-"+name,20,40);
+			newOption.setAttribute("value","track-"+name);
+			newOption.setAttribute("id","track-option-"+name);
+			let vCells = document.getElementById("track-vertical-cells").value;
+			let hCells = document.getElementById("track-horizontal-cells").value;
+			if (vCells == "") vCells = 20;
+			else vCells = Number(vCells);
+			if (hCells == "") hCells = 40;
+			else hCells = Number(hCells);
+			let pianoRollObject = new PianoRollCanvas("track-"+name,vCells,hCells);
+			// Playlist editor needs an associated pattern entry too
+			let newPat = document.getElementById("pattern-select");
+			let newOpt = document.createElement("option");
+			newOpt.innerText = name;
+			newOpt.setAttribute("value","instrument-"+name);
+			newPat.append(newOpt);
 			break;
 		default:
 			break;
@@ -91,7 +105,24 @@ function AddCanvas(canvasDiv,name)
 }
 
 // Hack to catch enter button presses on form inputs for adding canvases
-function EnterHandler(e,div,name)
+function EnterHandler(e,div,prefix,name)
 {
-   if (e && e.keyCode == 13) AddCanvas(div,name);
+   if (e && e.keyCode == 13) AddCanvas(div,prefix,name);
+}
+
+function DeleteSelectOption(select)
+{
+	let selectTag = document.getElementById(select);
+	for (var i=0; i<selectTag.length; i++)
+		if (selectTag.options[i].value == selectTag.value)
+			selectTag.remove(i);
+}
+
+function IncrementPlaylistBlockSize()
+{
+	trackLaneObject.incrementBlockSize();
+}
+function DecrementPlaylistBlockSize()
+{
+	trackLaneObject.decrementBlockSize();
 }

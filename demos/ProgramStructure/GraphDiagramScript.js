@@ -1,4 +1,7 @@
 //TODO: Test node deletion functionality more. Kind of a mess.
+//TODO: Add canvas zoom in/out and translation
+//TODO: Set up i/o so that outputs are forced to connect to inputs
+//TODO: Add code to render instruments
 class GraphDiagramCanvas
 {
 	coord = {x:0, y:0}; // the coords of the mouse
@@ -12,15 +15,25 @@ class GraphDiagramCanvas
 	curOutputs = 3; // number of outputs for next node
 	curName = "Default"; // the name of the next node
 
+	// x,y translate and scale for global coords
+	xScale = 1;
+	yScale = 1;
+	xTranslate = 1;
+	yTranslate = 1;
 	// Initial set up
 	constructor(query,size)
 	{
 		// Set Up the canvas
-		//this.canvas = document.querySelector(query);
 		this.canvas = document.getElementById(query);
 		this.ctx = this.canvas.getContext("2d");
 		this.width = (this.canvas.width = window.innerWidth);
-		let tabsHeight = document.getElementById('tab-container').offsetHeight;
+
+		// for some reason 2*tab-container height works but not using master-tab-container directly
+		let tabsHeight = 2*document.getElementById('tab-container').offsetHeight;
+		//document.getElementById("InstrumentEditor").style.display="inline"; // by default PlaylistEditor is hidden
+		tabsHeight += document.getElementById("instrument-controls").offsetHeight;
+		//document.getElementById("InstrumentEditor").style.display="none";
+
 		this.height = (this.canvas.height = window.innerHeight - tabsHeight);
 		this.nodeRadius = size;
 
@@ -43,7 +56,7 @@ class GraphDiagramCanvas
 			controlText += "s: decrementinput count\n"
 			controlText += "z: increment output count\n"
 			controlText += "x: decrement output count\n"
-			controlText += "h: display keybinds";
+			controlText += "q: display keybinds";
 	
 		if (ev.key == "1")
 		{
@@ -70,10 +83,16 @@ class GraphDiagramCanvas
 			else this.curName = "empty";
 		}
 		else if (ev.key == "a") this.curInputs++;
-		else if (ev.key == "s" && this.curInputs > 1) this.curInputs--;
+		else if (ev.key == "s" && this.curInputs > 0) this.curInputs--;
 		else if (ev.key == "z") this.curOutputs++;
-		else if (ev.key == "x" && this.curOutputs > 1) this.curOutputs--;
-		else if (ev.key == "h") alert(controlText);
+		else if (ev.key == "x" && this.curOutputs > 0) this.curOutputs--;
+		else if (ev.key == "q") alert(controlText);
+		else if (ev.key == "0") { this.xScale++; this.yScale++;}
+		else if (ev.key == "9") { this.xScale--; this.yScale--; }
+		else if (ev.key == "h") this.xTranslate--;
+		else if (ev.key == "l") this.xTranslate++;
+		else if (ev.key == "j") this.yTranslate++;
+		else if (ev.key == "k") this.yTranslate--;
 		this.draw();	
 	}
 
@@ -91,7 +110,7 @@ class GraphDiagramCanvas
 			this.nodeDelete();
 			this.inputMode = "NODE";
 		}
-		else // otherwise we are in node mode
+		else // otherwise we are in edge mode
 		{
 			// on first click if clicking node add start point to edge structure
 			// else do return.
@@ -211,6 +230,9 @@ class GraphDiagramCanvas
 	// Compute draw the display
 	draw()
 	{
+		//this.ctx.scale(-this.xScale,-this.yScale);
+		//this.ctx.translate(-this.xTranslate,-this.yTranslate);
+	
 		// clear the screen
 		this.ctx.clearRect(0, 0, this.width, this.height);
 
@@ -228,9 +250,9 @@ class GraphDiagramCanvas
 		if (this.nodeMode) text = "Node mode. Press h for keybinds ";
 		else text = "Edge mode. Press h for keybinds ";
 		*/
-		if (this.inputMode == "NODE") text = "Node mode. Press h for keybinds ";
-		else if (this.inputMode == "EDGE") text = "Edge mode. Press h for keybinds ";
-		else if (this.inputMode == "DELETE") text = "Delete mode. Press h for keybinds ";
+		if (this.inputMode == "NODE") text = "Node mode. Press q for keybinds ";
+		else if (this.inputMode == "EDGE") text = "Edge mode. Press q for keybinds ";
+		else if (this.inputMode == "DELETE") text = "Delete mode. Press q for keybinds ";
 	
 		this.ctx.font = "bold 25px Arial";
 		this.ctx.fillStyle = 'black';
@@ -250,6 +272,9 @@ class GraphDiagramCanvas
 		this.ctx.lineWidth = 6;
 		this.ctx.strokeStyle = 'black';
 		this.ctx.stroke();
+
+		//this.ctx.scale(this.xScale,this.yScale);
+		//this.ctx.translate(this.xTranslate,this.yTranslate);
 	}
 
 }
@@ -335,7 +360,7 @@ class Node
 	{	
 		this.pt.x = pt.x;
 		this.pt.y = pt.y;
-		if (inputs == 0 && outputs == 0) throw "Node must have at least one input or output"
+		//if (inputs == 0 && outputs == 0) throw "Node must have at least one input or output"
 		let rHeight = this.height/3; // Height of rectangle is divided into thirds based on inputs, name, outputs
 		let rinWidth = this.width/inputs;
 		let routWidth = this.width/outputs;

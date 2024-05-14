@@ -14,16 +14,23 @@ class PianoRollCanvas
 	{
 		// Set Up the canvas
 		//this.canvas = document.querySelector(query);
-		console.log(query);
 		this.canvas = document.getElementById(query);
 		this.ctx = this.canvas.getContext("2d");
-		let tabsHeight = document.getElementById('tab-container').offsetHeight;
+
+		// for some reason 2*tab-container height works but not using master-tab-container directly
+		let tabsHeight = 2*document.getElementById('tab-container').offsetHeight;
+		document.getElementById("TrackEditor").style.display="inline"; // by default TrackEditor is hidden
+		tabsHeight += document.getElementById("track-controls").offsetHeight;
+
 		this.width = (this.canvas.width = window.innerWidth);
 		this.height = (this.canvas.height = window.innerHeight - tabsHeight);
-		this.verticalCells = 20;
-		this.horizontalCells = 20;
-		this.cellWidth = this.width/this.horizontalCells;
-		this.cellHeight = this.height/this.verticalCells;
+
+		this.verticalCells = verticalCells;
+		this.horizontalCells = horizontalCells;
+
+		// The cell width is determined
+		this.cellWidth = this.width/this.verticalCells;
+		this.cellHeight = this.height/this.horizontalCells;
 
 		var that = this;
 		this.canvas.addEventListener('mousedown', function(ev) { that.leftClickDown(); }); 
