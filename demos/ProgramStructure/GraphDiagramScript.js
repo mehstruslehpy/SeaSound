@@ -109,7 +109,8 @@ class GraphDiagramCanvas
 		if (this.inputMode == "NODE")
 		{
 			// add node to nodeList
-			let val = {x: this.coord.x, y: this.coord.y};
+			//let val = {x: this.coord.x, y: this.coord.y};
+			let val = this.screenToWorldCoords(this.coord);
 			this.nodeList.push(new Node(val,this.curName,this.curInputs,this.curOutputs,this.ctx));
 		}
 		else if (this.inputMode == "DELETE")
@@ -119,6 +120,7 @@ class GraphDiagramCanvas
 		}
 		else // otherwise we are in edge mode
 		{
+			let point = this.screenToWorldCoords(this.coord); // convert mouse input to world coords
 			// on first click if clicking node add start point to edge structure
 			// else do return.
 			if (this.workingEdge == null)
@@ -127,7 +129,7 @@ class GraphDiagramCanvas
 				let intersectNode = false;
 				for (let i = 0; i < this.nodeList.length; i++)
 				{
-					let intersectPoint = this.nodeList[i].collision(this.coord);
+					let intersectPoint = this.nodeList[i].collision(point);
 					if (intersectPoint != null)
 					{
 						intersectNode = true;
@@ -153,7 +155,7 @@ class GraphDiagramCanvas
 			let intersectNode = false;
 			for (let i = 0; i < this.nodeList.length; i++)
 			{
-				let intersectPoint = this.nodeList[i].collision(this.coord);
+				let intersectPoint = this.nodeList[i].collision(point);
 				if (intersectPoint != null)
 				{
 					intersectNode = true;
@@ -170,7 +172,7 @@ class GraphDiagramCanvas
 			}
 
 			// add the segment to the edges list also
-			this.workingEdge.addSegment(this.coord);
+			this.workingEdge.addSegment(point);
 		}
 		//draw
 		this.draw();
@@ -179,8 +181,9 @@ class GraphDiagramCanvas
 	// Delete the currently selected node
 	nodeDelete()
 	{
+		let point = this.screenToWorldCoords(this.coord);
 		for (let i = 0; i < this.nodeList.length; i++)
-			if (this.nodeList[i].boundingCollision(this.coord))
+			if (this.nodeList[i].boundingCollision(point))
 			{
 				for (let j = 0; j < this.edgeList.length; j++)
 				{
@@ -208,7 +211,8 @@ class GraphDiagramCanvas
 			// drawing working edge
 			let index = this.workingEdge.polyLineList.length - 1; // this is not very good encapsulation
     		let from = this.workingEdge.polyLineList[index]; // this is not very good encapsulation
-    		let to = {x:this.coord.x, y:this.coord.y};
+    		let to = {x:this.coord.x, y:this.coord.y}; // the to point in screen coords
+			to = this.screenToWorldCoords(to); // convert the to point to world coords
 		
     		this.ctx.lineWidth = 6;
     		this.ctx.strokeStyle = 'black';
@@ -236,6 +240,8 @@ class GraphDiagramCanvas
 	// Compute draw the display
 	draw()
 	{
+		// First we need to clear the old background 
+
 		// Store the current transformation matrix
 		this.ctx.save();
 
@@ -243,8 +249,14 @@ class GraphDiagramCanvas
 		this.ctx.setTransform(1, 0, 0, 1, 0, 0);
 		this.ctx.clearRect(0, 0, this.width, this.height);
 
+		// Draw outline and helper text to fixed positions in viewport
+		this.helperText();
+		this.viewportOutline();
+
 		// Restore the transform
 		this.ctx.restore();
+
+		// Now we can actually start drawing
 
 		// draw all the nodes
 		for (let i = 0; i < this.nodeList.length; i++) this.nodeList[i].draw(this.ctx);
@@ -253,13 +265,13 @@ class GraphDiagramCanvas
 		if (this.workingEdge != null) this.workingEdge.draw(this.ctx);
 		// draw all the edges
 		for (let i = 0; i < this.edgeList.length; i++) this.edgeList[i].draw(this.ctx);
-	
+	}
+
+	// print the on screen helper text
+	helperText()
+	{
 		// Draw text showing the mode
 		let text = "";
-		/*
-		if (this.nodeMode) text = "Node mode. Press h for keybinds ";
-		else text = "Edge mode. Press h for keybinds ";
-		*/
 		if (this.inputMode == "NODE") text = "Node mode. Press h for keybinds ";
 		else if (this.inputMode == "EDGE") text = "Edge mode. Press h for keybinds ";
 		else if (this.inputMode == "DELETE") text = "Delete mode. Press h for keybinds ";
@@ -275,7 +287,11 @@ class GraphDiagramCanvas
 		text = "translate amount: " +this.translateAmt +", zoom amount: " + this.scaleAmt.toFixed(2);
 		textWidth = this.ctx.measureText(text).width;
 		this.ctx.fillText(text,this.width-textWidth,3*textHeight);
+	}
 
+	// draw outlines around the viewport
+	viewportOutline()
+	{
 		// Draw the outlines for the canvas too
 		this.ctx.beginPath();
 		this.ctx.moveTo(0,0);
@@ -286,11 +302,13 @@ class GraphDiagramCanvas
 		this.ctx.lineWidth = 6;
 		this.ctx.strokeStyle = 'black';
 		this.ctx.stroke();
+	}
 
-		//this.ctx.scale(this.xScale,this.yScale);
-		//this.ctx.resetTransform();
-		//this.ctx.translate(this.xTranslate,this.yTranslate);
-		//this.ctx.restore();
+	// Converts p a point on the screen (usually a mouse click) to a point in world coords
+	screenToWorldCoords(p)
+	{
+		// get and invert the canvas xform coords, then apply them to the input point
+		return this.ctx.getTransform().invertSelf().transformPoint(p);
 	}
 
 }
