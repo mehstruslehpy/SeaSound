@@ -15,11 +15,10 @@ class GraphDiagramCanvas
 	curOutputs = 3; // number of outputs for next node
 	curName = "Default"; // the name of the next node
 
-	// x,y translate and scale for global coords
-	xScale = 1;
-	yScale = 1;
-	xTranslate = 1;
-	yTranslate = 1;
+	// values for changing the scale and translate amount
+	translateAmt = 10;
+	scaleAmt = 1.15;
+
 	// Initial set up
 	constructor(query,size)
 	{
@@ -52,11 +51,15 @@ class GraphDiagramCanvas
 			controlText += "2: enter edge mode\n"
 			controlText += "3: enter delete mode\n"
 			controlText += "n: change rectangle name\n"
-			controlText += "a: increment input count\n"
-			controlText += "s: decrementinput count\n"
-			controlText += "z: increment output count\n"
-			controlText += "x: decrement output count\n"
-			controlText += "q: display keybinds";
+			controlText += "4: increment input count\n"
+			controlText += "5: decrement input count\n"
+			controlText += "6: increment output count\n"
+			controlText += "7: decrement output count\n"
+			controlText += "h: display keybinds\n";
+			controlText += "wasd: scroll viewport\n";
+			controlText += "qe: scale viewport\n";
+			controlText += "rf: change amount to translate by\n";
+			controlText += "tg: change amount to zoom by\n";
 	
 		if (ev.key == "1")
 		{
@@ -82,17 +85,21 @@ class GraphDiagramCanvas
 			if (out != null) this.curName = out;
 			else this.curName = "empty";
 		}
-		else if (ev.key == "a") this.curInputs++;
-		else if (ev.key == "s" && this.curInputs > 0) this.curInputs--;
-		else if (ev.key == "z") this.curOutputs++;
-		else if (ev.key == "x" && this.curOutputs > 0) this.curOutputs--;
-		else if (ev.key == "q") alert(controlText);
-		else if (ev.key == "0") { this.xScale++; this.yScale++;}
-		else if (ev.key == "9") { this.xScale--; this.yScale--; }
-		else if (ev.key == "h") this.xTranslate--;
-		else if (ev.key == "l") this.xTranslate++;
-		else if (ev.key == "j") this.yTranslate++;
-		else if (ev.key == "k") this.yTranslate--;
+		else if (ev.key == "4") this.curInputs++;
+		else if (ev.key == "5" && this.curInputs > 0) this.curInputs--;
+		else if (ev.key == "6") this.curOutputs++;
+		else if (ev.key == "7" && this.curOutputs > 0) this.curOutputs--;
+		else if (ev.key == "h") alert(controlText);
+		else if (ev.key == "q") this.ctx.scale(this.scaleAmt,this.scaleAmt);
+		else if (ev.key == "e") this.ctx.scale(1/this.scaleAmt,1/this.scaleAmt);
+		else if (ev.key == "a") this.ctx.translate(-this.translateAmt,0);
+		else if (ev.key == "d") this.ctx.translate(this.translateAmt,0);
+		else if (ev.key == "s") this.ctx.translate(0,this.translateAmt);
+		else if (ev.key == "w") this.ctx.translate(0,-this.translateAmt);
+		else if (ev.key == "r") this.translateAmt += 10;
+		else if (ev.key == "f") this.translateAmt -= 10;
+		else if (ev.key == "t") this.scaleAmt *= (1+1/(2**4));
+		else if (ev.key == "g") this.scaleAmt /= (1+1/(2**4));
 		this.draw();	
 	}
 
@@ -195,7 +202,6 @@ class GraphDiagramCanvas
 	{
 		this.coord.x = event.clientX - this.canvas.offsetLeft; 
 		this.coord.y = event.clientY - this.canvas.offsetTop; 
-		//if (!this.nodeMode && this.workingEdge != null) // draw the work in progress edge if needed
 		if (this.inputMode != "NODE" && this.workingEdge != null) // draw the work in progress edge if needed
 		{
 			this.draw();
@@ -230,11 +236,15 @@ class GraphDiagramCanvas
 	// Compute draw the display
 	draw()
 	{
-		//this.ctx.scale(-this.xScale,-this.yScale);
-		//this.ctx.translate(-this.xTranslate,-this.yTranslate);
-	
-		// clear the screen
+		// Store the current transformation matrix
+		this.ctx.save();
+
+		// Use the identity matrix while clearing the canvas
+		this.ctx.setTransform(1, 0, 0, 1, 0, 0);
 		this.ctx.clearRect(0, 0, this.width, this.height);
+
+		// Restore the transform
+		this.ctx.restore();
 
 		// draw all the nodes
 		for (let i = 0; i < this.nodeList.length; i++) this.nodeList[i].draw(this.ctx);
@@ -250,9 +260,9 @@ class GraphDiagramCanvas
 		if (this.nodeMode) text = "Node mode. Press h for keybinds ";
 		else text = "Edge mode. Press h for keybinds ";
 		*/
-		if (this.inputMode == "NODE") text = "Node mode. Press q for keybinds ";
-		else if (this.inputMode == "EDGE") text = "Edge mode. Press q for keybinds ";
-		else if (this.inputMode == "DELETE") text = "Delete mode. Press q for keybinds ";
+		if (this.inputMode == "NODE") text = "Node mode. Press h for keybinds ";
+		else if (this.inputMode == "EDGE") text = "Edge mode. Press h for keybinds ";
+		else if (this.inputMode == "DELETE") text = "Delete mode. Press h for keybinds ";
 	
 		this.ctx.font = "bold 25px Arial";
 		this.ctx.fillStyle = 'black';
@@ -262,6 +272,10 @@ class GraphDiagramCanvas
 		text = "inputs: " + this.curInputs + ", outputs: " + this.curOutputs + ", name: "+this.curName+" ";
 		textWidth = this.ctx.measureText(text).width;
 		this.ctx.fillText(text,this.width-textWidth,2*textHeight);
+		text = "translate amount: " +this.translateAmt +", zoom amount: " + this.scaleAmt.toFixed(2);
+		textWidth = this.ctx.measureText(text).width;
+		this.ctx.fillText(text,this.width-textWidth,3*textHeight);
+
 		// Draw the outlines for the canvas too
 		this.ctx.beginPath();
 		this.ctx.moveTo(0,0);
@@ -274,7 +288,9 @@ class GraphDiagramCanvas
 		this.ctx.stroke();
 
 		//this.ctx.scale(this.xScale,this.yScale);
+		//this.ctx.resetTransform();
 		//this.ctx.translate(this.xTranslate,this.yTranslate);
+		//this.ctx.restore();
 	}
 
 }
