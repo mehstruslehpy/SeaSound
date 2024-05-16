@@ -9,11 +9,15 @@ class PianoRollCanvas
 	mousePressed = false; // For tracking if the mouse has been pressed or not
 	controlPressed = false; // for tracking if control has been pressed or not
 	
+	// values for changing the scale and translate amount
+	translateAmt = 10;
+	scaleAmtX = 1.15;
+	scaleAmtY = 1.15;
+
 	// Initial set up
 	constructor(query,horizontalCells,verticalCells)
 	{
 		// Set Up the canvas
-		//this.canvas = document.querySelector(query);
 		this.canvas = document.getElementById(query);
 		this.ctx = this.canvas.getContext("2d");
 
@@ -28,7 +32,7 @@ class PianoRollCanvas
 		this.verticalCells = verticalCells;
 		this.horizontalCells = horizontalCells;
 
-		// The cell width is determined
+		// The cell width is determined here
 		this.cellWidth = this.width/this.verticalCells;
 		this.cellHeight = this.height/this.horizontalCells;
 
@@ -43,7 +47,34 @@ class PianoRollCanvas
 	// Keyboard button handler
 	buttonClick(ev)
 	{
+		let controlText = "";
+			controlText += "h: display keybinds\n";
+			controlText += "wasd: scroll viewport\n";
+			controlText += "qe: scale viewport in X\n";
+			controlText += "zc: scale viewport in X\n";
+			controlText += "rf: change amount to translate by\n";
+			controlText += "tg: change X scaling amount\n";
+			controlText += "yh: change Y scaling amount\n";
+			controlText += "ctrl: toggle note/delete modes\n";
+
 		if (ev.key == "Control") this.controlPressed = true;
+		else if (ev.key == "h") alert(controlText);
+		else if (ev.key == "q") this.ctx.scale(this.scaleAmtX,1);
+		else if (ev.key == "e") this.ctx.scale(1/this.scaleAmtX,1);
+		else if (ev.key == "z") this.ctx.scale(1,this.scaleAmtY);
+		else if (ev.key == "c") this.ctx.scale(1,1/this.scaleAmtY);
+		else if (ev.key == "a") this.ctx.translate(this.translateAmt,0);
+		else if (ev.key == "d") this.ctx.translate(-this.translateAmt,0);
+		else if (ev.key == "s") this.ctx.translate(0,-this.translateAmt);
+		else if (ev.key == "w") this.ctx.translate(0,this.translateAmt);
+		else if (ev.key == "r") this.translateAmt += 10;
+		else if (ev.key == "f") this.translateAmt -= 10;
+		else if (ev.key == "t") this.scaleAmtX *= (1+1/(2**4));
+		else if (ev.key == "g") this.scaleAmtX /= (1+1/(2**4));
+		else if (ev.key == "y") this.scaleAmtY *= (1+1/(2**4));
+		else if (ev.key == "h") this.scaleAmtY /= (1+1/(2**4));
+	
+		this.draw();	
 	}
 
 	// Snap input coordinates to grid and return the resulting coord
@@ -62,7 +93,8 @@ class PianoRollCanvas
 		if (this.controlPressed) this.controlLeftClickDown();
 		else
 		{
-			this.leftClickStart = this.snapToGrid(this.coord);
+			let val = this.screenToWorldCoords(this.coord);
+			this.leftClickStart = this.snapToGrid(val);
 			this.workingRectangle = new Array(this.leftClickStart,this.leftClickStart);
 			this.mousePressed = true;
 		}
@@ -70,12 +102,14 @@ class PianoRollCanvas
 	controlLeftClickDown()
 	{
 		let c = {x:this.coord.x, y:this.coord.y};
+		c = this.screenToWorldCoords(c);
 		for (let i = 0; i < this.rectangleList.length; i++)
 			if (this.rectangleCollision(c,this.rectangleList[i])) // if cursor lies inside a rectangle
 			{
 				this.rectangleList.splice(i,1); // remove the rectangle
 				break;
 			}
+		//this.controlPressed = false;
 		this.draw();
 	}	
 
@@ -85,22 +119,22 @@ class PianoRollCanvas
 		if (this.controlPressed) // if it was a control press
 		{
 			this.controlPressed = false; // untoggle controlPressed var and return
+			this.draw();
 			return;
 		}
 
 		// set up left click coords
-		this.leftClickEnd.x = this.coord.x;
-		this.leftClickEnd.y = this.coord.y;
+		this.leftClickEnd = this.screenToWorldCoords(this.coord);
 
 		// Line the two x coords up to snap to the appropriate rectangle edges
 		if (this.leftClickStart.x <= this.leftClickEnd.x) 
-			this.leftClickEnd.x = this.coord.x+this.cellWidth;
+			this.leftClickEnd.x += this.cellWidth;
 		else 
 			this.leftClickEnd.x = this.leftClickStart.x+this.cellWidth;
 
 		// Line the two y coords up to snap to the appropriate rectangle edges
 		if (this.leftClickStart.y <= this.leftClickEnd.y)
-			this.leftClickEnd.y = this.coord.y+this.cellHeight;
+			this.leftClickEnd.y += this.cellHeight;
 		else
 			this.leftClickStart.y += this.cellHeight;
 
@@ -142,21 +176,17 @@ class PianoRollCanvas
 		if (this.mousePressed)
 		{
 			// set up left click coords
-			this.leftClickEnd.x = this.coord.x;
-			this.leftClickEnd.y = this.coord.y;
-
-			// snap to the grid
-			this.leftClickStart = this.snapToGrid(this.leftClickStart);
+			this.leftClickEnd = this.screenToWorldCoords(this.coord);
 
 			// Line the two x coords up to snap to the appropriate rectangle edges
 			if (this.leftClickStart.x <= this.leftClickEnd.x) 
-				this.leftClickEnd.x = this.coord.x+this.cellWidth;
+				this.leftClickEnd.x += this.cellWidth;
 			else 
 				this.leftClickEnd.x = this.leftClickStart.x+this.cellWidth;
 
 			// Line the two y coords up to snap to the appropriate rectangle edges
 			if (this.leftClickStart.y <= this.leftClickEnd.y)
-				this.leftClickEnd.y = this.coord.y+this.cellHeight;
+				this.leftClickEnd.y += this.cellHeight;
 			else
 				this.leftClickStart.y += this.cellHeight;
 
@@ -186,8 +216,23 @@ class PianoRollCanvas
 	// Compute+draw the cell divisions of the display
 	draw()
 	{
-		// clear the screen
+		// First we need to clear the old background 
+
+		// Store the current transformation matrix
+		this.ctx.save();
+
+		// Use the identity matrix while clearing the canvas
+		this.ctx.setTransform(1, 0, 0, 1, 0, 0);
 		this.ctx.clearRect(0, 0, this.width, this.height);
+
+		// Draw outline and helper text to fixed positions in viewport
+		this.helperText();
+		this.viewportOutline();
+
+		// Restore the transform
+		this.ctx.restore();
+
+		// Now we can actually start drawing
 
 		//draw vertical divisions
 		for (var i = 0; i < this.verticalCells; i++)
@@ -211,14 +256,6 @@ class PianoRollCanvas
 			this.ctx.stroke();
 		}
 
-		// Draw text showing the mode
-		let text = "Press control to switch to delete mode.";
-		this.ctx.font = "bold 25px Arial";
-		this.ctx.fillStyle = 'black';
-		let textHeight = this.ctx.measureText('M').width; // The width of capital M approximates height
-		let textWidth = this.ctx.measureText(text).width;
-		this.ctx.fillText(text,this.width-textWidth,textHeight);
-
 		// draw all the rectangles
 		if (this.workingRectangle!=null) 
 			this.drawRectangle(this.workingRectangle[0],this.workingRectangle[1]);
@@ -230,15 +267,7 @@ class PianoRollCanvas
 		}
 		
 		// Draw the outlines for the canvas too
-		this.ctx.beginPath();
-		this.ctx.moveTo(0,0);
-		this.ctx.lineTo(0,this.height);
-		this.ctx.lineTo(this.width,this.height);
-		this.ctx.lineTo(this.width,0);
-		this.ctx.lineTo(0,0);
-		this.ctx.lineWidth = 6;
-		this.ctx.strokeStyle = 'black';
-		this.ctx.stroke();
+		this.viewportOutline();
 	}
 
 	drawRectangle(c1,c2)
@@ -268,7 +297,50 @@ class PianoRollCanvas
 	{
 		return (rect[0].x <= pt.x && pt.x <= rect[1].x && rect[0].y <= pt.y && pt.y <= rect[1].y);
 	}
-}
-// Draw the divisions
-//let pianoRollObject = new PianoRollCanvas(".pianoRollCanvas",20,40);
 
+	// draw outlines around the viewport
+	viewportOutline()
+	{
+		// Draw the outlines for the canvas too
+		this.ctx.beginPath();
+		this.ctx.moveTo(0,0);
+		this.ctx.lineTo(0,this.height);
+		this.ctx.lineTo(this.width,this.height);
+		this.ctx.lineTo(this.width,0);
+		this.ctx.lineTo(0,0);
+		this.ctx.lineWidth = 6;
+		this.ctx.strokeStyle = 'black';
+		this.ctx.stroke();
+	}
+
+	// print the on screen helper text
+	helperText()
+	{
+		// Draw text showing the mode
+		let text = ""
+		if (this.controlPressed) text = "Delete mode. ";
+		else text = "Note mode. ";
+		text += "Press h for keybinds.";
+	
+		this.ctx.font = "bold 25px Arial";
+		this.ctx.fillStyle = 'black';
+		let textHeight = this.ctx.measureText('M').width; // The width of capital M approximates height
+		let textWidth = this.ctx.measureText(text).width;
+		this.ctx.fillText(text,this.width-textWidth,textHeight);
+		text = "translate amount: " +this.translateAmt 
+		textWidth = this.ctx.measureText(text).width;
+		this.ctx.fillText(text,this.width-textWidth,2*textHeight);
+		text = "x zoom amount: " + this.scaleAmtX.toFixed(2);
+		text += ", y zoom amount: " + this.scaleAmtY.toFixed(2);
+		textWidth = this.ctx.measureText(text).width;
+		this.ctx.fillText(text,this.width-textWidth,3*textHeight);
+	
+	}
+
+	// Converts p a point on the screen (usually a mouse click) to a point in world coords
+	screenToWorldCoords(p)
+	{
+		// get and invert the canvas xform coords, then apply them to the input point
+		return this.ctx.getTransform().invertSelf().transformPoint(p);
+	}
+}

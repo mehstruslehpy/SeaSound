@@ -92,10 +92,10 @@ class GraphDiagramCanvas
 		else if (ev.key == "h") alert(controlText);
 		else if (ev.key == "q") this.ctx.scale(this.scaleAmt,this.scaleAmt);
 		else if (ev.key == "e") this.ctx.scale(1/this.scaleAmt,1/this.scaleAmt);
-		else if (ev.key == "a") this.ctx.translate(-this.translateAmt,0);
-		else if (ev.key == "d") this.ctx.translate(this.translateAmt,0);
-		else if (ev.key == "s") this.ctx.translate(0,this.translateAmt);
-		else if (ev.key == "w") this.ctx.translate(0,-this.translateAmt);
+		else if (ev.key == "a") this.ctx.translate(this.translateAmt,0);
+		else if (ev.key == "d") this.ctx.translate(-this.translateAmt,0);
+		else if (ev.key == "s") this.ctx.translate(0,-this.translateAmt);
+		else if (ev.key == "w") this.ctx.translate(0,this.translateAmt);
 		else if (ev.key == "r") this.translateAmt += 10;
 		else if (ev.key == "f") this.translateAmt -= 10;
 		else if (ev.key == "t") this.scaleAmt *= (1+1/(2**4));
@@ -200,6 +200,7 @@ class GraphDiagramCanvas
 				break;
 			}
 	}
+
 	// Update the current coordinates of the mouse
 	updateMouseCoordinates()
 	{
