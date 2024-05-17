@@ -25,11 +25,9 @@ class TrackLaneCanvas
 
 		// Set up the canvas size
 		let tabsHeight = document.getElementById('master-tab-container').offsetHeight;
-		console.log(tabsHeight);
 		document.getElementById("PlaylistEditor").style.display="inline"; // by default TrackEditor is hidden
 		tabsHeight += document.getElementById("playlist-controls").offsetHeight;
 		document.getElementById("PlaylistEditor").style.display="none";
-		console.log(tabsHeight);
 		this.width = (this.canvas.width = window.innerWidth);
 		this.height = (this.canvas.height = window.innerHeight - tabsHeight);
 		

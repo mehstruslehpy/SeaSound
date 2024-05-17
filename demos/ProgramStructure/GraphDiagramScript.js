@@ -1,5 +1,3 @@
-//TODO: Test node deletion functionality more. Kind of a mess.
-//TODO: Add canvas zoom in/out and translation
 //TODO: Set up i/o so that outputs are forced to connect to inputs
 //TODO: Add code to render instruments
 class GraphDiagramCanvas

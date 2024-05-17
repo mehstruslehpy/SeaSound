@@ -1,3 +1,5 @@
+<!-- TODO: Need to add way to spawn multiple piano rolls for multi params -->
+<!-- TODO: Need to add way to adjust divisions on the playlist editor -->
 <!DOCTYPE html>
 <html lang="en-US">
   <head>
@@ -5,7 +7,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Rectangle Drawing</title>
 	<!-- Scripts and style loaded here -->
- 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+ 	<!--<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>-->
     <script src="SliderScript.js" defer></script>
     <script src="CodedEventScript.js" defer></script>
     <script src="PointInterpScript.js" defer></script>
@@ -83,25 +85,37 @@
 						id="track-canvases-select" 
 						onchange="SelectDropDown('track-canvases',this.value)">
 				</select> 
+
 				<!-- Button for deleting current track -->
 				<button class="lr-pad" onclick="DeleteSelectOption('track-canvases-select')">
-					Delete
+					Delete Track
 				</button>
 				<!-- Button for adding a track -->
-				<div class="lr-pad">
-  					<label>New Track:</label>
-  					<input type="text submit" 
-							id="track-name" 
-							name="track-name"
-							onkeypress="EnterHandler(event,'track-canvases','track',document.getElementById('track-name').value)">
-  					<label>Vertical Cells:</label>
-  					<input type="number" id="track-vertical-cells"></input>
-  					<label>Horizontal Cells:</label>
-  					<input type="number" id="track-horizontal-cells">
-				</div>
-				<button class="lr-pad" onclick="AddCanvas('track-canvases','track',document.getElementById('track-name').value)">
-					Add
+				<button class="lr-pad" onclick='document.getElementById("track-dialog").showModal();'>
+					Add Track
 				</button>
+
+				<!-- Pop up dialog containing track parameters -->
+				<dialog id="track-dialog">
+				<form method="dialog" style="display:table;">
+				<div style="display:table-row;">
+					<label style="display:table-cell;">New Track:</label>
+					<input style="display:table-cell;"type="text submit" id="track-name" name="track-name"> </br>
+				</div>
+				<div style="display:table-row;">
+					<label style="display:table-cell;">Vertical Cells:</label>
+					<input style="display:table-cell;"type="number" id="track-vertical-cells" placeholder="20"> </br>
+				</div>
+				<div style="display:table-row;">
+					<label style="display:table-cell;">Horizontal Cells:</label>
+					<input style="display:table-cell;" type="number" id="track-horizontal-cells" placeholder="20"> </br>
+				</div>
+				<button id="cancel" type="reset" onclick='document.getElementById("track-dialog").close();'>Cancel</button>
+				<button type="submit" onclick="AddCanvas('track-canvases','track',document.getElementById('track-name').value)">
+					Confirm
+				</button>
+				</form>
+				</dialog>
 			</div>
 			<!-- Canvases for track lane diagrams-->
 			<!-- the tabindex value makes the canvas focusable for catching keystrokes -->
@@ -137,7 +151,6 @@
 														'instrument-canvases',
 														'instrument',
 														document.getElementById('instrument-name').value)">
-	
 				</div> 
 				<button class="lr-pad" 
 						onclick="AddCanvas('instrument-canvases','instrument',document.getElementById('instrument-name').value)">
