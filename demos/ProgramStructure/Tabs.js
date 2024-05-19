@@ -136,6 +136,5 @@ function ResetPlaylist()
 	console.log(typeof vCells);
 	console.log(hCells);
 
-	//trackLaneObject = new TrackLaneCanvas("trackLaneCanvas",10,20);
 	trackLaneObject.reset(hCells,vCells);
 }

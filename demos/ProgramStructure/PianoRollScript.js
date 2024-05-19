@@ -1,4 +1,3 @@
-//TODO: Refactor duplicate mouse coord and leftClickUp mouse coord code into a helper function
 class PianoRollCanvas
 {
 	coord = {x:0, y:0}; // the coords of the mouse
@@ -123,25 +122,6 @@ class PianoRollCanvas
 			return;
 		}
 
-		/*
-		// set up left click coords
-		this.leftClickEnd = this.screenToWorldCoords(this.coord);
-
-		// Line the two x coords up to snap to the appropriate rectangle edges
-		if (this.leftClickStart.x <= this.leftClickEnd.x) 
-			this.leftClickEnd.x += this.cellWidth;
-		else 
-			this.leftClickEnd.x = this.leftClickStart.x+this.cellWidth;
-
-		// Line the two y coords up to snap to the appropriate rectangle edges
-		if (this.leftClickStart.y <= this.leftClickEnd.y)
-			this.leftClickEnd.y += this.cellHeight;
-		else
-			this.leftClickStart.y += this.cellHeight;
-
-		// snap to the grid
-		this.leftClickEnd = this.snapToGrid(this.leftClickEnd);
-		*/
 		this.clickHelper();
 
 		let c1 = { // top left coord of rectangle
@@ -178,25 +158,6 @@ class PianoRollCanvas
 
 		if (this.mousePressed)
 		{
-			/*
-			// set up left click coords
-			this.leftClickEnd = this.screenToWorldCoords(this.coord);
-
-			// Line the two x coords up to snap to the appropriate rectangle edges
-			if (this.leftClickStart.x <= this.leftClickEnd.x) 
-				this.leftClickEnd.x += this.cellWidth;
-			else 
-				this.leftClickEnd.x = this.leftClickStart.x+this.cellWidth;
-
-			// Line the two y coords up to snap to the appropriate rectangle edges
-			if (this.leftClickStart.y <= this.leftClickEnd.y)
-				this.leftClickEnd.y += this.cellHeight;
-			else
-				this.leftClickStart.y += this.cellHeight;
-
-			// snap to the grid
-			this.leftClickEnd = this.snapToGrid(this.leftClickEnd);
-			*/
 			this.clickHelper();
 
 			let c1 = { // top left coord of rectangle
@@ -352,26 +313,6 @@ class PianoRollCanvas
 	
 	clickHelper()
 	{
-		/*
-		// set up left click coords
-		this.leftClickEnd = this.screenToWorldCoords(this.coord);
-
-		// Line the two x coords up to snap to the appropriate rectangle edges
-		if (this.leftClickStart.x <= this.leftClickEnd.x) 
-			this.leftClickEnd.x += this.cellWidth;
-		else 
-			this.leftClickEnd.x = this.leftClickStart.x+this.cellWidth;
-
-		// Line the two y coords up to snap to the appropriate rectangle edges
-		if (this.leftClickStart.y <= this.leftClickEnd.y)
-			this.leftClickEnd.y += this.cellHeight;
-		else
-			this.leftClickStart.y += this.cellHeight;
-
-		// snap to the grid
-		this.leftClickEnd = this.snapToGrid(this.leftClickEnd);
-		*/
-	
 		// set up left click coords
 		this.leftClickEnd = this.screenToWorldCoords(this.coord);
 
