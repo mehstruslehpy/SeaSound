@@ -47,6 +47,37 @@ class TrackLaneCanvas
 		this.draw();
 	}
 
+	// Reset all the variables of the canvas
+	reset(horizontalCells,verticalCells)
+	{
+		this.coord = {x:0, y:0}; // the coords of the mouse
+		this.leftClickStart = {x:0, y:0}; // the coords of the mouse at the start of a click
+		this.leftClickEnd = {x:0, y:0}; // the coords of the mouse at the release of a click
+		this.mousePressed = false; //record whether the mouse has been pressed
+		this.trackList = new Array(); // tracks are arrays of rectangles specified by their top left and bottom right coords
+		this.workingRectangle = null; // A rectangle not yet saved in the tracklist
+		this.existingCollision = false; // flag tracking whether the user has clicked an existing rectangle
+		this.moveIndex = -1; // the index that the collision occurred at 
+		this.controlPressed = false; // tracks whether control has been pressed
+		this.blockSize = 1; // length of the rectangle to draw
+	
+		// values for changing the scale and translate amount
+		this.translateAmt = 10;
+		this.scaleAmtX = 1.15;
+		this.scaleAmtY = 1.15;
+
+		// Set up cell sizes
+		this.verticalCells = verticalCells;
+		this.horizontalCells = horizontalCells;
+	
+		// Compute widths and heights of cells
+		this.cellWidth = this.width/this.verticalCells; // the number of vertical cell divisions controls cell widths
+		this.cellHeight = this.height/this.horizontalCells; // the number of horizontal cell divisions controls cell heights
+
+		this.draw();
+
+	}
+
 	// Keyboard button handler
 	buttonClick(ev)
 	{

@@ -62,13 +62,38 @@
 				<label class="lr-pad">Select Track:</label>
 				<select class="lr-pad" id="pattern-select">
 				</select> 
+				<label class="lr-pad">Block Size:</label>
 				<button class="lr-pad" onclick="IncrementPlaylistBlockSize()">
 					+
 				</button>
 				<button class="lr-pad" onclick="DecrementPlaylistBlockSize()">
 					-
 				</button>
-	
+
+				<label class="lr-pad">Reset Playlist:</label>
+				<!-- Button for adding a track -->
+				<button class="lr-pad" onclick='document.getElementById("playlist-dialog").showModal();'>
+					Reset
+				</button>
+
+				<!-- Pop up dialog for a new canvas -->
+				<dialog id="playlist-dialog">
+				<form method="dialog" style="display:table;">
+				<div style="display:table-row;">
+					<label style="display:table-cell;">Vertical Cells:</label>
+					<input style="display:table-cell;"type="number" id="playlist-vertical-cells" placeholder="20"> </br>
+				</div>
+				<div style="display:table-row;">
+					<label style="display:table-cell;">Horizontal Cells:</label>
+					<input style="display:table-cell;" type="number" id="playlist-horizontal-cells" placeholder="20"> </br>
+				</div>
+				<button type="reset" onclick='document.getElementById("playlist-dialog").close();'>Cancel</button>
+				<button type="submit" onclick="ResetPlaylist();">
+					Confirm
+				</button>
+				</form>
+				</dialog>
+
 			</div>
 			<!-- Canvas for displaying track/lanes -->
 			<canvas id="trackLaneCanvas" tabindex="1">

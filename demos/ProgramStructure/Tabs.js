@@ -117,7 +117,6 @@ function DeleteSelectOption(select)
 		if (selectTag.options[i].value == selectTag.value)
 			selectTag.remove(i);
 }
-
 function IncrementPlaylistBlockSize()
 {
 	trackLaneObject.incrementBlockSize();
@@ -125,4 +124,18 @@ function IncrementPlaylistBlockSize()
 function DecrementPlaylistBlockSize()
 {
 	trackLaneObject.decrementBlockSize();
+}
+function ResetPlaylist()
+{
+	let vCells = document.getElementById("playlist-vertical-cells").value;
+	let hCells = document.getElementById("playlist-horizontal-cells").value;
+	if (vCells == "") vCells = 20;
+	else vCells = Number(vCells);
+	if (hCells == "") hCells = 40;
+	else hCells = Number(hCells);
+	console.log(typeof vCells);
+	console.log(hCells);
+
+	//trackLaneObject = new TrackLaneCanvas("trackLaneCanvas",10,20);
+	trackLaneObject.reset(hCells,vCells);
 }

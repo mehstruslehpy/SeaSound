@@ -1,5 +1,4 @@
 //TODO: Set up i/o so that outputs are forced to connect to inputs
-//TODO: Add code to render instruments
 class GraphDiagramCanvas
 {
 	coord = {x:0, y:0}; // the coords of the mouse
@@ -27,9 +26,7 @@ class GraphDiagramCanvas
 
 		// for some reason 2*tab-container height works but not using master-tab-container directly
 		let tabsHeight = 2*document.getElementById('tab-container').offsetHeight;
-		//document.getElementById("InstrumentEditor").style.display="inline"; // by default PlaylistEditor is hidden
 		tabsHeight += document.getElementById("instrument-controls").offsetHeight;
-		//document.getElementById("InstrumentEditor").style.display="none";
 
 		this.height = (this.canvas.height = window.innerHeight - tabsHeight);
 		this.nodeRadius = size;
@@ -107,7 +104,6 @@ class GraphDiagramCanvas
 		if (this.inputMode == "NODE")
 		{
 			// add node to nodeList
-			//let val = {x: this.coord.x, y: this.coord.y};
 			let val = this.screenToWorldCoords(this.coord);
 			this.nodeList.push(new Node(val,this.curName,this.curInputs,this.curOutputs,this.ctx));
 		}
@@ -140,7 +136,6 @@ class GraphDiagramCanvas
 				if (!intersectNode) 
 				{
 					// if no intersection, then reset and return to node mode
-					//this.nodeMode = !this.nodeMode;
 					this.inputMode = "NODE";
 					this.workingEdge = null;
 					this.draw();
@@ -162,7 +157,6 @@ class GraphDiagramCanvas
 					this.edgeList.push(this.workingEdge);
 					// The edge is complete so exit edge mode
 					this.workingEdge = null;
-					//this.nodeMode = !this.nodeMode; 
 					this.inputMode = "NODE";
 					this.draw();
 					return;
