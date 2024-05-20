@@ -1,4 +1,7 @@
-window.onload = Loader;
+// TODO: Simplify the tab code. There's no need to save tabs between page loads.
+// TODO: Changing drop down displays incorrect parameter for instruments
+// TODO: Adding tracks to track editor should update dropdown in playlist editor
+window.onload = TabLoader;
 
 // There is only one track lane object for the whole program
 let trackLaneObject = new TrackLaneCanvas("trackLaneCanvas",10,20);
@@ -23,12 +26,14 @@ function OpenTab(tabName, btnID) {
 
 	localStorage.setItem('activeTab', tabName);
 	localStorage.setItem('activeBtn', btnID);
+	ResetParameter(); // Reset the parameters on the track editor tab for consistency
 }
 
-function Loader() {
+function TabLoader() {
 	str = localStorage.getItem('activeTab');
 	str2 = localStorage.getItem('activeBtn');
 
+	console.log(str);
 	switch (str) {
 		case 'PlaylistEditor':
 		case 'InstrumentEditor':
@@ -47,6 +52,8 @@ function SelectDropDown(divId,value)
 	for (let i = 0; i < children.length; i++)
 		if (children[i].id == value) children[i].style.display = "inline";
 		else children[i].style.display = "none";
+	// Changes track editor tab parameter back to 0 regardless of which tab we call this from
+	ResetParameter();
 }
 
 function AddCanvas(canvasDiv,prefix,name)
@@ -59,39 +66,72 @@ function AddCanvas(canvasDiv,prefix,name)
 		if (prefix+"-"+name == document.getElementById(canvasDiv+"-select").options[i].value)
 			return;
 
-	// add the associated canvas tag
-	let ele = document.getElementById(canvasDiv);
-	let newCanvas = document.createElement("canvas");
-	newCanvas.setAttribute("tabindex","1");
-	ele.appendChild(newCanvas);
-
-	// add the associated select entry
-	let selectEle = document.getElementById(canvasDiv+"-select");
-	let newOption = document.createElement("option");
-	newOption.innerText = name;
-	selectEle.append(newOption);
-
 	// load the display based on which type of canvas we are dealing with
 	switch (canvasDiv)
 	{
 		case "instrument-canvases":
+		{
+			// add the associated canvas tag
+			let ele = document.getElementById(canvasDiv);
+			let newCanvas = document.createElement("canvas");
+			newCanvas.setAttribute("tabindex","1");
+			ele.appendChild(newCanvas);
+
+			// add the associated select entry
+			let selectEle = document.getElementById(canvasDiv+"-select");
+			let newOption = document.createElement("option");
+			newOption.innerText = name;
+			selectEle.append(newOption);
+
 			newCanvas.setAttribute("id","instrument-"+name);
 			newOption.setAttribute("value","instrument-"+name);
 			newCanvas.setAttribute("class","trackLaneCanvas");
 			let trackLaneObject = new GraphDiagramCanvas("instrument-"+name,20);
 			break;
+		}
 		case "track-canvases": 
-			newCanvas.setAttribute("id","track-"+name);
-			newCanvas.setAttribute("class","pianoRollCanvas");
-			newOption.setAttribute("value","track-"+name);
-			newOption.setAttribute("id","track-option-"+name);
-			let vCells = document.getElementById("track-vertical-cells").value;
+		{
+			// Read in input parameters
+			let params = document.getElementById("track-parameters").value;
 			let hCells = document.getElementById("track-horizontal-cells").value;
+			let vCells = document.getElementById("track-vertical-cells").value;
 			if (vCells == "") vCells = 20;
 			else vCells = Number(vCells);
 			if (hCells == "") hCells = 40;
 			else hCells = Number(hCells);
-			let pianoRollObject = new PianoRollCanvas("track-"+name,vCells,hCells);
+			if (params == "") params = 2;
+			else params = Number(params);
+			console.log(params);
+	
+			// add a div to contain all our parameter canvases
+			let ele = document.getElementById(canvasDiv);
+			let instDiv  = document.createElement("div");
+			instDiv.setAttribute("id","instrument-"+name);
+			ele.appendChild(instDiv);
+
+			// add the associated select entry
+			let selectEle = document.getElementById(canvasDiv+"-select");
+			let newOption = document.createElement("option");
+			newOption.value = "instrument-"+name;
+			newOption.innerText = name;
+			selectEle.append(newOption);
+
+			// Display the currently selected parameter
+			document.getElementById("param-num").innerText = "Current Parameter: 0";
+
+			// create one canvas per parameter
+			for (let i = 0; i < params; i++)
+			{
+				// create the canvas
+				let newCanvas = document.createElement("canvas");
+				newCanvas.setAttribute("tabindex","1");
+				newCanvas.setAttribute("id","track-p"+i+"-"+name);
+				newCanvas.setAttribute("class","pianoRollCanvas");
+				if (i==0) newCanvas.style.display = "inline";
+				else newCanvas.style.display = "none";
+				instDiv.appendChild(newCanvas);
+				let pianoRollObject = new PianoRollCanvas("track-p"+i+"-"+name,vCells,hCells);
+			}
 			// Playlist editor needs an associated pattern entry too
 			let newPat = document.getElementById("pattern-select");
 			let newOpt = document.createElement("option");
@@ -99,6 +139,7 @@ function AddCanvas(canvasDiv,prefix,name)
 			newOpt.setAttribute("value","instrument-"+name);
 			newPat.append(newOpt);
 			break;
+		}
 		default:
 			break;
 	}
@@ -135,6 +176,51 @@ function ResetPlaylist()
 	else hCells = Number(hCells);
 	console.log(typeof vCells);
 	console.log(hCells);
-
 	trackLaneObject.reset(hCells,vCells);
+}
+function NextParameter()
+{
+	let name = document.getElementById("track-canvases-select").value;
+	name = name.split("-")[1];
+	let children = document.getElementById("instrument-"+name).children;
+	for (let i = 0; i < children.length; i++)
+	{
+		if (children[i].style.display == "inline")
+		{
+			children[i].style.display = "none";
+			children[(i+1)%children.length].style.display = "inline";
+			document.getElementById("param-num").innerText = "Current Parameter: "+(i+1)%children.length;
+			break;
+		}
+	}
+}
+function PrevParameter()
+{
+	let name = document.getElementById("track-canvases-select").value;
+	name = name.split("-")[1];
+	let children = document.getElementById("instrument-"+name).children;
+	for (let i = 0; i < children.length; i++)
+	{
+		if (children[i].style.display == "inline")
+		{
+			children[i].style.display = "none";
+			children[(i-1)%children.length].style.display = "inline";
+			document.getElementById("param-num").innerText = "Current Parameter: "+(i+1)%children.length;
+			break;
+		}
+	}
+}
+function ResetParameter()
+{
+	let name = document.getElementById("track-canvases-select").value;
+	name = name.split("-")[1];
+	let ele = document.getElementById("instrument-"+name);
+	if (ele == null) return;
+	let children = ele.children;
+	for (let i = 0; i < children.length; i++)
+	{
+		children[i].style.display = "none";
+	}
+	children[0].style.display = "inline";
+	document.getElementById("param-num").innerText = "Current Parameter: "+0;
 }

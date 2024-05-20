@@ -1,5 +1,6 @@
 <!-- TODO: Need to add way to spawn multiple piano rolls for multi params -->
 <!-- TODO: Need to add way to adjust divisions on the playlist editor -->
+<!-- TODO: Deleting a select option should delete the associated canvases -->
 <!DOCTYPE html>
 <html lang="en-US">
   <head>
@@ -21,7 +22,7 @@
   </head>
   <body>
 	<!-- Run tab scripts on load -->
-	<div onload="Loader()"></div>
+	<div onload="TabLoader()"></div>
 
 	<!--tab fields -->
 	<div id="master-tab-container">
@@ -112,20 +113,35 @@
 				</select> 
 
 				<!-- Button for deleting current track -->
-				<button class="lr-pad" onclick="DeleteSelectOption('track-canvases-select')">
+				<button class="lr-pad" onclick="DeleteSelectOption('track-canvases-select');DeleteSelectOption('pattern-select');">
 					Delete Track
 				</button>
 				<!-- Button for adding a track -->
 				<button class="lr-pad" onclick='document.getElementById("track-dialog").showModal();'>
 					Add Track
 				</button>
+				<label class="lr-pad">Switch Parameter:</label>
+				<!-- Button for showing next paramter -->
+				<button class="lr-pad" onclick='NextParameter();'>
+					+
+				</button>
+				<!-- Button for showing prev parameter -->
+				<button class="lr-pad" onclick='PrevParameter();'>
+					-
+				</button>
+				<!-- Display the currently parameter -->
+				<label class="lr-pad" id="param-num">Current Parameter:</label>
 
 				<!-- Pop up dialog containing track parameters -->
 				<dialog id="track-dialog">
 				<form method="dialog" style="display:table;">
 				<div style="display:table-row;">
-					<label style="display:table-cell;">New Track:</label>
+					<label style="display:table-cell;">Track Name:</label>
 					<input style="display:table-cell;"type="text submit" id="track-name" name="track-name"> </br>
+				</div>
+				<div style="display:table-row;">
+					<label style="display:table-cell;">Parameters:</label>
+					<input style="display:table-cell;"type="number" id="track-parameters" placeholder="2"> </br>
 				</div>
 				<div style="display:table-row;">
 					<label style="display:table-cell;">Vertical Cells:</label>

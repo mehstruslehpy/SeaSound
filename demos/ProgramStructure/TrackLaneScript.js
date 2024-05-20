@@ -89,6 +89,7 @@ class TrackLaneCanvas
 			controlText += "rf: change amount to translate by\n";
 			controlText += "tg: change X scaling amount\n";
 			controlText += "yh: change Y scaling amount\n";
+			controlText += "=-: increment/decrement block sizes\n";
 			controlText += "ctrl: toggle block/delete modes\n";
 
     	if (ev.key == "Control") this.controlPressed = true;

@@ -1,3 +1,5 @@
+//TODO: Need to set up multiple parameter inputs for each instrument and catch up some of the other input widget guis
+//TODO: Need to make pianoroll cell divisions configurable like the playlist editor
 class PianoRollCanvas
 {
 	coord = {x:0, y:0}; // the coords of the mouse
