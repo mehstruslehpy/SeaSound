@@ -1,10 +1,15 @@
-// TODO: Simplify the tab code. There's no need to save tabs between page loads.
-// TODO: Changing drop down displays incorrect parameter for instruments
-// TODO: Adding tracks to track editor should update dropdown in playlist editor
+// TODO: Simplify the tab code. There's no need to save tabs between page loads. <--- DO THIS ONE FIRST
+// TODO: Might as well make this a full viewer object and manage state a bit more cleanly <--- DO THIS ONE SECOND
+// TODO: Need to update the remaining widget code
+// TODO: Need to work on syncing instrument widget code
+// TODO: Need to start working on timing logic
 window.onload = TabLoader;
 
 // There is only one track lane object for the whole program
 let trackLaneObject = new TrackLaneCanvas("trackLaneCanvas",10,20);
+
+// An array to store the list of parameters for the in progress instrument
+let paramList = new Array();
 
 //Selected Tab
 function OpenTab(tabName, btnID) {
@@ -92,16 +97,16 @@ function AddCanvas(canvasDiv,prefix,name)
 		case "track-canvases": 
 		{
 			// Read in input parameters
-			let params = document.getElementById("track-parameters").value;
+			//let params = document.getElementById("track-parameters").value;
 			let hCells = document.getElementById("track-horizontal-cells").value;
 			let vCells = document.getElementById("track-vertical-cells").value;
 			if (vCells == "") vCells = 20;
 			else vCells = Number(vCells);
 			if (hCells == "") hCells = 40;
 			else hCells = Number(hCells);
-			if (params == "") params = 2;
-			else params = Number(params);
-			console.log(params);
+			//if (params == "") params = 2;
+			//else params = Number(params);
+			//console.log(params);
 	
 			// add a div to contain all our parameter canvases
 			let ele = document.getElementById(canvasDiv);
@@ -120,24 +125,53 @@ function AddCanvas(canvasDiv,prefix,name)
 			document.getElementById("param-num").innerText = "Current Parameter: 0";
 
 			// create one canvas per parameter
-			for (let i = 0; i < params; i++)
+			for (let i = 0; i < paramList.length; i++)
 			{
 				// create the canvas
 				let newCanvas = document.createElement("canvas");
 				newCanvas.setAttribute("tabindex","1");
 				newCanvas.setAttribute("id","track-p"+i+"-"+name);
-				newCanvas.setAttribute("class","pianoRollCanvas");
 				if (i==0) newCanvas.style.display = "inline";
 				else newCanvas.style.display = "none";
 				instDiv.appendChild(newCanvas);
-				let pianoRollObject = new PianoRollCanvas("track-p"+i+"-"+name,vCells,hCells);
+				if (paramList[i] == "Pianoroll")
+				{	
+					newCanvas.setAttribute("class","pianoRollCanvas");
+					let pianoRollObject = new PianoRollCanvas("track-p"+i+"-"+name,vCells,hCells);
+				}
+				else if (paramList[i] == "Lollipop")
+				{	
+					newCanvas.setAttribute("class","pianoRollCanvas");
+					let pianoRollObject = new SliderCanvas("track-p"+i+"-"+name,vCells,hCells,"lollipop");
+				}
+				else if (paramList[i] == "Bars")
+				{	
+					newCanvas.setAttribute("class","pianoRollCanvas");
+					let pianoRollObject = new SliderCanvas("track-p"+i+"-"+name,vCells,hCells,"solid");
+				}
+				else if (paramList[i] == "Event")
+				{	
+					newCanvas.setAttribute("class","pianoRollCanvas");
+					let pianoRollObject = new CodedEventCanvas("track-p"+i+"-"+name,hCells);
+				}
+				else 
+				{	
+					newCanvas.setAttribute("class","pianoRollCanvas");
+					let pianoRollObject = new PianoRollCanvas("track-p"+i+"-"+name,vCells,hCells);
+				}
 			}
+
 			// Playlist editor needs an associated pattern entry too
 			let newPat = document.getElementById("pattern-select");
 			let newOpt = document.createElement("option");
 			newOpt.innerText = name;
 			newOpt.setAttribute("value","instrument-"+name);
 			newPat.append(newOpt);
+
+			// Reset the parameter list array here and the parameter list tag in our modal dialog
+			paramList = new Array();
+			let paramListTag = document.getElementById("param-list");
+			while (paramListTag.firstChild) paramListTag.removeChild(paramListTag.lastChild);
 			break;
 		}
 		default:
@@ -223,4 +257,49 @@ function ResetParameter()
 	}
 	children[0].style.display = "inline";
 	document.getElementById("param-num").innerText = "Current Parameter: "+0;
+}
+
+// This is a hack for reopening the dialog on adding new parameters
+// Our AddParameter() and RemoveParameter() functions below toggle dialogShouldReopen
+// We check dialogShouldReopen on closing our dialog to determine whether we should reshow the dialog
+let dialogShouldReopen = false;
+function CheckDialogReopen()
+{
+	if (!dialogShouldReopen) return;
+	document.getElementById("track-dialog").showModal();
+	dialogShouldReopen = false;
+}
+function AddParameter()
+{
+	//get the selected value
+	let selectedValue = document.getElementById("parameter-type-select").value;
+
+	//get the tag to add parameters to
+	let pListTag = document.getElementById("param-list");
+
+	//create the tags
+	let newRow = document.createElement("tr");
+	let content = document.createElement("td");
+	content.innerText = selectedValue;
+
+	//build the new element
+	newRow.appendChild(content);
+	pListTag.appendChild(newRow);
+	
+	//add to our list of parameters
+	paramList.push(selectedValue);
+
+	// The dialog needs to reopen when we add parameters
+	dialogShouldReopen = true;
+	console.log(paramList);
+}
+function RemoveParameter()
+{
+	if (paramList.length == 0) return;
+	paramList.splice(0,1); // remove the list item in the list
+	let params = document.getElementById("param-list"); // get the params tag
+	let elements = params.getElementsByTagName("tr"); // get the elements of params tag
+	params.removeChild(elements[0]); // remove the first child of the params tag
+	dialogShouldReopen = true; // dialog should reopen when we remove params
+	console.log(paramList);
 }

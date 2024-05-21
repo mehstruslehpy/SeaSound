@@ -133,16 +133,30 @@
 				<label class="lr-pad" id="param-num">Current Parameter:</label>
 
 				<!-- Pop up dialog containing track parameters -->
-				<dialog id="track-dialog">
+				<dialog id="track-dialog" onclose="CheckDialogReopen();">
 				<form method="dialog" style="display:table;">
 				<div style="display:table-row;">
 					<label style="display:table-cell;">Track Name:</label>
 					<input style="display:table-cell;"type="text submit" id="track-name" name="track-name"> </br>
 				</div>
 				<div style="display:table-row;">
-					<label style="display:table-cell;">Parameters:</label>
-					<input style="display:table-cell;"type="number" id="track-parameters" placeholder="2"> </br>
+					<label style="display:table-cell;">Parameter:</label>
+					<select style="display:table-cell;" class="lr-pad" id="parameter-type-select"> 
+						<option value="Pianoroll">Pianoroll</option>
+						<option value="Lollipop">Lollipop</option>
+						<option value="Bars">Bars</option>
+						<option value="Event">Event</option>
+						<!-- <option>Interpolation Graph</option> -->
+					</select> 
 				</div>
+				<div style="display:table-row;">
+					<label style="display:table-cell;">Add/Remove:</label>
+					<button style="display:table-cell;" class="lr-pad" onclick='AddParameter();'> + </button>
+					<button style="display:table-cell;" class="lr-pad" onclick='RemoveParameter();'> - </button>
+				</div>
+				<table id="param-list" style="padding-left:2em;">
+					<!-- List of parameters is displayed in this table -->
+				</table>
 				<div style="display:table-row;">
 					<label style="display:table-cell;">Vertical Cells:</label>
 					<input style="display:table-cell;"type="number" id="track-vertical-cells" placeholder="20"> </br>

@@ -15,7 +15,8 @@ class SliderCanvas
 	constructor(query,horizontalCells,verticalCells,rectangleStyle)
 	{
 		// Set Up the canvas
-		this.canvas = document.querySelector(query);
+		//this.canvas = document.querySelector(query);
+		this.canvas = document.getElementById(query);
 		this.ctx = this.canvas.getContext("2d");
 		let tabsHeight = document.getElementById('tab-container').offsetHeight;
 		this.width = (this.canvas.width = window.innerWidth);
