@@ -1,9 +1,9 @@
-// TODO: Simplify the tab code. There's no need to save tabs between page loads. <--- DO THIS ONE FIRST
 // TODO: Might as well make this a full viewer object and manage state a bit more cleanly <--- DO THIS ONE SECOND
 // TODO: Need to update the remaining widget code
 // TODO: Need to work on syncing instrument widget code
 // TODO: Need to start working on timing logic
-window.onload = TabLoader;
+// TODO: Need to clear out track name text field after submission is done
+// TODO: Need to stop displaying canvases after their respective instruments have been deleted
 
 // There is only one track lane object for the whole program
 let trackLaneObject = new TrackLaneCanvas("trackLaneCanvas",10,20);
@@ -22,33 +22,13 @@ function OpenTab(tabName, btnID) {
 
 	var x = document.getElementsByClassName("tab-button");
 	for (i = 0; i < x.length; i++) {
-		//x[i].style.background = "#043927";
 		x[i].style.background = "black";
 	}
 
 	document.getElementById(tabName).style.display = "block";
 	document.getElementById(btnID).style.background = "green";
 
-	localStorage.setItem('activeTab', tabName);
-	localStorage.setItem('activeBtn', btnID);
 	ResetParameter(); // Reset the parameters on the track editor tab for consistency
-}
-
-function TabLoader() {
-	str = localStorage.getItem('activeTab');
-	str2 = localStorage.getItem('activeBtn');
-
-	console.log(str);
-	switch (str) {
-		case 'PlaylistEditor':
-		case 'InstrumentEditor':
-		case 'TrackEditor':
-		case 'Config':
-			OpenTab(str,str2);
-			break;
-		default:
-			console.log("no value");
-	}
 }
 
 function SelectDropDown(divId,value)
