@@ -1,6 +1,3 @@
-<!-- TODO: Need to add way to spawn multiple piano rolls for multi params -->
-<!-- TODO: Need to add way to adjust divisions on the playlist editor -->
-<!-- TODO: Deleting a select option should delete the associated canvases -->
 <!DOCTYPE html>
 <html lang="en-US">
   <head>
@@ -8,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Rectangle Drawing</title>
 	<!-- Scripts and style loaded here -->
- 	<!--<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>-->
     <script src="SliderScript.js" defer></script>
     <script src="CodedEventScript.js" defer></script>
     <script src="PointInterpScript.js" defer></script>
@@ -16,8 +12,8 @@
     <script src="TrackLaneScript.js" defer></script>
     <script src="PianoRollScript.js" defer></script>
 	<!-- Be sure to load the library script before the main script -->
-	<!-- This ensures Tabs.js has access to all the libraries defined in the above scripts -->
-    <script src="Tabs.js" defer></script>
+	<!-- This ensures View.js has access to all the libraries defined in the above scripts -->
+    <script src="View.js" defer></script>
     <link href="style.css" rel="stylesheet">
   </head>
   <body>
@@ -39,16 +35,24 @@
 			</button>
 		</div>
 		<div class="tab-container" id="tab-container">
-			<button class="tab-button" id="playlist-editor-tab" onclick="OpenTab('PlaylistEditor','playlist-editor-tab')">
+			<button class="tab-button" 
+					id="playlist-editor-tab" 
+					onclick="viewObj.OpenTab('PlaylistEditor','playlist-editor-tab');">
 				Playlist Editor
 			</button>
-			<button class="tab-button" id="instrument-editor-tab" onclick="OpenTab('InstrumentEditor','instrument-editor-tab')">
+			<button class="tab-button" 
+					id="instrument-editor-tab" 
+					onclick="viewObj.OpenTab('InstrumentEditor','instrument-editor-tab');">
 				Instrument Editor
 			</button>
-			<button class="tab-button" id="track-editor-tab" onclick="OpenTab('TrackEditor','track-editor-tab')">
+			<button class="tab-button" 
+					id="track-editor-tab" 
+					onclick="viewObj.OpenTab('TrackEditor','track-editor-tab');">
 				Track Editor
 			</button>
-			<button class="tab-button" id="config-tab" onclick="OpenTab('Configuration','config-tab')">
+			<button class="tab-button" 
+					id="config-tab" 
+					onclick="viewObj.OpenTab('Configuration','config-tab');">
 				Config
 			</button>
 		</div>
@@ -62,10 +66,10 @@
 				<select class="lr-pad" id="pattern-select">
 				</select> 
 				<label class="lr-pad">Block Size:</label>
-				<button class="lr-pad" onclick="IncrementPlaylistBlockSize()">
+				<button class="lr-pad" onclick="viewObj.IncrementPlaylistBlockSize();">
 					+
 				</button>
-				<button class="lr-pad" onclick="DecrementPlaylistBlockSize()">
+				<button class="lr-pad" onclick="viewObj.DecrementPlaylistBlockSize();">
 					-
 				</button>
 
@@ -87,7 +91,7 @@
 					<input style="display:table-cell;" type="number" id="playlist-horizontal-cells" placeholder="20"> </br>
 				</div>
 				<button type="reset" onclick='document.getElementById("playlist-dialog").close();'>Cancel</button>
-				<button type="submit" onclick="ResetPlaylist();">
+				<button type="submit" onclick="viewObj.ResetPlaylist();">
 					Confirm
 				</button>
 				</form>
@@ -107,31 +111,31 @@
 				<label class="lr-pad">Select Track:</label>
 				<select class="lr-pad" 
 						id="track-canvases-select" 
-						onchange="SelectDropDown('track-canvases',this.value)">
+						onchange="viewObj.SelectDropDown('track-canvases',this.value)">
 				</select> 
-
-				<!-- Button for deleting current track -->
-				<button class="lr-pad" onclick="DeleteSelectOption('track-canvases-select');DeleteSelectOption('pattern-select');">
+				<button class="lr-pad" 
+						onclick="viewObj.DeleteTrackSelection();">
 					Delete Track
 				</button>
+
 				<!-- Button for adding a track -->
 				<button class="lr-pad" onclick='document.getElementById("track-dialog").showModal();'>
 					Add Track
 				</button>
 				<label class="lr-pad">Switch Parameter:</label>
 				<!-- Button for showing next paramter -->
-				<button class="lr-pad" onclick='NextParameter();'>
+				<button class="lr-pad" onclick='viewObj.NextParameter();'>
 					+
 				</button>
 				<!-- Button for showing prev parameter -->
-				<button class="lr-pad" onclick='PrevParameter();'>
+				<button class="lr-pad" onclick='viewObj.PrevParameter();'>
 					-
 				</button>
 				<!-- Display the currently parameter -->
 				<label class="lr-pad" id="param-num">Current Parameter:</label>
 
 				<!-- Pop up dialog containing track parameters -->
-				<dialog id="track-dialog" onclose="CheckDialogReopen();">
+				<dialog id="track-dialog" onclose="viewObj.CheckDialogReopen();">
 				<form method="dialog" style="display:table;">
 				<div style="display:table-row;">
 					<label style="display:table-cell;">Track Name:</label>
@@ -149,8 +153,8 @@
 				</div>
 				<div style="display:table-row;">
 					<label style="display:table-cell;">Add/Remove:</label>
-					<button style="display:table-cell;" class="lr-pad" onclick='AddParameter();'> + </button>
-					<button style="display:table-cell;" class="lr-pad" onclick='RemoveParameter();'> - </button>
+					<button style="display:table-cell;" class="lr-pad" onclick='viewObj.AddParameter();'> + </button>
+					<button style="display:table-cell;" class="lr-pad" onclick='viewObj.RemoveParameter();'> - </button>
 				</div>
 				<table id="param-list" style="padding-left:2em;">
 					<!-- List of parameters is displayed in this table -->
@@ -164,7 +168,8 @@
 					<input style="display:table-cell;" type="number" id="track-horizontal-cells" placeholder="20"> </br>
 				</div>
 				<button id="cancel" type="reset" onclick='document.getElementById("track-dialog").close();'>Cancel</button>
-				<button type="submit" onclick="AddCanvas('track-canvases','track',document.getElementById('track-name').value)">
+				<button type="submit" 
+						onclick="viewObj.AddCanvas('track-canvases','track',document.getElementById('track-name').value)">
 					Confirm
 				</button>
 				</form>
@@ -188,10 +193,10 @@
 				<!-- Options are added dynamically here -->
 				<select class="lr-pad" 
 						id="instrument-canvases-select" 
-						onchange="SelectDropDown('instrument-canvases',this.value)">
+						onchange="viewObj.SelectDropDown('instrument-canvases',this.value)">
 				</select> 
 				<!-- Button for deleting current instrument -->
-				<button class="lr-pad" onclick="DeleteSelectOption('instrument-canvases-select')">
+				<button class="lr-pad" onclick="viewObj.DeleteInstrumentSelection()">
 					Delete
 				</button>
 				<!-- Button for adding an instrument -->
@@ -200,13 +205,15 @@
   					<input type="text submit" 
 							id="instrument-name" 
 							name="instrument-name" 
-							onkeypress="EnterHandler(event,
-														'instrument-canvases',
-														'instrument',
-														document.getElementById('instrument-name').value)">
+							onkeypress="viewObj.EnterHandler(event, 
+															'instrument-canvases', 
+															'instrument', 
+															document.getElementById('instrument-name').value)">
 				</div> 
 				<button class="lr-pad" 
-						onclick="AddCanvas('instrument-canvases','instrument',document.getElementById('instrument-name').value)">
+						onclick="viewObj.AddCanvas('instrument-canvases',
+													'instrument',
+													document.getElementById('instrument-name').value)">
 					Add
 				</button>
 			</div>
