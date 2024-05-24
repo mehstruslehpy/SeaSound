@@ -2,6 +2,7 @@
 // TODO: Need to update the remaining widget code
 // TODO: Need to work on syncing instrument widget code
 // TODO: Need to start working on timing logic
+// TODO: Add load and save code for instruments, widgets, project, etc
 class View
 {
 	// There is only one track lane object for the whole program
@@ -14,6 +15,12 @@ class View
 	instrumentMap = new Map();
 	// Contains all tracks indexed by name
 	trackMap = new Map();
+
+	// The default number of cells for a pianoroll widget, there are 88 keys on a piano
+	pianoRollVCellDefault = 88;
+
+	//The default number of vertical divisions for slider type widgets
+	sliderVCellDefault = 50;
 
 	// Opens the corresponding tab
 	OpenTab(tabName, btnID) 
@@ -228,7 +235,11 @@ class View
 		//create the tags
 		let newRow = document.createElement("tr");
 		let content = document.createElement("td");
-		content.innerText = selectedValue;
+
+		// The first "starred" parameter widget is in charge of triggering notes
+		// the remaining widgets control parameters for the trigger widget
+		if (pListTag.childElementCount == 0) content.innerText = selectedValue + " *";
+		else content.innerText = selectedValue;
 
 		//build the new element
 		newRow.appendChild(content);
@@ -245,10 +256,11 @@ class View
 	RemoveParameter()
 	{
 		if (this.paramList.length == 0) return;
-		this.paramList.splice(0,1); // remove the list item in the list
+		this.paramList.splice(0,1); // remove the first item in the list
 		let params = document.getElementById("param-list"); // get the params tag
 		let elements = params.getElementsByTagName("tr"); // get the elements of params tag
 		params.removeChild(elements[0]); // remove the first child of the params tag
+		if (elements[0] != null) elements[0].innerText += " *"; // readd the star to first element
 		this.dialogShouldReopen = true; // dialog should reopen when we remove params
 	}
 
@@ -287,9 +299,11 @@ class View
 
 		// Read in input arguments 
 		let hCells = document.getElementById("track-horizontal-cells").value;
+		/*
 		let vCells = document.getElementById("track-vertical-cells").value;
 		if (vCells == "") vCells = 20;
 		else vCells = Number(vCells);
+		*/
 		if (hCells == "") hCells = 40;
 		else hCells = Number(hCells);
 
@@ -323,16 +337,30 @@ class View
 			else newCanvas.style.display = "none";
 			instDiv.appendChild(newCanvas);
 			let canvObj = null;
-			if (this.paramList[i]=="Pianoroll")canvObj=new PianoRollCanvas("track-p"+i+"-"+name,vCells,hCells);
-			else if (this.paramList[i]=="Lollipop")canvObj=new SliderCanvas("track-p"+i+"-"+name,vCells,hCells,"lollipop");
-			else if (this.paramList[i]=="Bars")canvObj=new SliderCanvas("track-p"+i+"-"+name,vCells,hCells,"solid");
-			else if (this.paramList[i]=="Event")canvObj=new CodedEventCanvas("track-p"+i+"-"+name,hCells);
-			else canvObj=new PianoRollCanvas("track-p"+i+"-"+name,vCells,hCells);
+			//if (this.paramList[i]=="Pianoroll")canvObj=new PianoRollCanvas("track-p"+i+"-"+name,vCells,hCells);
+			if (this.paramList[i] == "Pianoroll")
+				canvObj=new PianoRollCanvas("track-p"+i+"-"+name,this.pianoRollVCellDefault,hCells);
+			else if (this.paramList[i] == "Lollipop")
+				canvObj=new SliderCanvas("track-p"+i+"-"+name,this.sliderVCellDefault,hCells,"lollipop");
+			else if (this.paramList[i] == "Bars")
+				canvObj=new SliderCanvas("track-p"+i+"-"+name,this.sliderVCellDefault,hCells,"solid");
+			else if (this.paramList[i] == "Event")
+				canvObj=new CodedEventCanvas("track-p"+i+"-"+name,hCells);
+			else 
+				canvObj=new PianoRollCanvas("track-p"+i+"-"+name,this.pianoRollVCellDefault,hCells);
 			tempCanv.push(canvObj);
 		}
 
 		// Add the new track to our map of all tracks
 		this.trackMap.set(this.CleanName(name),tempCanv);
+
+		// Register the instruments with each other
+		for (let i = 0; i < tempCanv.length; i++)
+			tempCanv[i].registerInstrument(tempCanv);
+
+		// Set up the canvas trigger modes
+		tempCanv[0].setTriggerMode(true);
+		for (let i = 1; i < tempCanv.length; i++) tempCanv[i].setTriggerMode(false);
 
 		// Playlist editor needs an associated pattern entry too
 		let newPat = document.getElementById("pattern-select");
@@ -349,7 +377,7 @@ class View
 		// Reset the input boxes
 		document.getElementById("track-name").value = "";
 		document.getElementById("track-horizontal-cells").value = "";
-		document.getElementById("track-vertical-cells").value = "";
+		//document.getElementById("track-vertical-cells").value = "";
 	}
 
 	// Delete whitespace from the input name string

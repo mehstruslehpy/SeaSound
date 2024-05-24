@@ -1,3 +1,5 @@
+<!-- TODO: Add an f statement builder widget -->
+<!-- TODO: Possibly add tools for automation clip style tools -->
 <!DOCTYPE html>
 <html lang="en-US">
   <head>
@@ -104,7 +106,7 @@
 			</canvas>
 		</div>
 
-		<div id="TrackEditor" class="tab" style="display:none">
+		<div id="TrackEditor" class="tab" style="display:block">
 			<!-- Div for track tab controls -->
 			<div class="menu-control-container" id="track-controls">
 				<!-- Selector for choosing a pattern -->
@@ -148,7 +150,6 @@
 						<option value="Lollipop">Lollipop</option>
 						<option value="Bars">Bars</option>
 						<option value="Event">Event</option>
-						<!-- <option>Interpolation Graph</option> -->
 					</select> 
 				</div>
 				<div style="display:table-row;">
@@ -156,13 +157,16 @@
 					<button style="display:table-cell;" class="lr-pad" onclick='viewObj.AddParameter();'> + </button>
 					<button style="display:table-cell;" class="lr-pad" onclick='viewObj.RemoveParameter();'> - </button>
 				</div>
+				<div style="display:table-row;">
+					<p style="display:table-cell; color:grey;"> Note: Starred first instrument triggers notes. </p>
+				</div>
 				<table id="param-list" style="padding-left:2em;">
 					<!-- List of parameters is displayed in this table -->
 				</table>
-				<div style="display:table-row;">
+				<!--<div style="display:table-row;">
 					<label style="display:table-cell;">Vertical Cells:</label>
 					<input style="display:table-cell;"type="number" id="track-vertical-cells" placeholder="20"> </br>
-				</div>
+				</div>-->
 				<div style="display:table-row;">
 					<label style="display:table-cell;">Horizontal Cells:</label>
 					<input style="display:table-cell;" type="number" id="track-horizontal-cells" placeholder="20"> </br>
@@ -182,10 +186,16 @@
 
 		<div id="Configuration" class="tab" style="display:none">
 			Master configuration controls go here.
+			<form>
+				<label>Beats Per Minute:</label>
+				<input type="number" placeholder="140"> </br>
+				<label>Beats Per Measure:</label>
+				<input type="number" placeholder="20"> </br>
+			</form>
 		</div>
 
 		<!-- GraphDiagram tab -->
-		<div id="InstrumentEditor" class="tab" style="display:block">
+		<div id="InstrumentEditor" class="tab" style="display:none">
 			<!-- Div for instrument tab controls -->
 			<div class="menu-control-container" id="instrument-controls">
 				<!-- Selector for choosing an instrument to edit -->

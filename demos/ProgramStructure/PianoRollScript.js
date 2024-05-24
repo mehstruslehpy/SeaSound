@@ -1,5 +1,8 @@
 //TODO: Need to set up multiple parameter inputs for each instrument and catch up some of the other input widget guis
 //TODO: Need to make pianoroll cell divisions configurable like the playlist editor
+//TODO: Add a double parameter matrix widget
+//TODO: Add a spreadsheet widget for manual input
+//TODO: Viewport outlines for other widgets is different from this one
 class PianoRollCanvas
 {
 	coord = {x:0, y:0}; // the coords of the mouse
@@ -9,11 +12,19 @@ class PianoRollCanvas
 	rectangleList = new Array(); // The list of rectangles created so far
 	mousePressed = false; // For tracking if the mouse has been pressed or not
 	controlPressed = false; // for tracking if control has been pressed or not
-	
+
+	lineWidth = 0.5; // Used for setting width of lines
+
+	// Controls whether the widget triggers notes or controls parameters
+	triggerMode = false;
+
 	// values for changing the scale and translate amount
 	translateAmt = 10;
 	scaleAmtX = 1.15;
 	scaleAmtY = 1.15;
+
+	// The instrument this widget is a parameter for
+	instrument = null;
 
 	// Initial set up
 	constructor(query,horizontalCells,verticalCells)
@@ -58,22 +69,22 @@ class PianoRollCanvas
 			controlText += "yh: change Y scaling amount\n";
 			controlText += "ctrl: toggle note/delete modes\n";
 
-		if (ev.key == "Control") this.controlPressed = true;
+		if (ev.key == "Control" && this.triggerMode) this.controlPressed = true;
 		else if (ev.key == "h") alert(controlText);
-		else if (ev.key == "q") this.ctx.scale(this.scaleAmtX,1);
-		else if (ev.key == "e") this.ctx.scale(1/this.scaleAmtX,1);
-		else if (ev.key == "z") this.ctx.scale(1,this.scaleAmtY);
-		else if (ev.key == "c") this.ctx.scale(1,1/this.scaleAmtY);
-		else if (ev.key == "a") this.ctx.translate(this.translateAmt,0);
-		else if (ev.key == "d") this.ctx.translate(-this.translateAmt,0);
-		else if (ev.key == "s") this.ctx.translate(0,-this.translateAmt);
-		else if (ev.key == "w") this.ctx.translate(0,this.translateAmt);
-		else if (ev.key == "r") this.translateAmt += 10;
-		else if (ev.key == "f") this.translateAmt -= 10;
-		else if (ev.key == "t") this.scaleAmtX *= (1+1/(2**4));
-		else if (ev.key == "g") this.scaleAmtX /= (1+1/(2**4));
-		else if (ev.key == "y") this.scaleAmtY *= (1+1/(2**4));
-		else if (ev.key == "h") this.scaleAmtY /= (1+1/(2**4));
+		else if (ev.key == "q") this.scaleAll(this.scaleAmtX,1);
+		else if (ev.key == "e") this.scaleAll(1/this.scaleAmtX,1);
+		else if (ev.key == "z") this.scaleAll(1,this.scaleAmtY);
+		else if (ev.key == "c") this.scaleAll(1,1/this.scaleAmtY);
+		else if (ev.key == "a") this.translateAll(this.translateAmt,0);
+		else if (ev.key == "d") this.translateAll(-this.translateAmt,0);
+		else if (ev.key == "s") this.translateAll(0,-this.translateAmt);
+		else if (ev.key == "w") this.translateAll(0,this.translateAmt);
+		else if (ev.key == "r") this.translateAmountAll(this.translateAmt+10);
+		else if (ev.key == "f") this.translateAmountAll(this.translateAmt-10);
+		else if (ev.key == "t") this.scaleAmountAll(this.scaleAmtX*(1+1/(2**4)),this.scaleAmtY);
+		else if (ev.key == "g") this.scaleAmountAll(this.scaleAmtX/(1+1/(2**4)),this.scaleAmtY);
+		else if (ev.key == "y") this.scaleAmountAll(this.scaleAmtX,this.scaleAmtY*(1+1/(2**4)));
+		else if (ev.key == "h") this.scaleAmountAll(this.scaleAmtX,this.scaleAmtY/(1+1/(2**4)));
 	
 		this.draw();	
 	}
@@ -91,7 +102,8 @@ class PianoRollCanvas
 	// Runs on pressing down left click of mouse
 	leftClickDown()
 	{
-		if (this.controlPressed) this.controlLeftClickDown();
+		if (!this.triggerMode) this.nonTriggerModeClick();
+		else if (this.controlPressed) this.controlLeftClickDown();
 		else
 		{
 			let val = this.screenToWorldCoords(this.coord);
@@ -100,8 +112,26 @@ class PianoRollCanvas
 			this.mousePressed = true;
 		}
 	}
+
+	nonTriggerModeClick()
+	{
+		let c = {x:this.coord.x, y:this.coord.y};
+		c = this.screenToWorldCoords(c);
+		c = this.snapToGrid(c);
+		for (let i = 0; i < this.rectangleList.length; i++)
+			if (this.rectangleXAxisCollision(c,this.rectangleList[i])) // if cursor lies inside a rectangle
+			{
+				console.log("Piano collision");
+				this.rectangleList[i][0].y = c.y; // then adjust the y axis coord of the collision rectangle
+				this.rectangleList[i][1].y = c.y+this.cellHeight;
+			}
+		this.draw(); // redraw
+	}
+
+	// Runs on pressing control left click
 	controlLeftClickDown()
 	{
+		if (!this.triggerMode) return;
 		let c = {x:this.coord.x, y:this.coord.y};
 		c = this.screenToWorldCoords(c);
 		for (let i = 0; i < this.rectangleList.length; i++)
@@ -110,13 +140,14 @@ class PianoRollCanvas
 				this.rectangleList.splice(i,1); // remove the rectangle
 				break;
 			}
-		//this.controlPressed = false;
+
 		this.draw();
 	}	
 
 	// Runs on release of left click of mouse
 	leftClickUp()
 	{
+		if (!this.triggerMode) return;
 		if (this.controlPressed) // if it was a control press
 		{
 			this.controlPressed = false; // untoggle controlPressed var and return
@@ -138,6 +169,14 @@ class PianoRollCanvas
 		this.mousePressed = false; // the mouse is no longer pressed
 		this.workingRectangle = null; // The working rectangle is null again
 		this.rectangleList.push([c1,c2]);
+
+		// Update the non-triggering widgets
+		for (let i = 0; i < this.instrument.length; i++)
+			if (this.instrument[i] != this)
+			{
+				this.instrument[i].addRectangle([c1,c2]); 
+				this.instrument[i].draw();
+			}
 		this.draw();
 	
 		// Send data to backend in post request here
@@ -207,7 +246,7 @@ class PianoRollCanvas
 		for (var i = 0; i < this.verticalCells; i++)
 		{
 			this.ctx.strokeStyle = 'black';
-			this.ctx.lineWidth = 1;
+			this.ctx.lineWidth = this.lineWidth;
 			this.ctx.beginPath();
 			this.ctx.moveTo(i*(this.width/this.verticalCells),0);
 			this.ctx.lineTo(i*(this.width/this.verticalCells),this.height);
@@ -218,7 +257,7 @@ class PianoRollCanvas
 		for (var i = 0; i < this.horizontalCells; i++)
 		{
 			this.ctx.strokeStyle = 'black';
-			this.ctx.lineWidth = 1;
+			this.ctx.lineWidth = this.lineWidth;
 			this.ctx.beginPath();
 			this.ctx.moveTo(0,i*(this.height/this.horizontalCells));
 			this.ctx.lineTo(this.width,i*(this.height/this.horizontalCells));
@@ -257,7 +296,7 @@ class PianoRollCanvas
 		this.ctx.lineTo(c2.x,c2.y);
 		this.ctx.lineTo(c2.x,c1.y);
 		this.ctx.lineTo(c1.x,c1.y);
-		this.ctx.lineWidth = 2;
+		this.ctx.lineWidth = this.lineWidth;
 		this.ctx.strokeStyle = 'black';
 		this.ctx.stroke();
 	}
@@ -267,6 +306,11 @@ class PianoRollCanvas
 		return (rect[0].x <= pt.x && pt.x <= rect[1].x && rect[0].y <= pt.y && pt.y <= rect[1].y);
 	}
 
+	// Check if pt lies between the rectangles x axis bounds
+	rectangleXAxisCollision(pt,rect)
+	{
+		return (rect[0].x <= pt.x && pt.x <= rect[1].x);
+	}
 	// draw outlines around the viewport
 	viewportOutline()
 	{
@@ -277,7 +321,7 @@ class PianoRollCanvas
 		this.ctx.lineTo(this.width,this.height);
 		this.ctx.lineTo(this.width,0);
 		this.ctx.lineTo(0,0);
-		this.ctx.lineWidth = 6;
+		this.ctx.lineWidth = 3;
 		this.ctx.strokeStyle = 'black';
 		this.ctx.stroke();
 	}
@@ -332,5 +376,82 @@ class PianoRollCanvas
 
 		// snap to the grid
 		this.leftClickEnd = this.snapToGrid(this.leftClickEnd);
+	}
+
+	// Store the instrument array for the current parameter
+	registerInstrument(inst)
+	{
+		this.instrument = inst;
+	}
+
+	// Getter for trigger mode variable
+	getTriggerMode()
+	{
+		return this.triggerMode;
+	}
+
+	// Setter for trigger mode variable
+	setTriggerMode(t)
+	{
+		this.triggerMode = t;
+	}
+
+	// Scale all params in the instrument array (including this one)
+	scaleAll(x,y)
+	{
+		for (let i = 0; i < this.instrument.length; i++)
+			this.instrument[i].applyScale(x,y);
+	}
+
+	// Translate all params in the instrument array (including this one)
+	translateAll(x,y)
+	{
+		for (let i = 0; i < this.instrument.length; i++)
+			this.instrument[i].applyTranslate(x,y);
+	}
+
+	// Set scale amount for all params in the instrument array (including this one)
+	scaleAmountAll()
+	{
+		for (let i = 0; i < this.instrument.length; i++)
+			this.instrument[i].setScaleAmount(x,y);
+	}
+	// Set translate amount for all params in the instrument array (including this one)
+	translateAmountAll(x,y)
+	{
+		for (let i = 0; i < this.instrument.length; i++)
+			this.instrument[i].setTranslateAmount(x,y);
+	}
+
+	// Apply a scaling to the current instrument
+	applyScale(x,y)
+	{
+		this.ctx.scale(x,y);
+		this.draw();
+	}
+	// Apply a translation to the current instrument
+	applyTranslate(x,y)
+	{
+		this.ctx.translate(x,y);
+		this.draw();
+	}
+	// Set the scaling amount for the current instrument
+	setScaleAmount(x,y)
+	{
+		this.scaleAmtX = x;
+		this.scaleAmtY = y;	
+		this.draw();
+	}
+	// Set the translation amount for the current instrument
+	setTranslateAmount(x)
+	{
+		this.translateAmount = x;	
+		this.draw();
+	}
+	addRectangle(rect)
+	{
+		let c1 = {x:rect[0].x,y:0};
+		let c2 = {x:rect[1].x,y:this.cellHeight};
+		this.rectangleList.push([c1,c2]);
 	}
 }
