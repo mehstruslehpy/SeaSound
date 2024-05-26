@@ -1,4 +1,5 @@
 //TODO: Set up i/o so that outputs are forced to connect to inputs
+//TODO: Add way to delete edges
 class GraphDiagramCanvas
 {
 	coord = {x:0, y:0}; // the coords of the mouse
@@ -7,7 +8,8 @@ class GraphDiagramCanvas
 	inputMode = "NODE"; // stores the current input mode of the canvas
 	nodeList = new Array(); // we maintain a list of nodes
 	edgeList = new Array(); // we maintain a list of edges
-	workingEdge = null;
+	workingEdge = null; // the edge we are currently building
+	startEdgeNodeType = null; // indicates whether the edge starts from an input or output node
 	curInputs = 2; // number of inputs for next node
 	curOutputs = 3; // number of outputs for next node
 	curName = "Default"; // the name of the next node
@@ -129,6 +131,8 @@ class GraphDiagramCanvas
 						intersectNode = true;
 						this.workingEdge.setFrom(intersectPoint);
 						this.workingEdge.addSegment(intersectPoint);
+						this.startEdgeNodeType = this.nodeList[i].collisionType(intersectPoint);
+						console.log(this.startEdgeNodeType);
 						// no need to draw in this case
 						break;
 					}
@@ -145,19 +149,27 @@ class GraphDiagramCanvas
 			}
 
 			// on later clicks add segments to edge structure
-			let intersectNode = false;
+			let intersectNode = false; //TODO: Is this still needed here?
 			for (let i = 0; i < this.nodeList.length; i++)
 			{
 				let intersectPoint = this.nodeList[i].collision(point);
-				if (intersectPoint != null)
+				let intersectType = intersectPoint!=null ? this.nodeList[i].collisionType(intersectPoint) : null;
+
+				console.log(intersectType);
+				// If the node types at either end of the edge match we should exit immediately
+				if (intersectPoint != null && intersectType == this.startEdgeNodeType) return;
+				else if (intersectPoint != null)
 				{
 					intersectNode = true;
 					this.workingEdge.setTo(intersectPoint);
 					this.workingEdge.addSegment(intersectPoint);
+					// edges need to flow from outputs to inputs
+					if (this.startEdgeNodeType != "OUTPUT") this.workingEdge.reverse();
 					this.edgeList.push(this.workingEdge);
 					// The edge is complete so exit edge mode
 					this.workingEdge = null;
 					this.inputMode = "NODE";
+					this.startEdgeNodeType = null;
 					this.draw();
 					return;
 				}
@@ -371,6 +383,15 @@ class Edge
   		ctx.lineTo(to.x - headlen * Math.cos(angle + Math.PI / 6), to.y - headlen * Math.sin(angle + Math.PI / 6));
     	ctx.stroke();
 	}
+
+	reverse()
+	{
+		this.polyLineList.reverse(); // reverse the poly line list for this edge
+		// swap from and to entries
+		let temp = {x:this.from.x, y:this.from.y};
+		this.from = {x:this.to.x, y:this.to.y};
+		this.to = temp;
+	}
 }
 
 class Node
@@ -444,6 +465,35 @@ class Node
 		pt.x += this.pt.x;
 		pt.y += this.pt.y;
 		
+		return null;
+	}
+	// Return which type of collision occurred if any else return null
+	collisionType(pt)
+	{
+		// convert input point to local coords
+		pt.x -= this.pt.x;
+		pt.y -= this.pt.y;
+
+		// check for collisions
+		for (let i = 0; i < this.inputList.length; i++)
+			if (this.pointInRectangle(pt,this.inputList[i]))
+			{
+				pt.x += this.pt.x; // convert input point back to global coords
+				pt.y += this.pt.y;
+				return "INPUT";
+			}
+
+		for (let i = 0; i < this.outputList.length; i++)
+			if (this.pointInRectangle(pt,this.outputList[i]))
+			{
+				pt.x += this.pt.x; // convert input point back to global coords
+				pt.y += this.pt.y;
+				return "OUTPUT";
+			}
+
+		// convert input point back to global coords
+		pt.x += this.pt.x;
+		pt.y += this.pt.y;
 		return null;
 	}
 	// return true if point collides inside the bounds of the rectangle
