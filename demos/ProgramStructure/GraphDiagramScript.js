@@ -112,6 +112,7 @@ class GraphDiagramCanvas
 		else if (this.inputMode == "DELETE")
 		{
 			this.nodeDelete();
+			this.edgeDelete();
 			this.inputMode = "NODE";
 		}
 		else // otherwise we are in edge mode
@@ -204,6 +205,19 @@ class GraphDiagramCanvas
 				break;
 			}
 	}
+
+	// Delete the currently selected edge
+	edgeDelete()
+	{
+		let point = this.screenToWorldCoords(this.coord);
+		for (let i = 0; i < this.edgeList.length; i++)
+			if (this.edgeList[i].collision(point))
+			{
+				this.edgeList.splice(i,1);
+				break;
+			}
+	}
+
 
 	// Update the current coordinates of the mouse
 	updateMouseCoordinates()
@@ -322,6 +336,7 @@ class Edge
 	from = null;
 	to = null;
 	polyLineList = null;
+	collisionRadius = 10.0; // Used for determining radius at which collisions can occur
 	constructor()
 	{	
 		this.polyLineList = new Array();
@@ -384,6 +399,7 @@ class Edge
     	ctx.stroke();
 	}
 
+	// Reverse the direction of this edge
 	reverse()
 	{
 		this.polyLineList.reverse(); // reverse the poly line list for this edge
@@ -392,6 +408,47 @@ class Edge
 		this.from = {x:this.to.x, y:this.to.y};
 		this.to = temp;
 	}
+
+	// Detect if the input point collides with this edge
+	collision(pt)
+	{
+		for (let i = 1; i < this.polyLineList.length; i++)
+			if (this.intersectSegment(this.polyLineList[i-1],this.polyLineList[i],pt,this.collisionRadius))
+				return true
+		return false;
+	}
+
+	// From: https://codereview.stackexchange.com/questions/192477/circle-line-segment-collision?rq=1
+	// return true if line segment thru AB intercepts the circle of given radius at C	
+    intersectSegment(A, B, C, radius) 
+	{
+        var dist;
+        const v1x = B.x - A.x;
+        const v1y = B.y - A.y;
+        const v2x = C.x - A.x;
+        const v2y = C.y - A.y;
+        // get the unit distance along the line of the closest point to
+        // circle center
+        const u = (v2x * v1x + v2y * v1y) / (v1y * v1y + v1x * v1x);
+        
+        // if the point is on the line segment get the distance squared
+        // from that point to the circle center
+        if(u >= 0 && u <= 1)
+		{
+            dist  = (A.x + v1x * u - C.x) ** 2 + (A.y + v1y * u - C.y) ** 2;
+        } 
+		else 
+		{
+            // if closest point not on the line segment
+            // use the unit distance to determine which end is closest
+            // and get dist square to circle
+            dist = u < 0 ?
+                  (A.x - C.x) ** 2 + (A.y - C.y) ** 2 :
+                  (B.x - C.x) ** 2 + (B.y - C.y) ** 2;
+        }
+        return dist < radius * radius;
+     }
+  
 }
 
 class Node
