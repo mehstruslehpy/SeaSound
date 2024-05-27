@@ -1,5 +1,5 @@
-//TODO: Set up i/o so that outputs are forced to connect to inputs
-//TODO: Add way to delete edges
+// TODO: Need to add code to render graph diagram to csound instrument code
+// TODO: Need to add code to name the instrument too
 class GraphDiagramCanvas
 {
 	coord = {x:0, y:0}; // the coords of the mouse
@@ -9,6 +9,7 @@ class GraphDiagramCanvas
 	nodeList = new Array(); // we maintain a list of nodes
 	edgeList = new Array(); // we maintain a list of edges
 	workingEdge = null; // the edge we are currently building
+	workingStartNode = null; // the first node we clicked while building an edge
 	startEdgeNodeType = null; // indicates whether the edge starts from an input or output node
 	curInputs = 2; // number of inputs for next node
 	curOutputs = 3; // number of outputs for next node
@@ -132,8 +133,8 @@ class GraphDiagramCanvas
 						intersectNode = true;
 						this.workingEdge.setFrom(intersectPoint);
 						this.workingEdge.addSegment(intersectPoint);
+						this.workingStartNode = this.nodeList[i];
 						this.startEdgeNodeType = this.nodeList[i].collisionType(intersectPoint);
-						console.log(this.startEdgeNodeType);
 						// no need to draw in this case
 						break;
 					}
@@ -156,7 +157,6 @@ class GraphDiagramCanvas
 				let intersectPoint = this.nodeList[i].collision(point);
 				let intersectType = intersectPoint!=null ? this.nodeList[i].collisionType(intersectPoint) : null;
 
-				console.log(intersectType);
 				// If the node types at either end of the edge match we should exit immediately
 				if (intersectPoint != null && intersectType == this.startEdgeNodeType) return;
 				else if (intersectPoint != null)
@@ -167,7 +167,27 @@ class GraphDiagramCanvas
 					// edges need to flow from outputs to inputs
 					if (this.startEdgeNodeType != "OUTPUT") this.workingEdge.reverse();
 					this.edgeList.push(this.workingEdge);
+					// Register the inputs and outputs of the two nodes
+					if (this.startEdgeNodeType != "OUTPUT")
+					{
+						// Get the to/from parameter number where the collision occured
+						// In this case recall the working edge has been reversed
+						let toParam = this.nodeList[i].collisionOutputParam(this.workingEdge.getFrom());
+						let fromParam = this.workingStartNode.collisionInputParam(this.workingEdge.getTo());
+						// Register the nodes with each other
+						this.workingStartNode.addOutputNode(this.nodeList[i],fromParam,toParam);
+						this.nodeList[i].addInputNode(this.workingStartNode,fromParam,toParam);
+					}
+					else
+					{
+						// Get the to/from parameter number where the collision occured
+						let toParam = this.nodeList[i].collisionInputParam(this.workingEdge.getTo());
+						let fromParam = this.workingStartNode.collisionOutputParam(this.workingEdge.getFrom());
+						this.workingStartNode.addInputNode(this.nodeList[i],fromParam,toParam);
+						this.nodeList[i].addOutputNode(this.workingStartNode,fromParam,toParam);
+					}
 					// The edge is complete so exit edge mode
+					this.workingStartNode = null;
 					this.workingEdge = null;
 					this.inputMode = "NODE";
 					this.startEdgeNodeType = null;
@@ -330,36 +350,63 @@ class GraphDiagramCanvas
 		return this.ctx.getTransform().invertSelf().transformPoint(p);
 	}
 
+	renderToText()
+	{
+		let startNodes = Array();
+		// Get all of the nodes with no inputs first
+		for (let i = 0; i < this.nodeList.length; i++)
+			if (this.nodeList[i].inputNodeCount() == 0) 
+				startNodes.push(this.nodeList[i]);
+
+		// If there are no nodes with no inputs then the instrument is not well formed
+		if (startNodes.length == 0) 
+		{
+			console.log("Error: Instrument has no well defined start nodes");
+			return;
+		}
+		
+
+		for (let i = 0; i < startNodes.length; i++) startNodes[i].renderToText();
+	}
 }
 class Edge
 {
-	from = null;
-	to = null;
-	polyLineList = null;
+	from = null; // The coord this edge starts from
+	to = null; // The coord this edge ends to
+	polyLineList = null; // Polyline list of segments connecting from point to to point
 	collisionRadius = 10.0; // Used for determining radius at which collisions can occur
+
+	// Construct this edge
 	constructor()
 	{	
 		this.polyLineList = new Array();
 	}
+	// Return true if this edge has an empty polyline
 	empty()
 	{
 		return (this.polyLineList.length == 0);
 	}
+	// Get the from coord of this edge
 	getFrom() { return this.from; }
+	// Get the to coord of this edge
 	getTo() { return this.to; }
+	// Set the from coord of this edge
 	setFrom(n)
 	{
 		this.from = n;
 	}
+	// Set the to coord of this edge
 	setTo(n)
 	{
 		this.to = n;
 	}
+	// Add a segment to the end of our polyline 
 	addSegment(n)
 	{
 		let val = {x: n.x, y:n.y};
 		this.polyLineList.push(val);
 	}
+	// Draw this edge
 	draw(ctx)
 	{	
 		for (let i = 1; i < this.polyLineList.length; i++)
@@ -448,7 +495,6 @@ class Edge
         }
         return dist < radius * radius;
      }
-  
 }
 
 class Node
@@ -460,7 +506,10 @@ class Node
 	outputList = Array(); // the list of output rectangles
 	name = ""; // the name of this node
 	pt = {x:0, y:0}; // the location of this node
-	
+
+	inputNodes = Array(); // The list of nodes hooked up to be inputs to this node
+	outputNodes = Array(); // The list of nodes hooked up to be outputs from this node
+
 	constructor(pt,name,inputs,outputs,ctx)
 	{	
 		this.pt.x = pt.x;
@@ -553,6 +602,48 @@ class Node
 		pt.y += this.pt.y;
 		return null;
 	}
+	// Return which input parameter number the input point collides with or -1 if no collision
+	collisionInputParam(pt)
+	{
+		// convert input point to local coords
+		pt.x -= this.pt.x;
+		pt.y -= this.pt.y;
+
+		// check for collisions
+		for (let i = 0; i < this.inputList.length; i++)
+			if (this.pointInRectangle(pt,this.inputList[i]))
+			{
+				pt.x += this.pt.x; // convert input point back to global coords
+				pt.y += this.pt.y;
+				return i;
+			}
+
+		// convert input point back to global coords
+		pt.x += this.pt.x;
+		pt.y += this.pt.y;
+		return -1;
+	}
+	// Return which output parameter number the output collides with or -1 if no collision
+	collisionOutputParam(pt)
+	{
+		// convert input point to local coords
+		pt.x -= this.pt.x;
+		pt.y -= this.pt.y;
+
+		for (let i = 0; i < this.outputList.length; i++)
+			if (this.pointInRectangle(pt,this.outputList[i]))
+			{
+				pt.x += this.pt.x; // convert input point back to global coords
+				pt.y += this.pt.y;
+				return i;
+			}
+
+		// convert input point back to global coords
+		pt.x += this.pt.x;
+		pt.y += this.pt.y;
+		return -1;
+	}
+
 	// return true if point collides inside the bounds of the rectangle
 	boundingCollision(pt)
 	{
@@ -630,6 +721,49 @@ class Node
 		return xBound && yBound;
 	}
 
+	// Return the number of input nodes for this node
+	inputNodeCount()
+	{
+		return this.inputNodes.length;
+	}
+
+	// Return the number of input nodes for this node
+	outputNodeCount()
+	{
+		return this.outputNodes.length;
+	}
+
+	// Add an input node to the list of input nodes
+	addInputNode(node,inParam,outParam)
+	{
+		this.inputNodes.push([node,inParam,outParam]);
+	}
+
+	// Add an output node to the list of output nodes
+	addOutputNode(node,inParam,outParam)
+	{
+		this.outputNodes.push([node,inParam,outParam]);
+	}
+
+	getName()
+	{ return this.name; }
+
+	renderToText()
+	{
+		//console.log("// "+this.getName()+" : " +"("+this.pt.x+","+this.pt.y+")");
+		// print all connections from this node to another node
+		for (let i = 0; i < this.outputNodeCount(); i++)
+		{
+			let text = ""
+				text += "output " + this.outputNodes[i][1];
+				text += " of " + this.outputNodes[i][0].getName();
+				text += " to input " +this.outputNodes[i][2];
+				text += " of " + this.getName();
+			console.log(text);
+		}
+		// recurse
+		for (let i = 0; i < this.outputNodeCount(); i++) this.outputNodes[i][0].renderToText();
+	}
 }
 // Draw the divisions
 //let graphDiagramObject = new GraphDiagramCanvas(".graphDiagramCanvas",20);

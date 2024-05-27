@@ -1,8 +1,6 @@
-//TODO: Need to set up multiple parameter inputs for each instrument and catch up some of the other input widget guis
-//TODO: Need to make pianoroll cell divisions configurable like the playlist editor
 //TODO: Add a double parameter matrix widget
 //TODO: Add a spreadsheet widget for manual input
-//TODO: Viewport outlines for other widgets is different from this one
+//TODO: Highlight octave cells
 class PianoRollCanvas
 {
 	coord = {x:0, y:0}; // the coords of the mouse
@@ -35,7 +33,7 @@ class PianoRollCanvas
 
 		// for some reason 2*tab-container height works but not using master-tab-container directly
 		let tabsHeight = 2*document.getElementById('tab-container').offsetHeight;
-		document.getElementById("TrackEditor").style.display="inline"; // by default TrackEditor is hidden
+		//document.getElementById("TrackEditor").style.display="inline"; // by default TrackEditor is hidden
 		tabsHeight += document.getElementById("track-controls").offsetHeight;
 
 		this.width = (this.canvas.width = window.innerWidth);

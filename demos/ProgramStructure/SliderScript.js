@@ -1,5 +1,4 @@
 //TODO: Add more draw styles
-//TODO: Add click mode that raises all heights where needed rather than inserting a note
 //TODO: Delete clicks sometimes delete a different note in the horizontal division from what is expected
 class SliderCanvas 
 {
@@ -30,7 +29,11 @@ class SliderCanvas
 		// Set Up the canvas
 		this.canvas = document.getElementById(query);
 		this.ctx = this.canvas.getContext("2d");
-		let tabsHeight = document.getElementById('tab-container').offsetHeight;
+
+		// for some reason 2*tab-container height works but not using master-tab-container directly
+		let tabsHeight = 2*document.getElementById('tab-container').offsetHeight;
+		tabsHeight += document.getElementById("track-controls").offsetHeight;
+
 		this.width = (this.canvas.width = window.innerWidth);
 		this.height = (this.canvas.height = window.innerHeight - tabsHeight);
 		

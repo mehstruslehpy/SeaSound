@@ -1,8 +1,7 @@
-// TODO: Might as well make this a full viewer object and manage state a bit more cleanly <--- Check this further
-// TODO: Need to update the remaining widget code
-// TODO: Need to work on syncing instrument widget code
 // TODO: Need to start working on timing logic
 // TODO: Add load and save code for instruments, widgets, project, etc
+// TODO: Minus button for current parameter in track editor tab is broken due to modular arithmetic subtraction issues
+// TODO: A modal window for building units for the instrument editor would be better than the keybind controls we have currently
 class View
 {
 	// There is only one track lane object for the whole program
@@ -189,7 +188,7 @@ class View
 			if (children[i].style.display == "inline")
 			{
 				children[i].style.display = "none";
-				children[(i-1)%children.length].style.display = "inline";
+				children[(i-1+children.length)%children.length].style.display = "inline";
 				document.getElementById("param-num").innerText = "Current Parameter: "+(i+1)%children.length;
 				break;
 			}

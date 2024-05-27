@@ -32,10 +32,13 @@ class CodedEventCanvas
 	constructor(query,cells)
 	{
 		// Set Up the canvas
-		//this.canvas = document.querySelector(query);
 		this.canvas = document.getElementById(query);
 		this.ctx = this.canvas.getContext("2d");
-		let tabsHeight = document.getElementById('tab-container').offsetHeight;
+
+		// for some reason 2*tab-container height works but not using master-tab-container directly
+		let tabsHeight = 2*document.getElementById('tab-container').offsetHeight;
+		tabsHeight += document.getElementById("track-controls").offsetHeight;
+
 		this.width = (this.canvas.width = window.innerWidth);
 		this.height = (this.canvas.height = window.innerHeight - tabsHeight);
 		this.cells = cells;
