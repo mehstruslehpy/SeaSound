@@ -384,6 +384,16 @@ class View
 	{
 		return name.replace(/\s+/g, '');
 	}
+	// Configures the currently selected node based on the node dialog
+	configureNode()
+	{
+		let name = document.getElementById("node-name").value;
+		let inputs = document.getElementById("node-inputs").value;
+		let outputs = document.getElementById("node-outputs").value;
+		let instrument = this.CleanName(document.getElementById("instrument-canvases-select").textContent);
+		if (instrument == "") return;
+		this.instrumentMap.get(instrument).configureNode(name,inputs,outputs);
+	}
 }
 
 let viewObj = new View();

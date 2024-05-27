@@ -226,6 +226,35 @@
 													document.getElementById('instrument-name').value)">
 					Add
 				</button>
+
+			
+				<!-- Button for opening node parameter dialog-->
+				<button class="lr-pad" onclick='document.getElementById("node-dialog").showModal();'>
+					Node Config
+				</button>
+	
+				<!-- Pop up dialog containing node parameters -->
+				<dialog id="node-dialog" onclose="console.log('node dialog closed');">
+				<form method="dialog" style="display:table;">
+				<div style="display:table-row;">
+					<label style="display:table-cell;">Node Name:</label>
+					<input style="display:table-cell;"type="text submit" id="node-name" name="node-name" placeholder="osc"></br>
+				</div>
+				<div style="display:table-row;">
+					<label style="display:table-cell;">Inputs:</label>
+					<input style="display:table-cell;" type="number" id="node-inputs" placeholder="3"></br>
+				</div>
+				<div style="display:table-row;">
+					<label style="display:table-cell;">Outputs:</label>
+					<input style="display:table-cell;" type="number" id="node-outputs" placeholder="3"></br>
+				</div>
+				<button id="cancel" type="reset" onclick='document.getElementById("node-dialog").close();'>Cancel</button>
+				<button type="submit" 
+						onclick="viewObj.configureNode();">
+					Confirm
+				</button>
+				</form>
+				</dialog>
 			</div>
 			<!-- Canvases for displaying graph diagrams -->
 			<!-- the tabindex value makes the canvas focusable for catching keystrokes -->

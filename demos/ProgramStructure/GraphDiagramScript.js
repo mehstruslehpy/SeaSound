@@ -41,6 +41,15 @@ class GraphDiagramCanvas
 		this.draw();
 	}
 
+
+	// Configure the nodes that are created on left click in node mode
+	configureNode(name,inputs,outputs)
+	{
+		this.curName = name;
+		this.curInputs = inputs;
+		this.curOutputs = outputs;
+		this.draw();
+	}
 	mButtonClick(ev)
 	{
 		let controlText = "";
