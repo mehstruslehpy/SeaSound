@@ -787,7 +787,7 @@ class Node
 	// We can have arbitrarily many output nodes
 	addOutputNode(node,fromParam,toParam)
 	{
-		this.outputNodes.push([node,fromParam,toParam]);
+		this.outputNodes[fromParam] = [node,fromParam,toParam];
 	}
 
 	getName()
@@ -804,23 +804,30 @@ class Node
 		this.printedFlag = true;
 
 		// get the list of inputs to this opcode
-		// TODO: The square brace notation here is only because I do not know how multiple output
-		//			opcodes work in csound (if they are even supported)	
+		// Build the list of input parameters
 		let params = Array();
 		for (let i = 0; i < this.inputNodeCount(); i++)
 		{
 			let str = this.inputNodes[i][0].getId();
 				str += this.inputNodes[i][0].getName();
-				str += "[";
+				str += "_";
 				str += this.inputNodes[i][1];
-				str += "]";
 			params.push(str);
 		}
 		let paramStr = "";
 		for (let i = 0; i < params.length; i++)
-			if (i==params.length-1) paramStr += params[i];
+			if (i==params.length-1) paramStr += params[i]; // last param has no comma
 			else paramStr += params[i]+", ";	
-		console.log(this.getId()+this.getName()+" = "+this.getName()+" "+paramStr)
+
+		// Build the list of outputs
+		let outputs = "";
+		for (let i = 0; i < this.outputNodeCount(); i++)
+			if (i==this.outputNodeCount()-1) 
+				outputs += this.getId()+this.getName()+"_"+i+" = "; // last output is to left of =
+			else 
+				outputs += this.getId()+this.getName()+"_"+i+", ";	
+	
+		console.log(outputs+this.getName()+" "+paramStr)
 	}
 	
 	getId()
