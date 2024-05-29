@@ -1,7 +1,5 @@
 // TODO: Need to start working on timing logic
 // TODO: Add load and save code for instruments, widgets, project, etc
-// TODO: Minus button for current parameter in track editor tab is broken due to modular arithmetic subtraction issues
-// TODO: A modal window for building units for the instrument editor would be better than the keybind controls we have currently
 class View
 {
 	// There is only one track lane object for the whole program

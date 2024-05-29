@@ -1,5 +1,8 @@
 // TODO: Need to add code to render graph diagram to csound instrument code
 // TODO: Need to add code to name the instrument too
+// TODO: renderToText per node text output and ordering needs work
+// TODO: Need to disable connecting an output to an occupied input and vice versa, one output to many inputs is fine
+//			but one input cannot have many outputs
 class GraphDiagramCanvas
 {
 	coord = {x:0, y:0}; // the coords of the mouse
@@ -175,25 +178,33 @@ class GraphDiagramCanvas
 					this.workingEdge.addSegment(intersectPoint);
 					// edges need to flow from outputs to inputs
 					if (this.startEdgeNodeType != "OUTPUT") this.workingEdge.reverse();
-					this.edgeList.push(this.workingEdge);
 					// Register the inputs and outputs of the two nodes
 					if (this.startEdgeNodeType != "OUTPUT")
 					{
 						// Get the to/from parameter number where the collision occured
 						// In this case recall the working edge has been reversed
-						let toParam = this.nodeList[i].collisionOutputParam(this.workingEdge.getFrom());
-						let fromParam = this.workingStartNode.collisionInputParam(this.workingEdge.getTo());
-						// Register the nodes with each other
-						this.workingStartNode.addOutputNode(this.nodeList[i],fromParam,toParam);
-						this.nodeList[i].addInputNode(this.workingStartNode,fromParam,toParam);
+						let fromParam = this.nodeList[i].collisionOutputParam(this.workingEdge.getFrom());
+						let toParam = this.workingStartNode.collisionInputParam(this.workingEdge.getTo());
+						// We can only have one input per input rectangle of any given node
+						// So the node and edge is set up correctly only if adding the input succeeds
+						if (this.workingStartNode.addInputNode(this.nodeList[i],fromParam,toParam))
+						{
+							this.nodeList[i].addOutputNode(this.workingStartNode,fromParam,toParam);
+							this.edgeList.push(this.workingEdge);
+						}
 					}
 					else
 					{
 						// Get the to/from parameter number where the collision occured
 						let toParam = this.nodeList[i].collisionInputParam(this.workingEdge.getTo());
 						let fromParam = this.workingStartNode.collisionOutputParam(this.workingEdge.getFrom());
-						this.workingStartNode.addInputNode(this.nodeList[i],fromParam,toParam);
-						this.nodeList[i].addOutputNode(this.workingStartNode,fromParam,toParam);
+						// We can only have one input per input rectangle of any given node
+						// So the node and edge is set up correctly only if adding the input succeeds
+						if (this.nodeList[i].addInputNode(this.workingStartNode,fromParam,toParam))
+						{
+							this.workingStartNode.addOutputNode(this.nodeList[i],fromParam,toParam);
+							this.edgeList.push(this.workingEdge);
+						}
 					}
 					// The edge is complete so exit edge mode
 					this.workingStartNode = null;
@@ -361,23 +372,31 @@ class GraphDiagramCanvas
 
 	renderToText()
 	{
+		// Get all of the nodes with no outputs first
 		let startNodes = Array();
-		// Get all of the nodes with no inputs first
 		for (let i = 0; i < this.nodeList.length; i++)
-			if (this.nodeList[i].inputNodeCount() == 0) 
+			if (this.nodeList[i].outputNodeCount() == 0) 
+			{
 				startNodes.push(this.nodeList[i]);
+			}
 
-		// If there are no nodes with no inputs then the instrument is not well formed
+		// If there are no nodes with no inputs then the instrument is not in a printable state
 		if (startNodes.length == 0) 
 		{
-			console.log("Error: Instrument has no well defined start nodes");
+			console.log("Error: Instrument has no well defined outputs");
 			return;
 		}
-		
 
-		for (let i = 0; i < startNodes.length; i++) startNodes[i].renderToText();
+		// Print the instrument
+		for (let i = 0; i < startNodes.length; i++) 
+			if (!startNodes[i].getPrintFlag())
+				startNodes[i].renderToText();
+
+		// Reset all the printflags for later prints
+		for (let i = 0; i < this.nodeList.length; i++) this.nodeList[i].setPrintFlag(false);
 	}
 }
+
 class Edge
 {
 	from = null; // The coord this edge starts from
@@ -506,6 +525,8 @@ class Edge
      }
 }
 
+// TODO: Want to make this a static variable in Node class, but kept get NaN errors
+nodeCount = 0; // Tracks the number of nodes we have created so far
 class Node
 {
 	height = 100; // height of the rectangle
@@ -519,8 +540,15 @@ class Node
 	inputNodes = Array(); // The list of nodes hooked up to be inputs to this node
 	outputNodes = Array(); // The list of nodes hooked up to be outputs from this node
 
+	printedFlag = false; // a flag used to determine if the current node has been printed
+
+	id = -1; // an identifier for the current node
+
 	constructor(pt,name,inputs,outputs,ctx)
 	{	
+
+		// Generate and assign an id for the current node
+		this.id = nodeCount++;
 		this.pt.x = pt.x;
 		this.pt.y = pt.y;
 		//if (inputs == 0 && outputs == 0) throw "Node must have at least one input or output"
@@ -532,12 +560,14 @@ class Node
 			let topLeft = {x:rinWidth*i, y:0};
 			let bottomRight = {x:rinWidth*(i+1), y:rHeight};
 			this.inputList.push([topLeft,bottomRight]);
+			this.inputNodes.push(null);
 		}
 		for (let i = 0; i < outputs; i++) // build the list of output rectangles
 		{
 			let topLeft = {x:routWidth*i, y:2*rHeight};
 			let bottomRight = {x:routWidth*(i+1), y:3*rHeight};
 			this.outputList.push([topLeft,bottomRight]);
+			this.outputNodes.push(null);
 		}
 		// we also need to pick a font height that will fit our box correctly
 		ctx.font = "bold "+this.fontSize+"px Arial";
@@ -743,15 +773,21 @@ class Node
 	}
 
 	// Add an input node to the list of input nodes
-	addInputNode(node,inParam,outParam)
+	// We cannot have multiple outputs connect to the same input
+	// So return true if the adding the new node is successful
+	// return false otherwise
+	addInputNode(node,fromParam,toParam)
 	{
-		this.inputNodes.push([node,inParam,outParam]);
+		if (this.inputNodes[toParam]!=null) return false;
+		this.inputNodes[toParam] = [node,fromParam,toParam];
+		return true;
 	}
 
 	// Add an output node to the list of output nodes
-	addOutputNode(node,inParam,outParam)
+	// We can have arbitrarily many output nodes
+	addOutputNode(node,fromParam,toParam)
 	{
-		this.outputNodes.push([node,inParam,outParam]);
+		this.outputNodes.push([node,fromParam,toParam]);
 	}
 
 	getName()
@@ -759,20 +795,42 @@ class Node
 
 	renderToText()
 	{
-		//console.log("// "+this.getName()+" : " +"("+this.pt.x+","+this.pt.y+")");
-		// print all connections from this node to another node
-		for (let i = 0; i < this.outputNodeCount(); i++)
+		// Print the inputs to this node if they have not already been printed
+		for (let i = 0; i < this.inputNodeCount(); i++) 
+			if (!this.inputNodes[i][0].getPrintFlag())
+				this.inputNodes[i][0].renderToText();
+
+		// We can now print the current node
+		this.printedFlag = true;
+
+		// get the list of inputs to this opcode
+		// TODO: The square brace notation here is only because I do not know how multiple output
+		//			opcodes work in csound (if they are even supported)	
+		let params = Array();
+		for (let i = 0; i < this.inputNodeCount(); i++)
 		{
-			let text = ""
-				text += "output " + this.outputNodes[i][1];
-				text += " of " + this.outputNodes[i][0].getName();
-				text += " to input " +this.outputNodes[i][2];
-				text += " of " + this.getName();
-			console.log(text);
+			let str = this.inputNodes[i][0].getId();
+				str += this.inputNodes[i][0].getName();
+				str += "[";
+				str += this.inputNodes[i][1];
+				str += "]";
+			params.push(str);
 		}
-		// recurse
-		for (let i = 0; i < this.outputNodeCount(); i++) this.outputNodes[i][0].renderToText();
+		let paramStr = "";
+		for (let i = 0; i < params.length; i++)
+			if (i==params.length-1) paramStr += params[i];
+			else paramStr += params[i]+", ";	
+		console.log(this.getId()+this.getName()+" = "+this.getName()+" "+paramStr)
 	}
+	
+	getId()
+	{ return this.id; }
+
+	// Getters and setters for the printed flag
+	getPrintFlag()
+	{ return this.printedFlag; }
+	setPrintFlag(flag)
+	{ this.printedFlag = flag; }
 }
 // Draw the divisions
 //let graphDiagramObject = new GraphDiagramCanvas(".graphDiagramCanvas",20);
