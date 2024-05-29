@@ -232,6 +232,10 @@
 				<button class="lr-pad" onclick='document.getElementById("node-dialog").showModal();'>
 					Node Config
 				</button>
+				<!-- Button for outputting instrument code -->
+				<button class="lr-pad" onclick='viewObj.renderInstrument();'>
+					Render Instrument
+				</button>
 	
 				<!-- Pop up dialog containing node parameters -->
 				<dialog id="node-dialog">
@@ -255,6 +259,16 @@
 				</button>
 				</form>
 				</dialog>
+
+				<!-- Pop up dialog containing node parameters -->
+				<dialog id="instr-code-dialog">
+				<textarea readonly id="instrument-code-dialog-output" style="width:500px;height:150px;white-space:nowrap;">
+				</textarea>
+				<form method="dialog">
+				<button id="cancel" type="reset" onclick='document.getElementById("instr-code-dialog").close();'>Close</button>
+				</form>
+				</dialog>
+
 			</div>
 			<!-- Canvases for displaying graph diagrams -->
 			<!-- the tabindex value makes the canvas focusable for catching keystrokes -->

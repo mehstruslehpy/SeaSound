@@ -279,7 +279,7 @@ class View
 		newCanvas.setAttribute("id","instrument-"+name);
 		newOption.setAttribute("value","instrument-"+name);
 		newCanvas.setAttribute("class","trackLaneCanvas");
-		let instrumentCanvasObject = new GraphDiagramCanvas("instrument-"+name,20);
+		let instrumentCanvasObject = new GraphDiagramCanvas("instrument-"+name,name,20);
 
 		// Add the instrument canvas to our map of all instruments
 		this.instrumentMap.set(this.CleanName(name),instrumentCanvasObject);
@@ -391,6 +391,19 @@ class View
 		let instrument = this.CleanName(document.getElementById("instrument-canvases-select").textContent);
 		if (instrument == "") return;
 		this.instrumentMap.get(instrument).configureNode(name,inputs,outputs);
+	}
+	// Render the currently selected instrument to text
+	renderInstrument()
+	{
+		let instrument = document.getElementById('instrument-canvases-select').textContent; // get the select tag
+		instrument = this.CleanName(instrument);
+		// Get a string with the instrument code
+		let outString = this.instrumentMap.get(instrument).renderToText();
+		// print the instrument to the console.
+		console.log(outString);
+		// Print the instrument code to modal in browser
+		document.getElementById("instr-code-dialog").showModal();
+		document.getElementById("instrument-code-dialog-output").textContent = outString;
 	}
 }
 

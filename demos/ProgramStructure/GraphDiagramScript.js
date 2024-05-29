@@ -18,12 +18,14 @@ class GraphDiagramCanvas
 	curOutputs = 3; // number of outputs for next node
 	curName = "Default"; // the name of the next node
 
+	instrumentName = ""; // The name of this instrument
+
 	// values for changing the scale and translate amount
 	translateAmt = 10;
 	scaleAmt = 1.15;
 
 	// Initial set up
-	constructor(query,size)
+	constructor(query,name,size)
 	{
 		// Set Up the canvas
 		this.canvas = document.getElementById(query);
@@ -36,6 +38,9 @@ class GraphDiagramCanvas
 
 		this.height = (this.canvas.height = window.innerHeight - tabsHeight);
 		this.nodeRadius = size;
+
+		// Set up the instrument name
+		this.instrumentName = name;
 
 		var that = this;
 		this.canvas.addEventListener('mousedown', function(ev) { that.leftClickDown(); }); 
@@ -380,20 +385,35 @@ class GraphDiagramCanvas
 				startNodes.push(this.nodeList[i]);
 			}
 
-		// If there are no nodes with no inputs then the instrument is not in a printable state
+		// If there are no nodes with outputs then the instrument is not in a printable state
 		if (startNodes.length == 0) 
 		{
 			console.log("Error: Instrument has no well defined outputs");
 			return;
 		}
 
-		// Print the instrument
+
+		// The string we will output
+		let outString = "";
+	
+		// Print the instrument name using csound instrument name syntax
+		outString = "instr "+this.instrumentName+"\n";
+		//console.log("instr "+this.instrumentName);
+
+		// Print the instrument nodes
 		for (let i = 0; i < startNodes.length; i++) 
 			if (!startNodes[i].getPrintFlag())
-				startNodes[i].renderToText();
+				outString += startNodes[i].renderToText();
+
+		// Print endin to signify end of instrument block
+		//console.log("endin");
+		outString += "endin\n";
 
 		// Reset all the printflags for later prints
 		for (let i = 0; i < this.nodeList.length; i++) this.nodeList[i].setPrintFlag(false);
+
+		// Return the string containing our instrument code
+		return outString;
 	}
 }
 
@@ -795,25 +815,29 @@ class Node
 
 	renderToText()
 	{
+		// We recursively build the following string
+		let outString = "";
+
 		// Print the inputs to this node if they have not already been printed
 		for (let i = 0; i < this.inputNodeCount(); i++) 
-			if (!this.inputNodes[i][0].getPrintFlag())
-				this.inputNodes[i][0].renderToText();
+			if (this.inputNodes[i]!=null && !this.inputNodes[i][0].getPrintFlag())
+				outString += this.inputNodes[i][0].renderToText();
 
 		// We can now print the current node
 		this.printedFlag = true;
 
-		// get the list of inputs to this opcode
-		// Build the list of input parameters
+		// Build the list of input parameters to this opcode
 		let params = Array();
 		for (let i = 0; i < this.inputNodeCount(); i++)
-		{
-			let str = this.inputNodes[i][0].getId();
-				str += this.inputNodes[i][0].getName();
-				str += "_";
-				str += this.inputNodes[i][1];
-			params.push(str);
-		}
+			if(this.inputNodes[i]!=null)
+			{
+				let str = this.inputNodes[i][0].getId();
+					str += this.inputNodes[i][0].getName();
+					str += "_";
+					str += this.inputNodes[i][1];
+				params.push(str);
+			}
+			else params.push("NULL");
 		let paramStr = "";
 		for (let i = 0; i < params.length; i++)
 			if (i==params.length-1) paramStr += params[i]; // last param has no comma
@@ -827,7 +851,9 @@ class Node
 			else 
 				outputs += this.getId()+this.getName()+"_"+i+", ";	
 	
-		console.log(outputs+this.getName()+" "+paramStr)
+		//console.log("\t"+outputs+this.getName()+" "+paramStr)
+		outString += "\t"+outputs+this.getName()+" "+paramStr+"\n";
+		return outString;	
 	}
 	
 	getId()
