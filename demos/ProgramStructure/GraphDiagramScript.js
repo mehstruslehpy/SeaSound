@@ -13,7 +13,7 @@ class GraphDiagramCanvas
 	workingStartNode = null; // the first node we clicked while building an edge
 	startEdgeNodeType = null; // indicates whether the edge starts from an input or output node
 	curInputs = 2; // number of inputs for next node
-	curOutputs = 3; // number of outputs for next node
+	curOutputs = ""; // number of outputs for next node
 	curName = "Default"; // the name of the next node
 
 	instrumentName = ""; // The name of this instrument
@@ -64,10 +64,10 @@ class GraphDiagramCanvas
 			controlText += "2: enter edge mode\n"
 			controlText += "3: enter delete mode\n"
 			controlText += "n: change rectangle name\n"
-			controlText += "4: increment input count\n"
-			controlText += "5: decrement input count\n"
-			controlText += "6: increment output count\n"
-			controlText += "7: decrement output count\n"
+			//controlText += "4: increment input count\n"
+			//controlText += "5: decrement input count\n"
+			//controlText += "6: increment output count\n"
+			//controlText += "7: decrement output count\n"
 			controlText += "h: display keybinds\n";
 			controlText += "wasd: scroll viewport\n";
 			controlText += "qe: scale viewport\n";
@@ -98,10 +98,10 @@ class GraphDiagramCanvas
 			if (out != null) this.curName = out;
 			else this.curName = "empty";
 		}
-		else if (ev.key == "4") this.curInputs++;
-		else if (ev.key == "5" && this.curInputs > 0) this.curInputs--;
-		else if (ev.key == "6") this.curOutputs++;
-		else if (ev.key == "7" && this.curOutputs > 0) this.curOutputs--;
+		//else if (ev.key == "4") this.curInputs++;
+		//else if (ev.key == "5" && this.curInputs > 0) this.curInputs--;
+		//else if (ev.key == "6") this.curOutputs++;
+		//else if (ev.key == "7" && this.curOutputs > 0) this.curOutputs--;
 		else if (ev.key == "h") alert(controlText);
 		else if (ev.key == "q") this.ctx.scale(this.scaleAmt,this.scaleAmt);
 		else if (ev.key == "e") this.ctx.scale(1/this.scaleAmt,1/this.scaleAmt);
