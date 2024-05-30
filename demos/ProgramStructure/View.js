@@ -388,6 +388,11 @@ class View
 		let name = document.getElementById("node-name").value;
 		let inputs = document.getElementById("node-inputs").value;
 		let outputs = document.getElementById("node-outputs").value;
+		outputs = this.CleanName(outputs); // clear whitespace
+		outputs = outputs.toLowerCase(); // convert to lower case
+		outputs = outputs.split(','); // split on commas
+		let allowedCases = new Set(["a","k","i","ga","gk","gi","p","S","pvs","w"]); // Collection of allowed values
+		outputs = outputs.filter((s) => { return allowedCases.has(s); }); // Filter array using collection
 		let instrument = this.CleanName(document.getElementById("instrument-canvases-select").textContent);
 		if (instrument == "") return;
 		this.instrumentMap.get(instrument).configureNode(name,inputs,outputs);

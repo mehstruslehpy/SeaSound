@@ -1,8 +1,6 @@
 // TODO: Need to add code to render graph diagram to csound instrument code
 // TODO: Need to add code to name the instrument too
-// TODO: renderToText per node text output and ordering needs work
-// TODO: Need to disable connecting an output to an occupied input and vice versa, one output to many inputs is fine
-//			but one input cannot have many outputs
+// TODO: Need to control output variable prefixes better, the current output won't work in csound
 class GraphDiagramCanvas
 {
 	coord = {x:0, y:0}; // the coords of the mouse
@@ -398,7 +396,6 @@ class GraphDiagramCanvas
 	
 		// Print the instrument name using csound instrument name syntax
 		outString = "instr "+this.instrumentName+"\n";
-		//console.log("instr "+this.instrumentName);
 
 		// Print the instrument nodes
 		for (let i = 0; i < startNodes.length; i++) 
@@ -406,7 +403,6 @@ class GraphDiagramCanvas
 				outString += startNodes[i].renderToText();
 
 		// Print endin to signify end of instrument block
-		//console.log("endin");
 		outString += "endin\n";
 
 		// Reset all the printflags for later prints
@@ -559,6 +555,19 @@ class Node
 
 	inputNodes = Array(); // The list of nodes hooked up to be inputs to this node
 	outputNodes = Array(); // The list of nodes hooked up to be outputs from this node
+	outTypes = ""; // string containing the types corresponding to each output
+	// Mapping of output type to colors for drawing
+	// Color palette generated from here: https://mokole.com/palette.html
+	outputColorMap = new Map([["a","#006400"],
+								["k","#00008b"],
+								["i","#b03060"],
+								["ga","#ff0000"],
+								["gk","#ffff00"],
+								["gi","#00ff00"],
+								["p","#00ffff"],
+								["S","#ff00ff"],
+								["pvs","#6495ed"],
+								["w","#ffdead"]]);
 
 	printedFlag = false; // a flag used to determine if the current node has been printed
 
@@ -566,15 +575,13 @@ class Node
 
 	constructor(pt,name,inputs,outputs,ctx)
 	{	
-
 		// Generate and assign an id for the current node
 		this.id = nodeCount++;
 		this.pt.x = pt.x;
 		this.pt.y = pt.y;
-		//if (inputs == 0 && outputs == 0) throw "Node must have at least one input or output"
 		let rHeight = this.height/3; // Height of rectangle is divided into thirds based on inputs, name, outputs
 		let rinWidth = this.width/inputs;
-		let routWidth = this.width/outputs;
+		let routWidth = this.width/outputs.length;
 		for (let i = 0; i < inputs; i++) // build the list of input rectangles
 		{
 			let topLeft = {x:rinWidth*i, y:0};
@@ -582,7 +589,8 @@ class Node
 			this.inputList.push([topLeft,bottomRight]);
 			this.inputNodes.push(null);
 		}
-		for (let i = 0; i < outputs; i++) // build the list of output rectangles
+		this.outTypes = outputs;
+		for (let i = 0; i < outputs.length; i++) // build the list of output rectangles
 		{
 			let topLeft = {x:routWidth*i, y:2*rHeight};
 			let bottomRight = {x:routWidth*(i+1), y:3*rHeight};
@@ -738,8 +746,10 @@ class Node
 		
 		for (let i = 0; i < this.outputList.length; i++)
 		{
-			this.drawRectangle(this.outputList[i],ctx,"black","green");
+			let outColor = this.outputColorMap.get(this.outTypes[i]);
+			this.drawRectangle(this.outputList[i],ctx,"black",outColor);
 		}
+
 		//draw name next
 		let midPt = this.height/2;
 		let pad = 5;
@@ -831,8 +841,10 @@ class Node
 		for (let i = 0; i < this.inputNodeCount(); i++)
 			if(this.inputNodes[i]!=null)
 			{
-				let str = this.inputNodes[i][0].getId();
+				let str = this.inputNodes[i][0].getOutputType(this.inputNodes[i][1]);
 					str += this.inputNodes[i][0].getName();
+					str += "_";
+					str += this.inputNodes[i][0].getId();
 					str += "_";
 					str += this.inputNodes[i][1];
 				params.push(str);
@@ -847,19 +859,20 @@ class Node
 		let outputs = "";
 		for (let i = 0; i < this.outputNodeCount(); i++)
 			if (i==this.outputNodeCount()-1) 
-				outputs += this.getId()+this.getName()+"_"+i+" = "; // last output is to left of =
+				outputs += this.outTypes[i]+this.getName()+"_"+this.getId()+"_"+i+" = "; // last output is to left of =
 			else 
-				outputs += this.getId()+this.getName()+"_"+i+", ";	
+				outputs += this.outTypes[i]+this.getName()+"_"+this.getId()+"_"+i+", ";	
 	
-		//console.log("\t"+outputs+this.getName()+" "+paramStr)
 		outString += "\t"+outputs+this.getName()+" "+paramStr+"\n";
 		return outString;	
 	}
 	
+
+	// Some basic getters and setters
+	getOutputType(n)
+	{ return this.outTypes[n]; }
 	getId()
 	{ return this.id; }
-
-	// Getters and setters for the printed flag
 	getPrintFlag()
 	{ return this.printedFlag; }
 	setPrintFlag(flag)
