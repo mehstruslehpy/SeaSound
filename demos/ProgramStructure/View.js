@@ -131,6 +131,12 @@ class View
 		document.getElementById('instrument-canvases-select').value = ""; // reset select value
 		this.HideAllCanvases('instrument-canvases'); // hide canvases
 		this.instrumentMap.delete(name); // delete selection from instrument map
+
+		// Remove the corresponding entry in the track modal dropdown
+		let instList = document.getElementById("instruments-datalist");
+		for (var i=0; i<instList.options.length; i++)
+			if (instList.options[i].value == name)
+				instList.children[i].remove();
 	}
 
 	// Increase the blocksize for the playlist editor
@@ -276,6 +282,12 @@ class View
 		newOption.innerText = name;
 		selectEle.append(newOption);
 
+		// add to the instrument data list in the track modal
+		let dataList = document.getElementById("instruments-datalist");
+		let listOption = document.createElement("option");
+		listOption.value = name;
+		dataList.append(listOption);
+	
 		newCanvas.setAttribute("id","instrument-"+name);
 		newOption.setAttribute("value","instrument-"+name);
 		newCanvas.setAttribute("class","trackLaneCanvas");
@@ -352,8 +364,10 @@ class View
 		this.trackMap.set(this.CleanName(name),tempCanv);
 
 		// Register the instruments with each other
+		let instname = document.getElementById("instrument-for-track").value
+		if (instname == "") instname = "EMPTY-INSTRUMENT";
 		for (let i = 0; i < tempCanv.length; i++)
-			tempCanv[i].registerInstrument(tempCanv);
+			tempCanv[i].registerInstrument(tempCanv,instname);
 
 		// Set up the canvas trigger modes
 		tempCanv[0].setTriggerMode(true);
@@ -400,6 +414,7 @@ class View
 	// Render the currently selected instrument to text
 	renderInstrument()
 	{
+		// Get the instrument text name
 		let instrument = document.getElementById('instrument-canvases-select').textContent; // get the select tag
 		instrument = this.CleanName(instrument);
 		// Get a string with the instrument code
@@ -410,6 +425,27 @@ class View
 		document.getElementById("instr-code-dialog").showModal();
 		document.getElementById("instrument-code-dialog-output").textContent = outString;
 	}
+	// Render the currently selected track
+	// TODO: Need to iterate across all the parameters here
+	renderTrack()
+	{
+		// Get the track text name
+		let track = document.getElementById('track-canvases-select').textContent; // get the select tag
+		track = this.CleanName(track);
+		// Get the beats per minute of the project
+		let bpmText = document.getElementById('playlist-bpm').value; // get the select tag
+		if (bpmText == "") bpmText = document.getElementById('playlist-bpm').placeholder;
+		// Get a string with the track code
+		let params = this.trackMap.get(track)
+		let paramList = params[0].getNoteOutput(Number(bpmText));
+		// print the track to the console.
+		console.log(paramList);
+
+		// Print the instrument code to modal in browser
+		//document.getElementById("instr-code-dialog").showModal();
+		//document.getElementById("instrument-code-dialog-output").textContent = outString;
+	}
+
 }
 
 let viewObj = new View();

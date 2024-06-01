@@ -1,6 +1,7 @@
 //TODO: Add a double parameter matrix widget
 //TODO: Add a spreadsheet widget for manual input
 //TODO: Highlight octave cells
+//TODO: Make note snapping configurable
 class PianoRollCanvas
 {
 	coord = {x:0, y:0}; // the coords of the mouse
@@ -21,8 +22,11 @@ class PianoRollCanvas
 	scaleAmtX = 1.15;
 	scaleAmtY = 1.15;
 
-	// The instrument this widget is a parameter for
+	// The instrument this widget is a parameter for (as a list of widgets)
 	instrument = null;
+
+	// The name of the instrument this widget is a parameter for
+	name = "";
 
 	// Initial set up
 	constructor(query,horizontalCells,verticalCells)
@@ -231,14 +235,28 @@ class PianoRollCanvas
 		this.ctx.setTransform(1, 0, 0, 1, 0, 0);
 		this.ctx.clearRect(0, 0, this.width, this.height);
 
-		// Draw outline and helper text to fixed positions in viewport
-		this.helperText();
-		this.viewportOutline();
-
 		// Restore the transform
 		this.ctx.restore();
 
 		// Now we can actually start drawing
+
+		//draw horizontal divisions
+		for (var i = 0; i < this.horizontalCells; i++)
+		{
+			// The first rectangle per octave is marked gray
+			if ((this.horizontalCells - i - 1)%12 == 0)
+			{
+				let y = i*this.height/this.horizontalCells;
+				this.ctx.fillStyle = "gray";
+				this.ctx.fillRect(0,y,this.width,this.cellHeight);
+			}
+			this.ctx.strokeStyle = 'black';
+			this.ctx.lineWidth = this.lineWidth;
+			this.ctx.beginPath();
+			this.ctx.moveTo(0,i*(this.height/this.horizontalCells));
+			this.ctx.lineTo(this.width,i*(this.height/this.horizontalCells));
+			this.ctx.stroke();
+		}
 
 		//draw vertical divisions
 		for (var i = 0; i < this.verticalCells; i++)
@@ -248,17 +266,6 @@ class PianoRollCanvas
 			this.ctx.beginPath();
 			this.ctx.moveTo(i*(this.width/this.verticalCells),0);
 			this.ctx.lineTo(i*(this.width/this.verticalCells),this.height);
-			this.ctx.stroke();
-		}
-
-		//draw horizontal divisions
-		for (var i = 0; i < this.horizontalCells; i++)
-		{
-			this.ctx.strokeStyle = 'black';
-			this.ctx.lineWidth = this.lineWidth;
-			this.ctx.beginPath();
-			this.ctx.moveTo(0,i*(this.height/this.horizontalCells));
-			this.ctx.lineTo(this.width,i*(this.height/this.horizontalCells));
 			this.ctx.stroke();
 		}
 
@@ -274,6 +281,20 @@ class PianoRollCanvas
 		
 		// Draw the outlines for the canvas too
 		this.viewportOutline();
+
+		// Now we want to draw the outlines for the helper text on top of the canvas
+		// Store the current transformation matrix
+		this.ctx.save();
+
+		// Use the identity matrix while clearing the canvas
+		this.ctx.setTransform(1, 0, 0, 1, 0, 0);
+
+		// Draw outline and helper text to fixed positions in viewport
+		this.helperText();
+		this.viewportOutline();
+
+		// Restore the transform
+		this.ctx.restore();
 	}
 
 	drawRectangle(c1,c2)
@@ -377,9 +398,10 @@ class PianoRollCanvas
 	}
 
 	// Store the instrument array for the current parameter
-	registerInstrument(inst)
+	registerInstrument(inst,name)
 	{
 		this.instrument = inst;
+		this.name = name;
 	}
 
 	// Getter for trigger mode variable
@@ -451,5 +473,32 @@ class PianoRollCanvas
 		let c1 = {x:rect[0].x,y:0};
 		let c2 = {x:rect[1].x,y:this.cellHeight};
 		this.rectangleList.push([c1,c2]);
+	}
+	// Convert the input rectangle to a triple [start time, duration, note]
+	// TODO: NEED TO DO UNIT CONVERSION HERE USING BPM PARAMETER
+	convertRectToNote(rect,bpm)
+	{
+		// Get the start time relative to the cell scaling of the left point
+		let start = rect[0].x/this.cellWidth; 
+		start = Math.round(start);
+		// Get the note duration relative to the same cell scaling
+		let dur = (rect[1].x - rect[0].x)/this.cellWidth; 
+		dur = Math.round(dur);
+		// Get the pitch with respect to the bottom left corner of the canvas scaled relative to the cell height
+		let pitch = (this.height - rect[0].y)/this.cellHeight;
+		pitch = pitch - 1; // the very bottom note of the canvas is zero rather than 1
+		pitch = Math.round(pitch);
+		return {start: start, duration: dur, pitch: pitch};
+	}
+	getNoteOutput(bpm)
+	{
+		let out = new Array();
+		for (let i = 0; i < this.rectangleList.length; i++)
+		{
+			let note = this.convertRectToNote(this.rectangleList[i],bpm);
+			//outString += "[start="+note.start+",duration="+note.duration+",pitch="+note.pitch+"]\n";
+			out.push(note);	
+		}
+		return out;
 	}
 }

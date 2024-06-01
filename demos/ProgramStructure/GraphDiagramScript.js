@@ -1,6 +1,7 @@
 // TODO: Need to add code to render graph diagram to csound instrument code
 // TODO: Need to add code to name the instrument too
 // TODO: Need to control output variable prefixes better, the current output won't work in csound
+// TODO: Add a nice text area for textual instrument input
 class GraphDiagramCanvas
 {
 	coord = {x:0, y:0}; // the coords of the mouse

@@ -1,5 +1,7 @@
 <!-- TODO: Add an f statement builder widget -->
 <!-- TODO: Possibly add tools for automation clip style tools -->
+<!-- TODO: I think adding to the front will solve the issue with delete modes deleting unexpected things under mouse cursor in canvases -->
+<!-- TODO: Cells per beat should probably not be so global -->
 <!DOCTYPE html>
 <html lang="en-US">
   <head>
@@ -74,6 +76,12 @@
 				<button class="lr-pad" onclick="viewObj.DecrementPlaylistBlockSize();">
 					-
 				</button>
+				<!-- For choosing the bpm and cells per beat values -->
+				<label class="lr-pad">BPM:</label>
+				<input type="number" id="playlist-bpm" placeholder="140"> </br>
+				<label class="lr-pad">Cells Per Beat:</label>
+				<input type="number" id="playlist-bpm" placeholder="140"> </br>
+
 
 				<label class="lr-pad">Reset Playlist:</label>
 				<!-- Button for adding a track -->
@@ -106,7 +114,7 @@
 			</canvas>
 		</div>
 
-		<div id="TrackEditor" class="tab" style="display:none">
+		<div id="TrackEditor" class="tab" style="display:block">
 			<!-- Div for track tab controls -->
 			<div class="menu-control-container" id="track-controls">
 				<!-- Selector for choosing a pattern -->
@@ -134,14 +142,25 @@
 					-
 				</button>
 				<!-- Display the currently parameter -->
-				<label class="lr-pad" id="param-num">Current Parameter:</label>
-
+				<label class="lr-pad" id="param-num">Current Parameter: *** </label>
+				<!-- Button to kick off rendering the output of the track to text -->
+				<button class="lr-pad" onclick='viewObj.renderTrack();'>
+					Render Track
+				</button>
+	
 				<!-- Pop up dialog containing track parameters -->
 				<dialog id="track-dialog" onclose="viewObj.CheckDialogReopen();">
 				<form method="dialog" style="display:table;">
 				<div style="display:table-row;">
 					<label style="display:table-cell;">Track Name:</label>
 					<input style="display:table-cell;"type="text submit" id="track-name" name="track-name"> </br>
+				</div>
+				<div style="display:table-row;">
+					<label style="display:table-cell;">Instrument:</label>
+					<input list="instruments-datalist" id="instrument-for-track">
+					<datalist id="instruments-datalist">
+  						<option value="EMPTY-INSTRUMENT">
+					</datalist>
 				</div>
 				<div style="display:table-row;">
 					<label style="display:table-cell;">Parameter:</label>
@@ -195,7 +214,7 @@
 		</div>
 
 		<!-- GraphDiagram tab -->
-		<div id="InstrumentEditor" class="tab" style="display:block">
+		<div id="InstrumentEditor" class="tab" style="display:none">
 			<!-- Div for instrument tab controls -->
 			<div class="menu-control-container" id="instrument-controls">
 				<!-- Selector for choosing an instrument to edit -->
