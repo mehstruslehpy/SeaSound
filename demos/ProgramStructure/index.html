@@ -79,9 +79,6 @@
 				<!-- For choosing the bpm and cells per beat values -->
 				<label class="lr-pad">BPM:</label>
 				<input type="number" id="playlist-bpm" placeholder="140"> </br>
-				<label class="lr-pad">Cells Per Beat:</label>
-				<input type="number" id="playlist-bpm" placeholder="140"> </br>
-
 
 				<label class="lr-pad">Reset Playlist:</label>
 				<!-- Button for adding a track -->
@@ -182,14 +179,15 @@
 				<table id="param-list" style="padding-left:2em;">
 					<!-- List of parameters is displayed in this table -->
 				</table>
-				<!--<div style="display:table-row;">
-					<label style="display:table-cell;">Vertical Cells:</label>
-					<input style="display:table-cell;"type="number" id="track-vertical-cells" placeholder="20"> </br>
-				</div>-->
 				<div style="display:table-row;">
 					<label style="display:table-cell;">Horizontal Cells:</label>
 					<input style="display:table-cell;" type="number" id="track-horizontal-cells" placeholder="20"> </br>
 				</div>
+				<div style="display:table-row;">
+					<label style="display:table-cell;">Cells Per Beat:</label>
+					<input style="display:table-cell;"type="number" id="track-cells-per-beat" placeholder="4"> </br>
+				</div>
+	
 				<button id="cancel" type="reset" onclick='document.getElementById("track-dialog").close();'>Cancel</button>
 				<button type="submit" 
 						onclick="viewObj.AddCanvas('track-canvases','track',document.getElementById('track-name').value)">

@@ -28,8 +28,11 @@ class PianoRollCanvas
 	// The name of the instrument this widget is a parameter for
 	name = "";
 
+	// For unit conversion
+	cellsPerBeat = 1;
+
 	// Initial set up
-	constructor(query,horizontalCells,verticalCells)
+	constructor(query,horizontalCells,verticalCells,cellsPerBeat)
 	{
 		// Set Up the canvas
 		this.canvas = document.getElementById(query);
@@ -49,6 +52,9 @@ class PianoRollCanvas
 		// The cell width is determined here
 		this.cellWidth = this.width/this.verticalCells;
 		this.cellHeight = this.height/this.horizontalCells;
+
+		// For unit conversion later
+		//this.cellsPerBeat = cellsPerBeat;
 
 		var that = this;
 		this.canvas.addEventListener('mousedown', function(ev) { that.leftClickDown(); }); 
@@ -92,10 +98,13 @@ class PianoRollCanvas
 	}
 
 	// Snap input coordinates to grid and return the resulting coord
+	// TODO: Make this snap amount configurable
 	snapToGrid(c)
 	{
 		var out = {
 			x: this.cellWidth * Math.floor(c.x/this.cellWidth),
+			// For some other snap amount b this line can be changed to
+			//x: b * this.cellWidth * Math.floor(c.x/(b*this.cellWidth)),
    			y: this.cellHeight * Math.floor(c.y/this.cellHeight)
 		};
 		return out;
@@ -262,7 +271,9 @@ class PianoRollCanvas
 		for (var i = 0; i < this.verticalCells; i++)
 		{
 			this.ctx.strokeStyle = 'black';
-			this.ctx.lineWidth = this.lineWidth;
+			// Draw the beat divisions more cleanly
+			if (i%this.cellsPerBeat == 0) this.ctx.lineWidth = 3*this.lineWidth;
+			else this.ctx.lineWidth = this.lineWidth;
 			this.ctx.beginPath();
 			this.ctx.moveTo(i*(this.width/this.verticalCells),0);
 			this.ctx.lineTo(i*(this.width/this.verticalCells),this.height);
@@ -475,7 +486,6 @@ class PianoRollCanvas
 		this.rectangleList.push([c1,c2]);
 	}
 	// Convert the input rectangle to a triple [start time, duration, note]
-	// TODO: NEED TO DO UNIT CONVERSION HERE USING BPM PARAMETER
 	convertRectToNote(rect,bpm)
 	{
 		// Get the start time relative to the cell scaling of the left point
@@ -488,6 +498,11 @@ class PianoRollCanvas
 		let pitch = (this.height - rect[0].y)/this.cellHeight;
 		pitch = pitch - 1; // the very bottom note of the canvas is zero rather than 1
 		pitch = Math.round(pitch);
+		// To output cell values do this:
+		//return {start: start, duration: dur, pitch: pitch};
+		// Convert raw cell values to values in seconds
+		start = this.cellsToSeconds(start,bpm);
+		dur = this.cellsToSeconds(dur,bpm);
 		return {start: start, duration: dur, pitch: pitch};
 	}
 	getNoteOutput(bpm)
@@ -496,9 +511,14 @@ class PianoRollCanvas
 		for (let i = 0; i < this.rectangleList.length; i++)
 		{
 			let note = this.convertRectToNote(this.rectangleList[i],bpm);
-			//outString += "[start="+note.start+",duration="+note.duration+",pitch="+note.pitch+"]\n";
 			out.push(note);	
 		}
 		return out;
+	}
+	cellsToSeconds(c,bpm)
+	{
+		// Conversion cell number * (beats / minute) * (cells / beat) * (minutes / second)
+		// = cells per second
+		return c*bpm*this.cellsPerBeat*(1/60);
 	}
 }

@@ -24,12 +24,16 @@ class CodedEventCanvas
 
 	// The instrument this widget is a parameter for
 	instrument = null;
+	name = "";
 
 	// Tracks whether control has been pressed or not
 	controlPressed = false;
 
+	// For unit conversion
+	cellsPerBeat = 1;
+
 	// Initial set up
-	constructor(query,cells)
+	constructor(query,cells,cellsPerBeat)
 	{
 		// Set Up the canvas
 		this.canvas = document.getElementById(query);
@@ -43,6 +47,9 @@ class CodedEventCanvas
 		this.height = (this.canvas.height = window.innerHeight - tabsHeight);
 		this.cells = cells;
 		this.cellWidth = this.width/this.cells;
+
+		// For unit conversion later
+		this.cellsPerBeat = cellsPerBeat;
 
 		var that = this;
 		this.canvas.addEventListener('mousedown', function(ev) { that.leftClickDown(); }); 

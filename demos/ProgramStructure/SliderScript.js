@@ -22,9 +22,13 @@ class SliderCanvas
 
 	// The instrument this widget is a parameter for
 	instrument = null;
+	name = "";
+
+	// For unit conversion
+	cellsPerBeat = 1;
 
 	// Initial set up
-	constructor(query,horizontalCells,verticalCells,rectangleStyle)
+	constructor(query,horizontalCells,verticalCells,cellsPerBeat,rectangleStyle)
 	{
 		// Set Up the canvas
 		this.canvas = document.getElementById(query);
@@ -48,6 +52,9 @@ class SliderCanvas
 
 		if (!this.styles.includes(rectangleStyle)) throw "Unknown draw style";
 		this.rectangleStyle = rectangleStyle;
+
+		// For unit conversion later
+		this.cellsPerBeat = cellsPerBeat;
 
 		var that = this;
 		this.canvas.addEventListener('mousedown', function(ev) { that.leftClickDown(); }); 

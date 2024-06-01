@@ -308,13 +308,11 @@ class View
 
 		// Read in input arguments 
 		let hCells = document.getElementById("track-horizontal-cells").value;
-		/*
-		let vCells = document.getElementById("track-vertical-cells").value;
-		if (vCells == "") vCells = 20;
-		else vCells = Number(vCells);
-		*/
 		if (hCells == "") hCells = 40;
 		else hCells = Number(hCells);
+		let cellsPerBeat = document.getElementById("track-cells-per-beat").value;
+		if (cellsPerBeat == "") cellsPerBeat= 4;
+		else cellsPerBeat = Number(cellsPerBeat);
 
 		// add a div to contain all our parameter canvases
 		let ele = document.getElementById(canvasDiv);
@@ -348,15 +346,15 @@ class View
 			let canvObj = null;
 			//if (this.paramList[i]=="Pianoroll")canvObj=new PianoRollCanvas("track-p"+i+"-"+name,vCells,hCells);
 			if (this.paramList[i] == "Pianoroll")
-				canvObj=new PianoRollCanvas("track-p"+i+"-"+name,this.pianoRollVCellDefault,hCells);
+				canvObj=new PianoRollCanvas("track-p"+i+"-"+name,this.pianoRollVCellDefault,hCells,cellsPerBeat);
 			else if (this.paramList[i] == "Lollipop")
-				canvObj=new SliderCanvas("track-p"+i+"-"+name,this.sliderVCellDefault,hCells,"lollipop");
+				canvObj=new SliderCanvas("track-p"+i+"-"+name,this.sliderVCellDefault,hCells,cellsPerBeat,"lollipop");
 			else if (this.paramList[i] == "Bars")
-				canvObj=new SliderCanvas("track-p"+i+"-"+name,this.sliderVCellDefault,hCells,"solid");
+				canvObj=new SliderCanvas("track-p"+i+"-"+name,this.sliderVCellDefault,hCells,cellsPerBeat,"solid");
 			else if (this.paramList[i] == "Event")
-				canvObj=new CodedEventCanvas("track-p"+i+"-"+name,hCells);
+				canvObj=new CodedEventCanvas("track-p"+i+"-"+name,hCells,cellsPerBeat);
 			else 
-				canvObj=new PianoRollCanvas("track-p"+i+"-"+name,this.pianoRollVCellDefault,hCells);
+				canvObj=new PianoRollCanvas("track-p"+i+"-"+name,this.pianoRollVCellDefault,hCells,cellsPerBeat);
 			tempCanv.push(canvObj);
 		}
 
