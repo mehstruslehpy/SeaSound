@@ -471,6 +471,36 @@ class CodedEventCanvas
 	{
 		this.rectangleList.splice(i,j);
 	}
+	// Convert the input rectangle to a triple [start time, duration, note]
+	convertRectToNote(rect,bpm)
+	{
+		// Get the start time relative to the cell scaling of the left point
+		let start = rect[0].x/this.cellWidth; 
+		start = Math.round(start * this.snapAmount) / this.snapAmount; // mult/div here preserves snapping
+		// Get the note duration relative to the same cell scaling
+		let dur = (rect[1].x - rect[0].x)/this.cellWidth; 
+		dur = Math.round(dur * this.snapAmount) / this.snapAmount; // mult/div here preserves snapping
+		// Convert raw cell values to values in seconds
+		start = this.cellsToSeconds(start,bpm);
+		dur = this.cellsToSeconds(dur,bpm);
+		return [start,dur,rect[2]]; // rect[2] contains the text output of this rectangle
+	}
+	getNoteOutput(bpm)
+	{
+		let out = new Array();
+		for (let i = 0; i < this.rectangleList.length; i++)
+		{
+			let note = this.convertRectToNote(this.rectangleList[i],bpm);
+			out.push(note);	
+		}
+		return out;
+	}
+	cellsToSeconds(c,bpm)
+	{
+		// Conversion cell number * (beats / minute) * (cells / beat) * (minutes / second)
+		// = cells per second
+		return c*bpm*this.cellsPerBeat*(1/60);
+	}
 }
 // Draw the divisions
 //let codedEventObject= new CodedEventCanvas(".codedEventCanvas",40);
