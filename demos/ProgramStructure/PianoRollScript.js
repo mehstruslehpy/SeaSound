@@ -1,7 +1,7 @@
 //TODO: Add a double parameter matrix widget
 //TODO: Add a spreadsheet widget for manual input
 //TODO: Highlight octave cells
-//TODO: Make note snapping configurable
+//TODO: Need to convert pitch values to pitch classes
 class PianoRollCanvas
 {
 	coord = {x:0, y:0}; // the coords of the mouse
@@ -30,6 +30,9 @@ class PianoRollCanvas
 
 	// For unit conversion
 	cellsPerBeat = 1;
+
+	// For snapping to grid
+	snapAmount = 1;
 
 	// Initial set up
 	constructor(query,horizontalCells,verticalCells,cellsPerBeat)
@@ -75,10 +78,17 @@ class PianoRollCanvas
 			controlText += "rf: change amount to translate by\n";
 			controlText += "tg: change X scaling amount\n";
 			controlText += "yh: change Y scaling amount\n";
+			controlText += "x: change snap to grid amount\n";
 			controlText += "ctrl: toggle note/delete modes\n";
 
 		if (ev.key == "Control" && this.triggerMode) this.controlPressed = true;
 		else if (ev.key == "h") alert(controlText);
+		else if (ev.key == "x") 
+		{
+			let n = prompt("Input snap to grid amount:");
+			for (let i = 0; i < this.instrument.length; i++) this.instrument[i].setSnapAmount(n);
+			for (let i = 0; i < this.instrument.length; i++) this.instrument[i].draw();
+		}
 		else if (ev.key == "q") this.scaleAll(this.scaleAmtX,1);
 		else if (ev.key == "e") this.scaleAll(1/this.scaleAmtX,1);
 		else if (ev.key == "z") this.scaleAll(1,this.scaleAmtY);
@@ -101,10 +111,12 @@ class PianoRollCanvas
 	// TODO: Make this snap amount configurable
 	snapToGrid(c)
 	{
+		let division = 1/this.snapAmount;
 		var out = {
-			x: this.cellWidth * Math.floor(c.x/this.cellWidth),
-			// For some other snap amount b this line can be changed to
-			//x: b * this.cellWidth * Math.floor(c.x/(b*this.cellWidth)),
+			// For no snapping we can do the following
+			//x: this.cellWidth * Math.floor(c.x/this.cellWidth),
+			// Snapping X value to grid
+			x: division * this.cellWidth * Math.floor(c.x/(division*this.cellWidth)),
    			y: this.cellHeight * Math.floor(c.y/this.cellHeight)
 		};
 		return out;
@@ -145,13 +157,21 @@ class PianoRollCanvas
 		if (!this.triggerMode) return;
 		let c = {x:this.coord.x, y:this.coord.y};
 		c = this.screenToWorldCoords(c);
-		for (let i = 0; i < this.rectangleList.length; i++)
+		// Delete the selected note if any exists
+		// Iterating backwards ensures we delete the note at the front of the display
+		for (let i = this.rectangleList.length - 1; i >= 0; i--)
 			if (this.rectangleCollision(c,this.rectangleList[i])) // if cursor lies inside a rectangle
 			{
 				this.rectangleList.splice(i,1); // remove the rectangle
+				// Update the non-triggering widgets too
+				for (let j = 0; j < this.instrument.length; j++)
+					if (this.instrument[j] != this)
+					{
+						this.instrument[j].splice(i,1);
+						this.instrument[j].draw();
+					}
 				break;
 			}
-
 		this.draw();
 	}	
 
@@ -180,6 +200,7 @@ class PianoRollCanvas
 		this.mousePressed = false; // the mouse is no longer pressed
 		this.workingRectangle = null; // The working rectangle is null again
 		this.rectangleList.push([c1,c2]);
+		//this.rectangleList.unshift([c1,c2]);
 
 		// Update the non-triggering widgets
 		for (let i = 0; i < this.instrument.length; i++)
@@ -370,7 +391,7 @@ class PianoRollCanvas
 		let textHeight = this.ctx.measureText('M').width; // The width of capital M approximates height
 		let textWidth = this.ctx.measureText(text).width;
 		this.ctx.fillText(text,this.width-textWidth,textHeight);
-		text = "translate amount: " +this.translateAmt 
+		text = "translate amount: " +this.translateAmt +", snap amount: "+this.snapAmount;
 		textWidth = this.ctx.measureText(text).width;
 		this.ctx.fillText(text,this.width-textWidth,2*textHeight);
 		text = "x zoom amount: " + this.scaleAmtX.toFixed(2);
@@ -392,11 +413,13 @@ class PianoRollCanvas
 		// set up left click coords
 		this.leftClickEnd = this.screenToWorldCoords(this.coord);
 
+		let division = 1/this.snapAmount;
+
 		// Line the two x coords up to snap to the appropriate rectangle edges
 		if (this.leftClickStart.x <= this.leftClickEnd.x) 
-			this.leftClickEnd.x += this.cellWidth;
+			this.leftClickEnd.x += this.cellWidth * division;
 		else 
-			this.leftClickEnd.x = this.leftClickStart.x+this.cellWidth;
+			this.leftClickEnd.x = this.leftClickStart.x+this.cellWidth * division;
 
 		// Line the two y coords up to snap to the appropriate rectangle edges
 		if (this.leftClickStart.y <= this.leftClickEnd.y)
@@ -484,16 +507,17 @@ class PianoRollCanvas
 		let c1 = {x:rect[0].x,y:0};
 		let c2 = {x:rect[1].x,y:this.cellHeight};
 		this.rectangleList.push([c1,c2]);
+		//this.rectangleList.unshift([c1,c2]);
 	}
 	// Convert the input rectangle to a triple [start time, duration, note]
 	convertRectToNote(rect,bpm)
 	{
 		// Get the start time relative to the cell scaling of the left point
 		let start = rect[0].x/this.cellWidth; 
-		start = Math.round(start);
+		start = Math.round(start * this.snapAmount) / this.snapAmount; // mult/div here preserves snapping
 		// Get the note duration relative to the same cell scaling
 		let dur = (rect[1].x - rect[0].x)/this.cellWidth; 
-		dur = Math.round(dur);
+		dur = Math.round(dur * this.snapAmount) / this.snapAmount; // mult/div here preserves snapping
 		// Get the pitch with respect to the bottom left corner of the canvas scaled relative to the cell height
 		let pitch = (this.height - rect[0].y)/this.cellHeight;
 		pitch = pitch - 1; // the very bottom note of the canvas is zero rather than 1
@@ -520,5 +544,18 @@ class PianoRollCanvas
 		// Conversion cell number * (beats / minute) * (cells / beat) * (minutes / second)
 		// = cells per second
 		return c*bpm*this.cellsPerBeat*(1/60);
+	}
+
+	// Setter for the snap to grid amount
+	setSnapAmount(n)
+	{
+		if (n>=1) this.snapAmount = Math.trunc(n);
+		else this.snapAmount = 1;
+		// sometimes our snap code skips drawing so force a draw
+		//this.draw();
+	}
+	splice(i,j)
+	{
+		this.rectangleList.splice(i,j);
 	}
 }

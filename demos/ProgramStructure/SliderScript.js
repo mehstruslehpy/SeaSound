@@ -1,5 +1,5 @@
 //TODO: Add more draw styles
-//TODO: Delete clicks sometimes delete a different note in the horizontal division from what is expected
+//TODO: Need to check that deletion works as expected with this one. It might be kind of weird
 class SliderCanvas 
 {
 	coord = {x:0, y:0}; // the coords of the mouse
@@ -26,6 +26,9 @@ class SliderCanvas
 
 	// For unit conversion
 	cellsPerBeat = 1;
+
+	// Snap amount
+	snapAmount = 1;
 
 	// Initial set up
 	constructor(query,horizontalCells,verticalCells,cellsPerBeat,rectangleStyle)
@@ -74,9 +77,16 @@ class SliderCanvas
 			controlText += "rf: change amount to translate by\n";
 			controlText += "tg: change X scaling amount\n";
 			controlText += "yh: change Y scaling amount\n";
+			controlText += "x: change snap to grid amount\n";
 			controlText += "ctrl: toggle enter/delete modes\n";
 
 		if (ev.key == "Control" && this.triggerMode) this.controlPressed = true;
+		else if (ev.key == "x") 
+		{
+			let n = prompt("Input snap to grid amount:");
+			for (let i = 0; i < this.instrument.length; i++) this.instrument[i].setSnapAmount(n);
+			for (let i = 0; i < this.instrument.length; i++) this.instrument[i].draw();
+		}
 		else if (ev.key == "h") alert(controlText);
 		else if (ev.key == "q") this.scaleAll(this.scaleAmtX,1);
 		else if (ev.key == "e") this.scaleAll(1/this.scaleAmtX,1);
@@ -99,8 +109,9 @@ class SliderCanvas
 	// Snap input coordinates to grid and return the resulting coord
 	snapToGrid(c)
 	{
+		let division = 1/this.snapAmount;
 		var out = {
-			x: this.cellWidth * Math.floor(c.x/this.cellWidth),
+			x: division * this.cellWidth * Math.floor(c.x/(division * this.cellWidth)),
    			//y: this.cellHeight * Math.floor(c.y/this.cellHeight)
    			y: c.y 
 		};
@@ -149,22 +160,39 @@ class SliderCanvas
 		if (!this.triggerMode) return;
 		let c = {x:this.coord.x, y:this.coord.y};
 		c = this.screenToWorldCoords(c);
-		for (let i = 0; i < this.sliderList.length; i++)
+		// Delete the selected note if any exists
+		// Iterating backwards ensures we delete the note at the front of the display
+		for (let i = this.sliderList.length - 1; i >= 0; i--)
 			switch (this.rectangleStyle)
 			{
 				case "lollipop":
 					if (this.lollipopCollision(c,this.sliderList[i]))
 					{
 						this.sliderList.splice(i,1);
+						// Update the non-triggering widgets
+						for (let j = 0; j < this.instrument.length; j++)
+							if (this.instrument[j] != this)
+							{
+								this.instrument[j].splice(i,1);
+								this.instrument[j].draw();
+							}
 						break;
 					}
 				case "solid":
 					if (this.solidCollision(c,this.sliderList[i]))
 					{
 						this.sliderList.splice(i,1);
+						// Update the non-triggering widgets
+						for (let j = 0; j < this.instrument.length; j++)
+							if (this.instrument[j] != this)
+							{
+								this.instrument[j].splice(i,1);
+								this.instrument[j].draw();
+							}
 						break;
 					}
 			}
+
 		this.draw();
 	}
 
@@ -381,7 +409,7 @@ class SliderCanvas
 		let textHeight = this.ctx.measureText('M').width; // The width of capital M approximates height
 		let textWidth = this.ctx.measureText(text).width;
 		this.ctx.fillText(text,this.width-textWidth,textHeight);
-		text = "translate amount: " +this.translateAmt 
+		text = "translate amount: " +this.translateAmt +", snap amount: " + this.snapAmount;
 		textWidth = this.ctx.measureText(text).width;
 		this.ctx.fillText(text,this.width-textWidth,2*textHeight);
 		text = "x zoom amount: " + this.scaleAmtX.toFixed(2);
@@ -409,11 +437,13 @@ class SliderCanvas
 	{
 		// snap to the grid
 		this.leftClickStart = this.snapToGrid(this.leftClickStart);
+
+		let division = 1/this.snapAmount;
 		// Line the two x coords up to snap to the appropriate rectangle edges
 		if (this.leftClickStart.x <= this.leftClickEnd.x) 
-			this.leftClickEnd.x += this.cellWidth;
+			this.leftClickEnd.x += this.cellWidth * division;
 		else 
-			this.leftClickEnd.x = this.leftClickStart.x+this.cellWidth;
+			this.leftClickEnd.x = this.leftClickStart.x+this.cellWidth * division;
 
 		// Line the two y coords up to snap to the appropriate rectangle edges
 		if (this.leftClickStart.y <= this.leftClickEnd.y)
@@ -506,6 +536,19 @@ class SliderCanvas
 	rectangleXAxisCollision(pt,rect)
 	{
 		return (rect[0].x <= pt.x && pt.x <= rect[1].x);
+	}
+
+	// Setter for the snap to grid amount
+	setSnapAmount(n)
+	{
+		if (n>=1) this.snapAmount = Math.trunc(n);
+		else this.snapAmount = 1;
+		// sometimes our snap code skips drawing so force a draw
+		//this.draw();
+	}
+	splice(i,j)
+	{
+		this.sliderList.splice(i,j);
 	}
 }
 

@@ -32,6 +32,8 @@ class CodedEventCanvas
 	// For unit conversion
 	cellsPerBeat = 1;
 
+	// Snap amount
+	snapAmount = 1;
 	// Initial set up
 	constructor(query,cells,cellsPerBeat)
 	{
@@ -71,9 +73,16 @@ class CodedEventCanvas
 			controlText += "tg: change X scaling amount\n";
 			controlText += "yh: change Y scaling amount\n";
 			controlText += "i: change input text\n";
+			controlText += "x: change snap to grid amount\n";
 			controlText += "ctrl: toggle note/delete modes\n";
 
 		if (ev.key == "Control" && this.triggerMode) this.controlPressed = true;
+		else if (ev.key == "x") 
+		{
+			let n = prompt("Input snap to grid amount:");
+			for (let i = 0; i < this.instrument.length; i++) this.instrument[i].setSnapAmount(n);
+			for (let i = 0; i < this.instrument.length; i++) this.instrument[i].draw();
+		}
 		else if (ev.key == "h") alert(controlText);
 		else if (ev.key == "q") this.scaleAll(this.scaleAmtX,1);
 		else if (ev.key == "e") this.scaleAll(1/this.scaleAmtX,1);
@@ -97,8 +106,9 @@ class CodedEventCanvas
 	// Snap input coordinates to grid and return the resulting coord
 	snapToGrid(c)
 	{
+		let division = 1/this.snapAmount;
 		var out = {
-			x: this.cellWidth * Math.floor(c.x/this.cellWidth),
+			x: division * this.cellWidth * Math.floor(c.x/(division * this.cellWidth)),
    			y: 0
 		};
 		return out;
@@ -137,10 +147,17 @@ class CodedEventCanvas
 		if (!this.triggerMode) return;
 		let c = {x:this.coord.x, y:this.coord.y};
 		c = {x:this.screenToWorldCoords(c).x, y:0};
-		for (let i = 0; i < this.rectangleList.length; i++)
+		for (let i = this.rectangleList.length - 1; i >= 0; i--)
 			if (this.rectangleCollision(c,this.rectangleList[i])) // if cursor lies inside a rectangle
 			{
 				this.rectangleList.splice(i,1); // remove the rectangle
+				// Update the non-triggering widgets
+				for (let j = 0; j < this.instrument.length; j++)
+					if (this.instrument[j] != this)
+					{
+						this.instrument[j].splice(i,1);
+						this.instrument[j].draw();
+					}
 				break;
 			}
 
@@ -284,7 +301,7 @@ class CodedEventCanvas
 		let textHeight = this.ctx.measureText('M').width; // The width of capital M approximates height
 		let textWidth = this.ctx.measureText(text).width;
 		this.ctx.fillText(text,this.width-textWidth,textHeight);
-		text = "translate amount: " +this.translateAmt 
+		text = "translate amount: " +this.translateAmt + ", snap amount: "+this.snapAmount;
 		textWidth = this.ctx.measureText(text).width;
 		this.ctx.fillText(text,this.width-textWidth,2*textHeight);
 		text = "x zoom amount: " + this.scaleAmtX.toFixed(2);
@@ -409,11 +426,12 @@ class CodedEventCanvas
 		// set up left click coords
 		this.leftClickEnd = this.screenToWorldCoords(this.coord);
 
+		let division = 1/this.snapAmount;
 		// Line the two x coords up to snap to the appropriate rectangle edges
 		if (this.leftClickStart.x <= this.leftClickEnd.x) 
-			this.leftClickEnd.x += this.cellWidth;
+			this.leftClickEnd.x += this.cellWidth * division;
 		else 
-			this.leftClickEnd.x = this.leftClickStart.x+this.cellWidth;
+			this.leftClickEnd.x = this.leftClickStart.x+this.cellWidth * division;
 
 		// Line the two y coords up to snap to the appropriate rectangle edges
 		if (this.leftClickStart.y <= this.leftClickEnd.y)
@@ -440,6 +458,18 @@ class CodedEventCanvas
 	rectangleXAxisCollision(pt,rect)
 	{
 		return (rect[0].x <= pt.x && pt.x <= rect[1].x);
+	}
+	// Setter for the snap to grid amount
+	setSnapAmount(n)
+	{
+		if (n>=1) this.snapAmount = Math.trunc(n);
+		else this.snapAmount = 1;
+		// sometimes our snap code skips drawing so force a draw
+		//this.draw();
+	}
+	splice(i,j)
+	{
+		this.rectangleList.splice(i,j);
 	}
 }
 // Draw the divisions

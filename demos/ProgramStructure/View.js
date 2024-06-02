@@ -19,6 +19,8 @@ class View
 	//The default number of vertical divisions for slider type widgets
 	sliderVCellDefault = 50;
 
+	snapAmount = 1;
+
 	// Opens the corresponding tab
 	OpenTab(tabName, btnID) 
 	{
