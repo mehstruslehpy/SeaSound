@@ -1,5 +1,6 @@
 //TODO: Add more draw styles
 //TODO: Need to check that deletion works as expected with this one. It might be kind of weird
+//TODO: Need to also fix collision code for resetting heights. Doesn't seem to work right.
 class SliderCanvas 
 {
 	coord = {x:0, y:0}; // the coords of the mouse
@@ -155,11 +156,28 @@ class SliderCanvas
 		let c = {x:this.coord.x, y:this.coord.y};
 		c = this.screenToWorldCoords(c);
 		for (let i = 0; i < this.sliderList.length; i++)
-			if (this.rectangleXAxisCollision(c,this.sliderList[i])) // if cursor lies inside a rectangle
+			switch (this.rectangleStyle)
 			{
-				this.sliderList[i][0].y = c.y; // then adjust the y axis coord of the collision rectangle
-				this.sliderList[i][1].y = c.y + this.cellHeight;
+				case "lollipop":
+				{
+					if (this.rectangleXAxisCollision1(c,this.sliderList[i])) // if cursor lies inside a rectangle
+					{
+						this.sliderList[i][0].y = c.y; // then adjust the y axis coord of the collision rectangle
+						this.sliderList[i][1].y = c.y + this.cellHeight;
+					}
+					break;
+				}
+				case "solid":
+				{
+					if (this.rectangleXAxisCollision2(c,this.sliderList[i])) // if cursor lies inside a rectangle
+					{
+						this.sliderList[i][0].y = c.y; // then adjust the y axis coord of the collision rectangle
+						this.sliderList[i][1].y = c.y + this.cellHeight;
+					}
+					break;
+				}
 			}
+	
 		this.draw(); // redraw
 	}
 	controlLeftClickDown()
@@ -472,9 +490,14 @@ class SliderCanvas
 		return this.ctx.getTransform().invertSelf().transformPoint(p);
 	}
 
-	registerInstrument(inst)
+	registerInstrument(inst,name)
 	{
 		this.instrument = inst;
+		this.name = name;
+	}
+	getName()
+	{
+		return this.name;
 	}
 	getTriggerMode()
 	{
@@ -543,12 +566,16 @@ class SliderCanvas
 		let c2 = {x:rect[1].x,y:rect[1].y};
 		this.sliderList.push([c1,c2]);
 	}
-	// Check if pt lies between the rectangles x axis bounds
-	rectangleXAxisCollision(pt,rect)
+	// Check if pt lies in division/snapAmount of left point of rectangle along x axis
+	rectangleXAxisCollision1(pt,rect)
+	{
+		return (rect[0].x <= pt.x && pt.x <= rect[0].x+this.cellWidth/this.snapAmount);
+	}
+	// Check if pt lies in x bounds of the given rectangle
+	rectangleXAxisCollision2(pt,rect)
 	{
 		return (rect[0].x <= pt.x && pt.x <= rect[1].x);
 	}
-
 	// Setter for the snap to grid amount
 	setSnapAmount(n)
 	{

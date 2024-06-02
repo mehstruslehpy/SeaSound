@@ -1,5 +1,6 @@
 // TODO: Need to start working on timing logic
 // TODO: Add load and save code for instruments, widgets, project, etc
+// TODO: We aren't getting the name correctly when we try and register names
 class View
 {
 	// There is only one track lane object for the whole program
@@ -431,6 +432,8 @@ class View
 	{
 		// Get the track text name
 		let track = document.getElementById('track-canvases-select').textContent; // get the select tag
+		let sel = document.getElementById('track-canvases-select'); // get the select tag
+		track = sel.options[sel.selectedIndex].text; // the text of the selected option
 		track = this.CleanName(track);
 		// Get the beats per minute of the project
 		let bpmText = document.getElementById('playlist-bpm').value; // get the select tag
@@ -438,6 +441,13 @@ class View
 		// Get a string with the track code
 		let params = this.trackMap.get(track)
 		let paramList = params[0].getNoteOutput(Number(bpmText));
+		// Prefix each paramList element with the name of the selected instrument
+		for (let i = 0; i < paramList.length; i++) paramList[i].unshift(params[0].getName());
+		for (let i = 1; i < params.length; i++)
+		{
+			let out = params[i].getNoteOutput(Number(bpmText));
+			for (let j = 0; j < out.length; j++) paramList[j].push(out[j][2]);
+		}
 		// print the track to the console.
 		console.log(paramList);
 

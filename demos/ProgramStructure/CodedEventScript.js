@@ -314,9 +314,15 @@ class CodedEventCanvas
 	}
 
 
-	registerInstrument(inst)
+	registerInstrument(inst,name)
 	{
 		this.instrument = inst;
+		this.name = name;
+	}
+
+	getName()
+	{
+		return this.name;
 	}
 	getTriggerMode()
 	{

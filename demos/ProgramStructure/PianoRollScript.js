@@ -144,7 +144,6 @@ class PianoRollCanvas
 		for (let i = 0; i < this.rectangleList.length; i++)
 			if (this.rectangleXAxisCollision(c,this.rectangleList[i])) // if cursor lies inside a rectangle
 			{
-				console.log("Piano collision");
 				this.rectangleList[i][0].y = c.y; // then adjust the y axis coord of the collision rectangle
 				this.rectangleList[i][1].y = c.y+this.cellHeight;
 			}
@@ -436,6 +435,11 @@ class PianoRollCanvas
 	{
 		this.instrument = inst;
 		this.name = name;
+	}
+
+	getName()
+	{
+		return this.name;
 	}
 
 	// Getter for trigger mode variable
