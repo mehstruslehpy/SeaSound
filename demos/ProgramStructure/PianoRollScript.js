@@ -527,7 +527,8 @@ class PianoRollCanvas
 		// Convert raw cell values to values in seconds
 		start = this.cellsToSeconds(start,bpm);
 		dur = this.cellsToSeconds(dur,bpm);
-		return {start: start, duration: dur, pitch: pitch};
+		//return {start: start, duration: dur, pitch: pitch};
+		return [start,dur,pitch];
 	}
 	getNoteOutput(bpm)
 	{

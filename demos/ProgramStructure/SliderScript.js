@@ -30,6 +30,10 @@ class SliderCanvas
 	// Snap amount
 	snapAmount = 1;
 
+	// max and min values for output, output values are scaled to this range
+	maxOut = 1;
+	minOut = -1;
+
 	// Initial set up
 	constructor(query,horizontalCells,verticalCells,cellsPerBeat,rectangleStyle)
 	{
@@ -78,6 +82,7 @@ class SliderCanvas
 			controlText += "tg: change X scaling amount\n";
 			controlText += "yh: change Y scaling amount\n";
 			controlText += "x: change snap to grid amount\n";
+			controlText += "nm: change output max/min values\n";
 			controlText += "ctrl: toggle enter/delete modes\n";
 
 		if (ev.key == "Control" && this.triggerMode) this.controlPressed = true;
@@ -102,6 +107,8 @@ class SliderCanvas
 		else if (ev.key == "g") this.scaleAmountAll(this.scaleAmtX/(1+1/(2**4)),this.scaleAmtY);
 		else if (ev.key == "y") this.scaleAmountAll(this.scaleAmtX,this.scaleAmtY*(1+1/(2**4)));
 		else if (ev.key == "h") this.scaleAmountAll(this.scaleAmtX,this.scaleAmtY/(1+1/(2**4)));
+		else if (ev.key == "m") this.setMax(prompt("Set maximum output value:"));
+		else if (ev.key == "n") this.setMin(prompt("Set minimum output value:"));
 	
 		this.draw();	
 	}
@@ -416,6 +423,10 @@ class SliderCanvas
 		text += ", y zoom amount: " + this.scaleAmtY.toFixed(2);
 		textWidth = this.ctx.measureText(text).width;
 		this.ctx.fillText(text,this.width-textWidth,3*textHeight);
+		text = "max output: " + this.maxOut.toFixed(2);
+		text += ", min output: " + this.minOut.toFixed(2);
+		textWidth = this.ctx.measureText(text).width;
+		this.ctx.fillText(text,this.width-textWidth,4*textHeight);
 	}
 
 	// draw outlines around the viewport
@@ -549,6 +560,46 @@ class SliderCanvas
 	splice(i,j)
 	{
 		this.sliderList.splice(i,j);
+	}
+	setMax(n)
+	{
+		this.maxOut = Number(n);
+	}
+	setMin(n)
+	{
+		this.minOut = Number(n);
+	}
+	// Convert the input rectangle to a triple [start time, duration, note]
+	convertRectToNote(rect,bpm)
+	{
+		// Get the start time relative to the cell scaling of the left point
+		let start = rect[0].x/this.cellWidth; 
+		start = Math.round(start * this.snapAmount) / this.snapAmount; // mult/div here preserves snapping
+		// Get the note duration relative to the same cell scaling
+		let dur = (rect[1].x - rect[0].x)/this.cellWidth; 
+		dur = Math.round(dur * this.snapAmount) / this.snapAmount; // mult/div here preserves snapping
+		// Translate and scale the output value to the appropriate range
+		let val = (this.maxOut - this.minOut) * (this.height - rect[0].y)/this.height + this.minOut;
+		// Convert raw cell values to values in seconds
+		start = this.cellsToSeconds(start,bpm);
+		dur = this.cellsToSeconds(dur,bpm);
+		return [start,dur,val];
+	}
+	getNoteOutput(bpm)
+	{
+		let out = new Array();
+		for (let i = 0; i < this.sliderList.length; i++)
+		{
+			let note = this.convertRectToNote(this.sliderList[i],bpm);
+			out.push(note);	
+		}
+		return out;
+	}
+	cellsToSeconds(c,bpm)
+	{
+		// Conversion cell number * (beats / minute) * (cells / beat) * (minutes / second)
+		// = cells per second
+		return c*bpm*this.cellsPerBeat*(1/60);
 	}
 }
 
