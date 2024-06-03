@@ -1,6 +1,4 @@
-// TODO: Need to start working on timing logic
 // TODO: Add load and save code for instruments, widgets, project, etc
-// TODO: We aren't getting the name correctly when we try and register names
 class View
 {
 	// There is only one track lane object for the whole program
@@ -449,7 +447,18 @@ class View
 			for (let j = 0; j < out.length; j++) paramList[j].push(out[j][2]);
 		}
 		// print the track to the console.
-		console.log(paramList);
+		let outStr = "";
+		for (let i = 0; i < paramList.length; i++) // for every note 
+		{
+			outStr += "i \""+paramList[i][0]+"\""; // instrument name, named instruments are surrounded in quotes
+			for (let j = 1; j < paramList[i].length; j++) // for every parameter of the note
+			{
+				outStr += " "+String(paramList[i][j]); // add the parameter to the current line
+			}
+			outStr += "\n";
+		}
+		//console.log(paramList);
+		console.log(outStr);
 
 		// Print the instrument code to modal in browser
 		//document.getElementById("instr-code-dialog").showModal();

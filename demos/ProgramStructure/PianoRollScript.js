@@ -1,6 +1,5 @@
 //TODO: Add a double parameter matrix widget
 //TODO: Add a spreadsheet widget for manual input
-//TODO: Highlight octave cells
 //TODO: Need to convert pitch values to pitch classes
 class PianoRollCanvas
 {
@@ -526,13 +525,10 @@ class PianoRollCanvas
 		let pitch = (this.height - rect[0].y)/this.cellHeight;
 		pitch = pitch - 1; // the very bottom note of the canvas is zero rather than 1
 		pitch = Math.round(pitch);
-		// To output cell values do this:
-		//return {start: start, duration: dur, pitch: pitch};
 		// Convert raw cell values to values in seconds
 		start = this.cellsToSeconds(start,bpm);
 		dur = this.cellsToSeconds(dur,bpm);
-		//return {start: start, duration: dur, pitch: pitch};
-		return [start,dur,pitch];
+		return [start,dur,this.noteToPitchClass(pitch)];
 	}
 	getNoteOutput(bpm)
 	{
@@ -562,5 +558,13 @@ class PianoRollCanvas
 	splice(i,j)
 	{
 		this.rectangleList.splice(i,j);
+	}
+	// Converts a note to a pitch class value
+	noteToPitchClass(n)
+	{
+		let octave = Math.floor(n/12);
+		let remainder = n % 12;
+		remainder = ('00'+remainder).slice(-2); // forces remainder to be two digits with zero padding
+		return String(octave)+"."+String(remainder);
 	}
 }

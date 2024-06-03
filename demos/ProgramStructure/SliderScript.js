@@ -1,6 +1,4 @@
-//TODO: Add more draw styles
 //TODO: Need to check that deletion works as expected with this one. It might be kind of weird
-//TODO: Need to also fix collision code for resetting heights. Doesn't seem to work right.
 class SliderCanvas 
 {
 	coord = {x:0, y:0}; // the coords of the mouse

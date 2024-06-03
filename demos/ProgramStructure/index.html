@@ -1,7 +1,6 @@
 <!-- TODO: Add an f statement builder widget -->
 <!-- TODO: Possibly add tools for automation clip style tools -->
 <!-- TODO: I think adding to the front will solve the issue with delete modes deleting unexpected things under mouse cursor in canvases -->
-<!-- TODO: Cells per beat should probably not be so global -->
 <!DOCTYPE html>
 <html lang="en-US">
   <head>
@@ -279,7 +278,7 @@
 
 				<!-- Pop up dialog containing node parameters -->
 				<dialog id="instr-code-dialog">
-				<textarea readonly id="instrument-code-dialog-output" style="width:500px;height:150px;white-space:nowrap;">
+				<textarea readonly id="instrument-code-dialog-output" style="width:500px;height:150px;">
 				</textarea>
 				<form method="dialog">
 				<button id="cancel" type="reset" onclick='document.getElementById("instr-code-dialog").close();'>Close</button>
