@@ -461,8 +461,8 @@ class View
 		console.log(outStr);
 
 		// Print the instrument code to modal in browser
-		//document.getElementById("instr-code-dialog").showModal();
-		//document.getElementById("instrument-code-dialog-output").textContent = outString;
+		document.getElementById("track-code-dialog").showModal();
+		document.getElementById("track-code-dialog-output").textContent = outStr;
 	}
 
 }

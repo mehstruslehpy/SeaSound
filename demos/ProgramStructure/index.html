@@ -195,6 +195,17 @@
 				</form>
 				</dialog>
 			</div>
+
+			<!-- Pop up dialog containing csound track -->
+			<dialog id="track-code-dialog">
+			<textarea readonly id="track-code-dialog-output" style="width:500px;height:150px;">
+			</textarea>
+			<form method="dialog">
+			<button id="cancel" type="reset" onclick='document.getElementById("track-code-dialog").close();'>Close</button>
+			</form>
+			</dialog>
+
+
 			<!-- Canvases for track lane diagrams-->
 			<!-- the tabindex value makes the canvas focusable for catching keystrokes -->
 			<div id="track-canvases"></div>
