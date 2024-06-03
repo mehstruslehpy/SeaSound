@@ -507,6 +507,16 @@ class CodedEventCanvas
 		// = cells per second
 		return c*bpm*this.cellsPerBeat*(1/60);
 	}
+	// Getter for the number of cells per beat
+	getCellsPerBeat()
+	{
+		return this.cellsPerBeat;
+	}
+	// Getter for the number of notes
+	getNotes()
+	{
+		return this.horizontalCells;
+	}
 }
 // Draw the divisions
 //let codedEventObject= new CodedEventCanvas(".codedEventCanvas",40);

@@ -56,6 +56,33 @@ class View
 		this.ResetParameter();
 	}
 
+	// For the pattern selector
+	PatternSelect()
+	{
+		let sel = document.getElementById('pattern-select'); // get the select tag
+		let instrument = sel.options[sel.selectedIndex].text; // the text of the selected option
+		console.log(instrument);	
+		// get the number of notes
+		let notes = this.trackMap.get(instrument)[0].getNotes();
+		console.log(notes);
+		// get the number of cells per beat
+		let cellsPerBeat = this.trackMap.get(instrument)[0].getCellsPerBeat();
+		// Get the number of beats per block
+		let beatsPerBlock = document.getElementById('playlist-bpb').value;
+		if (beatsPerBlock == "") beatsPerBlock = document.getElementById('playlist-bpb').placeholder;
+		beatsPerBlock = Number(beatsPerBlock);
+		console.log(beatsPerBlock);
+		// Convert to the number of blocks rounded to the nearest integer
+		// cells/(cells/beat) is the number of beats
+		// beats/(beats/block) is the number of blocks
+		//let blocks = Math.round(notes/(cellsPerBeat*beatsPerBlock));
+		// TODO: Should this be ceiling, round or floor?
+		let blocks = Math.ceil(notes/(cellsPerBeat*beatsPerBlock));
+		console.log(blocks);
+		this.trackLaneObject.setBlockSize(blocks);
+		this.trackLaneObject.setBlockName(this.trackMap.get(instrument)[0].getName());
+	}
+
 	// Hides all canvases attached to the canvas div
 	HideAllCanvases(divId)
 	{

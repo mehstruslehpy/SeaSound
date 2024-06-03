@@ -10,6 +10,7 @@ class TrackLaneCanvas
 	moveIndex = -1; // the index that the collision occurred at 
 	controlPressed = false; // tracks whether control has been pressed
 	blockSize = 1; // length of the rectangle to draw
+	blockName = "EMPTY";
 	
 	// values for changing the scale and translate amount
 	translateAmt = 10;
@@ -93,8 +94,8 @@ class TrackLaneCanvas
 			controlText += "ctrl: toggle block/delete modes\n";
 
     	if (ev.key == "Control") this.controlPressed = true;
-    	else if (ev.key == "=") this.incrementBlockSize();
-    	else if (ev.key == "-") this.decrementBlockSize();
+    	//else if (ev.key == "=") this.incrementBlockSize();
+    	//else if (ev.key == "-") this.decrementBlockSize();
 		else if (ev.key == "h") alert(controlText);
 		else if (ev.key == "q") this.ctx.scale(this.scaleAmtX,1);
 		else if (ev.key == "e") this.ctx.scale(1/this.scaleAmtX,1);
@@ -195,6 +196,7 @@ class TrackLaneCanvas
 			// Save the entry of the track list that we are attempting to move
 			let tempLeft  = {x:this.trackList[i][0].x, y:this.trackList[i][0].y};
 			let tempRight  = {x:this.trackList[i][1].x, y:this.trackList[i][1].y};
+			let tempName = this.trackList[i][2];
 			
 			// remove it from the current track list
 			this.trackList.splice(i,1);
@@ -203,7 +205,7 @@ class TrackLaneCanvas
 			let collision = this.rectCollisionCheck(tempLeft,tempRight);
 
 			// if no collision occurred we can readd it, otherwise it will be deleted
-			if (!collision) this.trackList.push([tempLeft,tempRight]);
+			if (!collision) this.trackList.push([tempLeft,tempRight,tempName]);
 
 			// We are done moving the track
 			this.existingCollision = false;
@@ -219,7 +221,7 @@ class TrackLaneCanvas
 		let newLeft = {x:this.leftClickStart.x, y:this.leftClickStart.y};
 		let newRight = {x:this.leftClickEnd.x, y:this.leftClickEnd.y};
 		// If no collisions occur we can insert the finished rectangle
-		if (!collision) this.trackList.push([newLeft,newRight]);
+		if (!collision) this.trackList.push([newLeft,newRight,this.blockName]);
 		this.workingRectangle = null;
 		this.draw();
 	}
@@ -318,15 +320,16 @@ class TrackLaneCanvas
 		{
 			let c1 = this.trackList[i][0];
 			let c2 = this.trackList[i][1];
-			this.drawRectangle(c1,c2);
+			let name = this.trackList[i][2];
+			this.drawRectangle(c1,c2,name);
 		}
 		if (this.workingRectangle != null)
-			this.drawRectangle(this.workingRectangle[0],this.workingRectangle[1]);
+			this.drawRectangle(this.workingRectangle[0],this.workingRectangle[1],this.blockName);
 
 		// Draw the outlines for the canvas too
 		this.viewportOutline();
 	}
-	drawRectangle(topLeft,bottomRight)
+	drawRectangle(topLeft,bottomRight,name)
 	{
 		// Now we can draw the rectangle 
 		this.ctx.fillStyle = "rgb(0 0 255)";
@@ -347,6 +350,14 @@ class TrackLaneCanvas
 		this.ctx.lineWidth = 2;
 		this.ctx.strokeStyle = 'black';
 		this.ctx.stroke();
+
+		// draw the text
+		this.ctx.lineWidth = 2;
+		this.ctx.strokeStyle = 'black';
+		this.ctx.stroke();
+		this.ctx.font = "bold 50px Arial";
+		this.ctx.fillStyle = 'black';
+		this.ctx.fillText(name,topLeft.x,topLeft.y,Math.abs(topLeft.x-bottomRight.x));
 	}
     // Draw a circle around the input coord
     circleCoord(c)
@@ -461,13 +472,25 @@ class TrackLaneCanvas
 		let textHeight = this.ctx.measureText('M').width; // The width of capital M approximates height
 		let textWidth = this.ctx.measureText(text).width;
 		this.ctx.fillText(text,this.width-textWidth,textHeight);
-		text = "block size: " + this.blockSize;
-		text += " translate amount: " +this.translateAmt 
+		text = "block size: " + this.blockSize + ", block name: "+this.blockName;
 		textWidth = this.ctx.measureText(text).width;
 		this.ctx.fillText(text,this.width-textWidth,2*textHeight);
 		text = "x zoom amount: " + this.scaleAmtX.toFixed(2);
 		text += ", y zoom amount: " + this.scaleAmtY.toFixed(2);
 		textWidth = this.ctx.measureText(text).width;
 		this.ctx.fillText(text,this.width-textWidth,3*textHeight);
+		text = "translate amount: " +this.translateAmt;
+		textWidth = this.ctx.measureText(text).width;
+		this.ctx.fillText(text,this.width-textWidth,4*textHeight);
+	}
+	setBlockSize(sz)
+	{
+		this.blockSize = sz;
+		this.draw();
+	}
+	setBlockName(name)
+	{
+		this.blockName = name;
+		this.draw();
 	}
 }

@@ -567,4 +567,15 @@ class PianoRollCanvas
 		remainder = ('00'+remainder).slice(-2); // forces remainder to be two digits with zero padding
 		return String(octave)+"."+String(remainder);
 	}
+
+	// Getter for the number of cells per beat
+	getCellsPerBeat()
+	{
+		return this.cellsPerBeat;
+	}
+	// Getter for the number of notes
+	getNotes()
+	{
+		return this.verticalCells;
+	}
 }
