@@ -336,10 +336,10 @@ class View
 
 		// Read in input arguments 
 		let hCells = document.getElementById("track-horizontal-cells").value;
-		if (hCells == "") hCells = 40;
+		if (hCells == "") Number(hCells = document.getElementById("track-horizontal-cells").placeholder);
 		else hCells = Number(hCells);
 		let cellsPerBeat = document.getElementById("track-cells-per-beat").value;
-		if (cellsPerBeat == "") cellsPerBeat= 4;
+		if (cellsPerBeat == "") Number(cellsPerBeat = document.getElementById("track-cells-per-beat").placeholder);
 		else cellsPerBeat = Number(cellsPerBeat);
 
 		// add a div to contain all our parameter canvases
