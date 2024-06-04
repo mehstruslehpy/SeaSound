@@ -1,4 +1,5 @@
 // TODO: Add load and save code for instruments, widgets, project, etc
+// TODO: We might also be able to add a marker on playback to show playback
 class View
 {
 	// There is only one track lane object for the whole program
@@ -454,8 +455,7 @@ class View
 		document.getElementById("instrument-code-dialog-output").textContent = outString;
 	}
 	// Render the currently selected track
-	// TODO: Need to iterate across all the parameters here
-	renderTrack()
+	renderTrack(offset)
 	{
 		// Get the track text name
 		let track = document.getElementById('track-canvases-select').textContent; // get the select tag
@@ -465,17 +465,23 @@ class View
 		// Get the beats per minute of the project
 		let bpmText = document.getElementById('playlist-bpm').value; // get the select tag
 		if (bpmText == "") bpmText = document.getElementById('playlist-bpm').placeholder;
-		// Get a string with the track code
+		// Get the track
 		let params = this.trackMap.get(track)
+		// Geet the note output for the triggering parameter, this includes the start and duration times
 		let paramList = params[0].getNoteOutput(Number(bpmText));
 		// Prefix each paramList element with the name of the selected instrument
 		for (let i = 0; i < paramList.length; i++) paramList[i].unshift(params[0].getName());
+		// Add offset times to start times
+		for (let i = 0; i < paramList.length; i++) paramList[i][0] += offset;
+		// Get the remaining parameters
 		for (let i = 1; i < params.length; i++)
 		{
 			let out = params[i].getNoteOutput(Number(bpmText));
 			for (let j = 0; j < out.length; j++) paramList[j].push(out[j][2]);
 		}
-		// print the track to the console.
+		// For convenience sort the notes by their start times, csound does this anyway, so this is for easy reading
+		params.sort(function(a,b){ return a[1] > a[1]; });
+		// Convert the track to a string
 		let outStr = "";
 		for (let i = 0; i < paramList.length; i++) // for every note 
 		{
@@ -486,7 +492,7 @@ class View
 			}
 			outStr += "\n";
 		}
-		//console.log(paramList);
+		// Print the track string to the console
 		console.log(outStr);
 
 		// Print the instrument code to modal in browser

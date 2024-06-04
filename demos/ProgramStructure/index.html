@@ -1,6 +1,7 @@
 <!-- TODO: Add an f statement builder widget -->
-<!-- TODO: Possibly add tools for automation clip style tools -->
+<!-- TODO: Possibly add tools for automation clip style tools, this might also be doable via globals -->
 <!-- TODO: I think adding to the front will solve the issue with delete modes deleting unexpected things under mouse cursor in canvases -->
+<!-- TODO: Add audio clip editing/arranging features -->
 <!DOCTYPE html>
 <html lang="en-US">
   <head>
@@ -139,7 +140,7 @@
 				<!-- Display the currently parameter -->
 				<label class="lr-pad" id="param-num">Current Parameter: *** </label>
 				<!-- Button to kick off rendering the output of the track to text -->
-				<button class="lr-pad" onclick='viewObj.renderTrack();'>
+				<button class="lr-pad" onclick='viewObj.renderTrack(0);'>
 					Render Track
 				</button>
 	
