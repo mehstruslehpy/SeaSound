@@ -64,19 +64,21 @@ class View
 		console.log(instrument);	
 		// get the number of notes
 		let notes = this.trackMap.get(instrument)[0].getNotes();
-		console.log(notes);
+		console.log("Number of beats: "+notes);
 		// get the number of cells per beat
 		let cellsPerBeat = this.trackMap.get(instrument)[0].getCellsPerBeat();
 		// Get the number of beats per block
 		let beatsPerBlock = document.getElementById('playlist-bpb').value;
 		if (beatsPerBlock == "") beatsPerBlock = document.getElementById('playlist-bpb').placeholder;
 		beatsPerBlock = Number(beatsPerBlock);
-		console.log(beatsPerBlock);
+		console.log("Beats per block: "+beatsPerBlock);
+		console.log("Cells per beat: "+cellsPerBeat);
 		// Convert to the number of blocks rounded to the nearest integer
 		// cells/(cells/beat) is the number of beats
 		// beats/(beats/block) is the number of blocks
 		//let blocks = Math.round(notes/(cellsPerBeat*beatsPerBlock));
 		// TODO: Should this be ceiling, round or floor?
+		// TODO: I think this unit conversion is wrong
 		let blocks = Math.ceil(notes/(cellsPerBeat*beatsPerBlock));
 		console.log(blocks);
 		this.trackLaneObject.setBlockSize(blocks);
@@ -336,10 +338,10 @@ class View
 
 		// Read in input arguments 
 		let hCells = document.getElementById("track-horizontal-cells").value;
-		if (hCells == "") Number(hCells = document.getElementById("track-horizontal-cells").placeholder);
+		if (hCells == "") hCells = Number(document.getElementById("track-horizontal-cells").placeholder);
 		else hCells = Number(hCells);
 		let cellsPerBeat = document.getElementById("track-cells-per-beat").value;
-		if (cellsPerBeat == "") Number(cellsPerBeat = document.getElementById("track-cells-per-beat").placeholder);
+		if (cellsPerBeat == "") cellsPerBeat = Number(document.getElementById("track-cells-per-beat").placeholder);
 		else cellsPerBeat = Number(cellsPerBeat);
 
 		// add a div to contain all our parameter canvases

@@ -56,7 +56,7 @@ class PianoRollCanvas
 		this.cellHeight = this.height/this.horizontalCells;
 
 		// For unit conversion later
-		//this.cellsPerBeat = cellsPerBeat;
+		this.cellsPerBeat = cellsPerBeat;
 
 		var that = this;
 		this.canvas.addEventListener('mousedown', function(ev) { that.leftClickDown(); }); 
