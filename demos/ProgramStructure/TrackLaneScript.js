@@ -11,6 +11,7 @@ class TrackLaneCanvas
 	controlPressed = false; // tracks whether control has been pressed
 	blockSize = 1; // length of the rectangle to draw
 	blockName = "EMPTY";
+	rectangleFontSize = 1;
 	
 	// values for changing the scale and translate amount
 	translateAmt = 10;
@@ -39,6 +40,13 @@ class TrackLaneCanvas
 		// Compute widths and heights of cells
 		this.cellWidth = this.width/this.verticalCells; // the number of vertical cell divisions controls cell widths
 		this.cellHeight = this.height/this.horizontalCells; // the number of horizontal cell divisions controls cell heights
+
+		// set up font height
+		while (this.ctx.measureText('M').width < this.cellHeight) // The width of capital M approximates height
+		{
+			this.ctx.font = "bold "+this.rectangleFontSize+"px Arial";
+			this.rectangleFontSize++;
+		}
 
 		var that = this;
 		this.canvas.addEventListener('mousedown', function(ev) { that.leftClickDown(); }); 
@@ -355,9 +363,11 @@ class TrackLaneCanvas
 		this.ctx.lineWidth = 2;
 		this.ctx.strokeStyle = 'black';
 		this.ctx.stroke();
-		this.ctx.font = "bold 50px Arial";
+
+		// get the correct height
+		this.ctx.font = "bold "+this.rectangleFontSize+"px Arial";
 		this.ctx.fillStyle = 'black';
-		this.ctx.fillText(name,topLeft.x,topLeft.y,Math.abs(topLeft.x-bottomRight.x));
+		this.ctx.fillText(name,topLeft.x,topLeft.y+this.cellHeight,Math.abs(topLeft.x-bottomRight.x));
 	}
     // Draw a circle around the input coord
     circleCoord(c)

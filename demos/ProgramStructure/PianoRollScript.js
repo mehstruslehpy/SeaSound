@@ -379,7 +379,7 @@ class PianoRollCanvas
 	helperText()
 	{
 		// Draw text showing the mode
-		let text = ""
+		let text = "";
 		if (this.controlPressed) text = "Delete mode. ";
 		else text = "Note mode. ";
 		text += "Press h for keybinds.";
