@@ -503,4 +503,41 @@ class TrackLaneCanvas
 		this.blockName = name;
 		this.draw();
 	}
+	// Outputs an array of offset times and names for the tracks in the playlist
+	getOffsetsAndNames(bpm,bpb,paramList)
+	{
+		console.log("BEATS PER MIN: "+bpm);
+		console.log("BEATS PER BLOCK: "+bpb);
+		// The array we will output to
+		let outArr = new Array();
+		// Get the cell this track starts at
+		//let start = Math.round(rect[0].x/this.cellWidth); 
+		// Convert start time to offset cell time
+		for (let i = 0; i < this.trackList.length; i++)
+		{
+			let offsetCell = this.coordToCell(this.trackList[i][0].x);
+			let offsetTime = this.cellsToSeconds(offsetCell,bpm,bpb);
+			let name = this.trackList[i][2];
+			//console.log("Cell offset: "+offset);
+			//console.log("Offset in secs: "+this.cellsToSeconds(offset,bpm,bpb));
+			//console.log("Track name: "+this.trackList[i][2]);
+			//console.log(paramList
+			
+			outArr.push([name,offsetTime]);
+		}
+
+		return outArr;
+	}
+	// Round an x coordinate to its cell value
+	coordToCell(n)
+	{
+		return Math.round(n/this.cellWidth);
+	}
+	// convert a cell value to a time in seconds
+	cellsToSeconds(c,bpm,bpb)
+	{
+		// the start time in seconds
+		// start-time = block * (beats / block) * (beats / min) * (min/sec)
+		return c * bpb * bpm * (1/60);
+	}
 }

@@ -85,6 +85,13 @@
 					Reset
 				</button>
 
+				<!-- Button for rendering the score-->
+				<!--<button class="lr-pad" onclick='alert("RENDER SCORE HERE");'>-->
+				<button class="lr-pad" onclick='viewObj.renderScore();'>
+					Render Score
+				</button>
+
+
 				<!-- Pop up dialog for a new canvas -->
 				<dialog id="playlist-dialog">
 				<form method="dialog" style="display:table;">
@@ -263,6 +270,11 @@
 				<button class="lr-pad" onclick='viewObj.renderInstrument();'>
 					Render Instrument
 				</button>
+				<!-- Button for outputting all instrument code -->
+				<button class="lr-pad" onclick='alert("RENDER ALL INSTRUMENTS HERE");'>
+					Render Orchestra
+				</button>
+	
 	
 				<!-- Pop up dialog containing node parameters -->
 				<dialog id="node-dialog">

@@ -1,5 +1,6 @@
 // TODO: Add load and save code for instruments, widgets, project, etc
 // TODO: We might also be able to add a marker on playback to show playback
+// TODO: Note sorting seems wrong, need to fix for correct output
 class View
 {
 	// There is only one track lane object for the whole program
@@ -62,18 +63,14 @@ class View
 	{
 		let sel = document.getElementById('pattern-select'); // get the select tag
 		let instrument = sel.options[sel.selectedIndex].text; // the text of the selected option
-		console.log(instrument);	
 		// get the number of notes
 		let notes = this.trackMap.get(instrument)[0].getNotes();
-		console.log("Number of beats: "+notes);
 		// get the number of cells per beat
 		let cellsPerBeat = this.trackMap.get(instrument)[0].getCellsPerBeat();
 		// Get the number of beats per block
 		let beatsPerBlock = document.getElementById('playlist-bpb').value;
 		if (beatsPerBlock == "") beatsPerBlock = document.getElementById('playlist-bpb').placeholder;
 		beatsPerBlock = Number(beatsPerBlock);
-		console.log("Beats per block: "+beatsPerBlock);
-		console.log("Cells per beat: "+cellsPerBeat);
 		// Convert to the number of blocks rounded to the nearest integer
 		// cells/(cells/beat) is the number of beats
 		// beats/(beats/block) is the number of blocks
@@ -81,9 +78,8 @@ class View
 		// TODO: Should this be ceiling, round or floor?
 		// TODO: I think this unit conversion is wrong
 		let blocks = Math.ceil(notes/(cellsPerBeat*beatsPerBlock));
-		console.log(blocks);
 		this.trackLaneObject.setBlockSize(blocks);
-		this.trackLaneObject.setBlockName(this.trackMap.get(instrument)[0].getName());
+		this.trackLaneObject.setBlockName(instrument);
 	}
 
 	// Hides all canvases attached to the canvas div
@@ -472,7 +468,7 @@ class View
 		// Prefix each paramList element with the name of the selected instrument
 		for (let i = 0; i < paramList.length; i++) paramList[i].unshift(params[0].getName());
 		// Add offset times to start times
-		for (let i = 0; i < paramList.length; i++) paramList[i][0] += offset;
+		for (let i = 0; i < paramList.length; i++) paramList[i][1] += offset;
 		// Get the remaining parameters
 		for (let i = 1; i < params.length; i++)
 		{
@@ -480,7 +476,7 @@ class View
 			for (let j = 0; j < out.length; j++) paramList[j].push(out[j][2]);
 		}
 		// For convenience sort the notes by their start times, csound does this anyway, so this is for easy reading
-		params.sort(function(a,b){ return a[1] > a[1]; });
+		params.sort(function(a,b){ return a[1] > b[1]; });
 		// Convert the track to a string
 		let outStr = "";
 		for (let i = 0; i < paramList.length; i++) // for every note 
@@ -500,6 +496,62 @@ class View
 		document.getElementById("track-code-dialog-output").textContent = outStr;
 	}
 
+	renderScore()
+	{
+		// Get the beats per minute of the project
+		let bpmText = document.getElementById('playlist-bpm').value; // get the select tag
+		if (bpmText == "") bpmText = document.getElementById('playlist-bpm').placeholder;
+		// Get the beats per minute of the project
+		let bpbText = document.getElementById('playlist-bpb').value; // get the select tag
+		if (bpbText == "") bpbText = document.getElementById('playlist-bpb').placeholder;
+	
+		// get the events we intend to output
+		let outEvents = this.trackLaneObject.getOffsetsAndNames(Number(bpmText),Number(bpbText));
+		// For convenience sort all of the events
+		outEvents.sort(function(a,b){ return a[1] > b[1]; });
+		// We will store the score in this string
+		let score = "";
+		// Get all of the track blocks
+		for (let i = 0; i < outEvents.length; i++)
+		{
+			score += "// track="+outEvents[i][0] + ", offset="+outEvents[i][1]+"\n";
+			score += this.renderTrackByName(Number(bpmText),outEvents[i][0],outEvents[i][1]);
+			score += "\n"; // add a trailing newline
+		}
+		console.log(score);
+	}	
+	// Render a track given the bpm, name and an offset
+	renderTrackByName(bpm,name,offset)
+	{
+		// Get the track
+		let params = this.trackMap.get(name);
+		// Geet the note output for the triggering parameter, this includes the start and duration times
+		let paramList = params[0].getNoteOutput(bpm);
+		// Prefix each paramList element with the name of the selected instrument
+		for (let i = 0; i < paramList.length; i++) paramList[i].unshift(params[0].getName());
+		// Add offset times to start times
+		for (let i = 0; i < paramList.length; i++) paramList[i][1] += offset;
+		// Get the remaining parameters
+		for (let i = 1; i < params.length; i++)
+		{
+			let out = params[i].getNoteOutput(bpm);
+			for (let j = 0; j < out.length; j++) paramList[j].push(out[j][2]);
+		}
+		// For convenience sort the notes by their start times, csound does this anyway, so this is for easy reading
+		params.sort(function(a,b){ return a[1] > b[1]; });
+		// Convert the track to a string
+		let outStr = "";
+		for (let i = 0; i < paramList.length; i++) // for every note 
+		{
+			outStr += "i \""+paramList[i][0]+"\""; // instrument name, named instruments are surrounded in quotes
+			for (let j = 1; j < paramList[i].length; j++) // for every parameter of the note
+			{
+				outStr += " "+String(paramList[i][j]); // add the parameter to the current line
+			}
+			outStr += "\n";
+		}
+		return outStr;
+	}
 }
 
 let viewObj = new View();
