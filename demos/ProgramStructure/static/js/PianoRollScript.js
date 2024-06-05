@@ -28,13 +28,13 @@ class PianoRollCanvas
 	name = "";
 
 	// For unit conversion
-	cellsPerBeat = 1;
+	beatsPerCell = 1;
 
 	// For snapping to grid
 	snapAmount = 1;
 
 	// Initial set up
-	constructor(query,horizontalCells,verticalCells,cellsPerBeat)
+	constructor(query,horizontalCells,verticalCells,beatsPerCell)
 	{
 		// Set Up the canvas
 		this.canvas = document.getElementById(query);
@@ -56,7 +56,7 @@ class PianoRollCanvas
 		this.cellHeight = this.height/this.horizontalCells;
 
 		// For unit conversion later
-		this.cellsPerBeat = cellsPerBeat;
+		this.beatsPerCell = beatsPerCell;
 
 		var that = this;
 		this.canvas.addEventListener('mousedown', function(ev) { that.leftClickDown(); }); 
@@ -290,9 +290,6 @@ class PianoRollCanvas
 		for (var i = 0; i < this.verticalCells; i++)
 		{
 			this.ctx.strokeStyle = 'black';
-			// Draw the beat divisions more cleanly
-			if (i%this.cellsPerBeat == 0) this.ctx.lineWidth = 3*this.lineWidth;
-			else this.ctx.lineWidth = this.lineWidth;
 			this.ctx.beginPath();
 			this.ctx.moveTo(i*(this.width/this.verticalCells),0);
 			this.ctx.lineTo(i*(this.width/this.verticalCells),this.height);
@@ -542,9 +539,8 @@ class PianoRollCanvas
 	}
 	cellsToSeconds(c,bpm)
 	{
-		// Conversion cell number * (beats / minute) * (cells / beat) * (minutes / second)
-		// = cells per second
-		return c*bpm*this.cellsPerBeat*(1/60);
+		let cellsPerSecond = bpm * (1/this.beatsPerCell) * (1/60);
+		return c/cellsPerSecond;
 	}
 
 	// Setter for the snap to grid amount
@@ -569,9 +565,9 @@ class PianoRollCanvas
 	}
 
 	// Getter for the number of cells per beat
-	getCellsPerBeat()
+	getBeatsPerCell()
 	{
-		return this.cellsPerBeat;
+		return this.beatsPerCell;
 	}
 	// Getter for the number of notes
 	getNotes()

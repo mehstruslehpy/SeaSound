@@ -30,12 +30,12 @@ class CodedEventCanvas
 	controlPressed = false;
 
 	// For unit conversion
-	cellsPerBeat = 1;
+	beatsPerCell = 1;
 
 	// Snap amount
 	snapAmount = 1;
 	// Initial set up
-	constructor(query,cells,cellsPerBeat)
+	constructor(query,cells,beatsPerCell)
 	{
 		// Set Up the canvas
 		this.canvas = document.getElementById(query);
@@ -51,7 +51,7 @@ class CodedEventCanvas
 		this.cellWidth = this.width/this.cells;
 
 		// For unit conversion later
-		this.cellsPerBeat = cellsPerBeat;
+		this.beatsPerCell = beatsPerCell;
 
 		var that = this;
 		this.canvas.addEventListener('mousedown', function(ev) { that.leftClickDown(); }); 
@@ -503,14 +503,12 @@ class CodedEventCanvas
 	}
 	cellsToSeconds(c,bpm)
 	{
-		// Conversion cell number * (beats / minute) * (cells / beat) * (minutes / second)
-		// = cells per second
-		return c*bpm*this.cellsPerBeat*(1/60);
+		let cellsPerSecond = bpm * (1/this.beatsPerCell) * (1/60);
+		return c/cellsPerSecond;
 	}
-	// Getter for the number of cells per beat
-	getCellsPerBeat()
+	getBeatsPerCell()
 	{
-		return this.cellsPerBeat;
+		return this.beatsPerCell;
 	}
 	// Getter for the number of notes
 	getNotes()

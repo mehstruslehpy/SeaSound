@@ -531,7 +531,7 @@ class TrackLaneCanvas
 	cellsToSeconds(c,bpm,bpb)
 	{
 		// the start time in seconds
-		// start-time = block * (beats / block) * (beats / min) * (min/sec)
-		return c * bpb * bpm * (1/60);
+		let cellsPerSecond = bpm * (1/60);
+		return bpb * c / cellsPerSecond;
 	}
 }

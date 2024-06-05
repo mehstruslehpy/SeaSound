@@ -68,18 +68,15 @@ class View
 		// get the number of notes
 		let notes = this.trackMap.get(instrument)[0].getNotes();
 		// get the number of cells per beat
-		let cellsPerBeat = this.trackMap.get(instrument)[0].getCellsPerBeat();
+		let beatsPerCell = this.trackMap.get(instrument)[0].getBeatsPerCell();
 		// Get the number of beats per block
 		let beatsPerBlock = document.getElementById('playlist-bpb').value;
 		if (beatsPerBlock == "") beatsPerBlock = document.getElementById('playlist-bpb').placeholder;
 		beatsPerBlock = Number(beatsPerBlock);
 		// Convert to the number of blocks rounded to the nearest integer
-		// cells/(cells/beat) is the number of beats
-		// beats/(beats/block) is the number of blocks
-		//let blocks = Math.round(notes/(cellsPerBeat*beatsPerBlock));
 		// TODO: Should this be ceiling, round or floor?
 		// TODO: I think this unit conversion is wrong
-		let blocks = Math.ceil(notes/(cellsPerBeat*beatsPerBlock));
+		let blocks = Math.ceil(beatsPerCell*notes/(beatsPerBlock));
 		this.trackLaneObject.setBlockSize(blocks);
 		this.trackLaneObject.setBlockName(instrument);
 	}
@@ -339,9 +336,9 @@ class View
 		let hCells = document.getElementById("track-horizontal-cells").value;
 		if (hCells == "") hCells = Number(document.getElementById("track-horizontal-cells").placeholder);
 		else hCells = Number(hCells);
-		let cellsPerBeat = document.getElementById("track-cells-per-beat").value;
-		if (cellsPerBeat == "") cellsPerBeat = Number(document.getElementById("track-cells-per-beat").placeholder);
-		else cellsPerBeat = Number(cellsPerBeat);
+		let beatsPerCell = document.getElementById("track-beats-per-cell").value;
+		if (beatsPerCell == "") beatsPerCell = Number(document.getElementById("track-beats-per-cell").placeholder);
+		else beatsPerCell = Number(beatsPerCell);
 
 		// add a div to contain all our parameter canvases
 		let ele = document.getElementById(canvasDiv);
@@ -375,15 +372,15 @@ class View
 			let canvObj = null;
 			//if (this.paramList[i]=="Pianoroll")canvObj=new PianoRollCanvas("track-p"+i+"-"+name,vCells,hCells);
 			if (this.paramList[i] == "Pianoroll")
-				canvObj=new PianoRollCanvas("track-p"+i+"-"+name,this.pianoRollVCellDefault,hCells,cellsPerBeat);
+				canvObj=new PianoRollCanvas("track-p"+i+"-"+name,this.pianoRollVCellDefault,hCells,beatsPerCell);
 			else if (this.paramList[i] == "Lollipop")
-				canvObj=new SliderCanvas("track-p"+i+"-"+name,this.sliderVCellDefault,hCells,cellsPerBeat,"lollipop");
+				canvObj=new SliderCanvas("track-p"+i+"-"+name,this.sliderVCellDefault,hCells,beatsPerCell,"lollipop");
 			else if (this.paramList[i] == "Bars")
-				canvObj=new SliderCanvas("track-p"+i+"-"+name,this.sliderVCellDefault,hCells,cellsPerBeat,"solid");
+				canvObj=new SliderCanvas("track-p"+i+"-"+name,this.sliderVCellDefault,hCells,beatsPerCell,"solid");
 			else if (this.paramList[i] == "Event")
-				canvObj=new CodedEventCanvas("track-p"+i+"-"+name,hCells,cellsPerBeat);
+				canvObj=new CodedEventCanvas("track-p"+i+"-"+name,hCells,beatsPerCell);
 			else 
-				canvObj=new PianoRollCanvas("track-p"+i+"-"+name,this.pianoRollVCellDefault,hCells,cellsPerBeat);
+				canvObj=new PianoRollCanvas("track-p"+i+"-"+name,this.pianoRollVCellDefault,hCells,beatsPerCell);
 			tempCanv.push(canvObj);
 		}
 
