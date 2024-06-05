@@ -1,6 +1,8 @@
 // TODO: Add load and save code for instruments, widgets, project, etc
 // TODO: We might also be able to add a marker on playback to show playback
 // TODO: Note sorting seems wrong, need to fix for correct output
+// TODO: Should also print score in modal
+// TODO: Node config not working when we have two instruments and change instruments
 class View
 {
 	// There is only one track lane object for the whole program
@@ -432,7 +434,9 @@ class View
 		outputs = outputs.split(','); // split on commas
 		let allowedCases = new Set(["a","k","i","ga","gk","gi","p","S","pvs","w"]); // Collection of allowed values
 		outputs = outputs.filter((s) => { return allowedCases.has(s); }); // Filter array using collection
-		let instrument = this.CleanName(document.getElementById("instrument-canvases-select").textContent);
+		let sel = document.getElementById('instrument-canvases-select'); // get the select tag
+		let instrument = sel.options[sel.selectedIndex].text; // the text of the selected option
+		instrument = this.CleanName(instrument);
 		if (instrument == "") return;
 		this.instrumentMap.get(instrument).configureNode(name,inputs,outputs);
 	}
@@ -440,8 +444,10 @@ class View
 	renderInstrument()
 	{
 		// Get the instrument text name
-		let instrument = document.getElementById('instrument-canvases-select').textContent; // get the select tag
+		let sel = document.getElementById('instrument-canvases-select'); // get the select tag
+		let instrument = sel.options[sel.selectedIndex].text; // the text of the selected option
 		instrument = this.CleanName(instrument);
+		if (instrument == "") return;
 		// Get a string with the instrument code
 		let outString = this.instrumentMap.get(instrument).renderToText();
 		// print the instrument to the console.
@@ -454,6 +460,7 @@ class View
 	renderTrack(offset)
 	{
 		// Get the track text name
+		// TODO: This line with track seems unneeded
 		let track = document.getElementById('track-canvases-select').textContent; // get the select tag
 		let sel = document.getElementById('track-canvases-select'); // get the select tag
 		track = sel.options[sel.selectedIndex].text; // the text of the selected option
@@ -496,7 +503,7 @@ class View
 		document.getElementById("track-code-dialog-output").textContent = outStr;
 	}
 
-	renderScore()
+	renderScore(displayModal)
 	{
 		// Get the beats per minute of the project
 		let bpmText = document.getElementById('playlist-bpm').value; // get the select tag
@@ -518,7 +525,15 @@ class View
 			score += this.renderTrackByName(Number(bpmText),outEvents[i][0],outEvents[i][1]);
 			score += "\n"; // add a trailing newline
 		}
+		// print the score to the console
 		console.log(score);
+		// Print the score code to modal in browser
+		if (displayModal)
+		{
+			document.getElementById("score-code-dialog").showModal();
+			document.getElementById("score-code-dialog-output").textContent = score;
+		}
+		return score;
 	}	
 	// Render a track given the bpm, name and an offset
 	renderTrackByName(bpm,name,offset)
@@ -551,6 +566,38 @@ class View
 			outStr += "\n";
 		}
 		return outStr;
+	}
+	renderOrchestra(displayModal)
+	{
+		// Get the instrument text name
+		let instrument = document.getElementById('instrument-canvases-select').textContent; // get the select tag
+		instrument = this.CleanName(instrument);
+		// Get a string with the instrument code
+		//let outString = this.instrumentMap.get(instrument).renderToText();
+		let outString = "";
+		for (const [key,value] of this.instrumentMap)
+		{
+			outString += "// instrument="+value.getName()+"\n";
+			outString += value.renderToText();
+			outString += "\n";
+		}
+		// print the instrument to the console.
+		console.log(outString);
+		// Print the instrument code to modal in browser
+		if (displayModal)
+		{
+			document.getElementById("instr-code-dialog").showModal();
+			document.getElementById("instrument-code-dialog-output").textContent = outString;
+		}
+		return outString;
+	}
+
+	playTrack()
+	{
+		// get the score and the orchestra strings
+		let score = this.renderScore(false);
+		let orchestra = this.renderOrchestra(false);
+		playCode(score,orchestra);
 	}
 }
 

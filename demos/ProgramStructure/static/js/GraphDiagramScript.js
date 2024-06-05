@@ -413,6 +413,10 @@ class GraphDiagramCanvas
 		// Return the string containing our instrument code
 		return outString;
 	}
+	getName()
+	{
+		return this.instrumentName;
+	}
 }
 
 class Edge

@@ -1,13 +1,9 @@
-import json
 import flask
-from flask import request
-from flask_cors import CORS
+from flask import render_template
 
 app = flask.Flask(__name__)
-CORS(app)
 
-@app.route("/pianoroll",methods=['POST'])
-def welcome():
-	print(json.loads(request.data))
-	return "return string"
+@app.route("/")
+def index():
+	return render_template('index.html')
 

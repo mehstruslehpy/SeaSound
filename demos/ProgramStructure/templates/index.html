@@ -8,24 +8,52 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Rectangle Drawing</title>
-	<!-- Scripts and style loaded here -->
-    <script src="SliderScript.js" defer></script>
-    <script src="CodedEventScript.js" defer></script>
-    <script src="PointInterpScript.js" defer></script>
-    <script src="GraphDiagramScript.js" defer></script>
-    <script src="TrackLaneScript.js" defer></script>
-    <script src="PianoRollScript.js" defer></script>
-	<!-- Be sure to load the library script before the main script -->
+	<!-- Load the csound code -->
+	<script>
+		// csound.js is the Csound WASM module
+		const csoundjs = "../static/node_modules/@csound/browser/dist/csound.js";
+		// csound is the Csound engine object (null as we start)
+		let csound = null;
+
+		// this is the JS function to run Csound with the given code as input
+		async function playCode(orcString,scoreString) 
+		{
+			// import the Csound method from csound.js
+			const { Csound } = await import(csoundjs);
+			// create a Csound engine object
+			csound = await Csound();
+			// set realtime audio (dac) output  
+			await csound.setOption("-odac");
+			// compile the orchestra string
+			await csound.compileOrc(orcString);
+			// read the score string
+			await csound.readScore(scoreString);
+			// start the engine
+			await csound.start();
+			// Play the score
+			await csound.perform();
+		}
+	</script>
+	<!-- My scripts are loaded next -->
+	<!-- Library scripts are loaded  before the main script -->
 	<!-- This ensures View.js has access to all the libraries defined in the above scripts -->
-    <script src="View.js" defer></script>
-    <link href="style.css" rel="stylesheet">
+    <script src="../static/js/SliderScript.js" defer></script>
+    <script src="../static/js/CodedEventScript.js" defer></script>
+    <script src="../static/js/PointInterpScript.js" defer></script>
+    <script src="../static/js/GraphDiagramScript.js" defer></script>
+    <script src="../static/js/TrackLaneScript.js" defer></script>
+    <script src="../static/js/PianoRollScript.js" defer></script>
+	<!-- This is the main script -->
+    <script src="../static/js/View.js" defer></script>
+	<!-- CSS files are loaded next -->
+    <link href="../static/css/style.css" rel="stylesheet">
   </head>
   <body>
 
 	<!--tab fields -->
 	<div id="master-tab-container">
 		<div class="tab-container" id="tab-container">
-			<button class="tab-button">
+			<button class="tab-button" onclick="viewObj.playTrack();">
 				Play Track
 			</button>
 			<button class="tab-button">
@@ -87,10 +115,18 @@
 
 				<!-- Button for rendering the score-->
 				<!--<button class="lr-pad" onclick='alert("RENDER SCORE HERE");'>-->
-				<button class="lr-pad" onclick='viewObj.renderScore();'>
+				<button class="lr-pad" onclick='viewObj.renderScore(true);'>
 					Render Score
 				</button>
 
+				<!-- Pop up dialog containing csound track -->
+				<dialog id="score-code-dialog">
+				<textarea readonly id="score-code-dialog-output" style="width:500px;height:150px;">
+				</textarea>
+				<form method="dialog">
+				<button id="cancel" type="reset" onclick='document.getElementById("score-code-dialog").close();'>Close</button>
+				</form>
+				</dialog>
 
 				<!-- Pop up dialog for a new canvas -->
 				<dialog id="playlist-dialog">
@@ -271,7 +307,7 @@
 					Render Instrument
 				</button>
 				<!-- Button for outputting all instrument code -->
-				<button class="lr-pad" onclick='alert("RENDER ALL INSTRUMENTS HERE");'>
+				<button class="lr-pad" onclick='viewObj.renderOrchestra(true);'>
 					Render Orchestra
 				</button>
 	

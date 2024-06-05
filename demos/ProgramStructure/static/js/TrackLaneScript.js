@@ -12,6 +12,7 @@ class TrackLaneCanvas
 	blockSize = 1; // length of the rectangle to draw
 	blockName = "EMPTY";
 	rectangleFontSize = 1;
+	fontPad = 1.5; // padding to force text into rectangle
 	
 	// values for changing the scale and translate amount
 	translateAmt = 10;
@@ -42,7 +43,8 @@ class TrackLaneCanvas
 		this.cellHeight = this.height/this.horizontalCells; // the number of horizontal cell divisions controls cell heights
 
 		// set up font height
-		while (this.ctx.measureText('M').width < this.cellHeight) // The width of capital M approximates height
+		this.ctx.font = "bold "+this.rectangleFontSize+"px Arial";
+		while (this.ctx.measureText('@').width < this.cellHeight) // The width of @ approximates height
 		{
 			this.ctx.font = "bold "+this.rectangleFontSize+"px Arial";
 			this.rectangleFontSize++;
@@ -365,9 +367,10 @@ class TrackLaneCanvas
 		this.ctx.stroke();
 
 		// get the correct height
+		console.log(this.rectangleFontSize);
 		this.ctx.font = "bold "+this.rectangleFontSize+"px Arial";
 		this.ctx.fillStyle = 'black';
-		this.ctx.fillText(name,topLeft.x,topLeft.y+this.cellHeight,Math.abs(topLeft.x-bottomRight.x));
+		this.ctx.fillText(name,topLeft.x,topLeft.y+this.cellHeight-this.fontPad,Math.abs(topLeft.x-bottomRight.x));
 	}
     // Draw a circle around the input coord
     circleCoord(c)
@@ -506,23 +509,14 @@ class TrackLaneCanvas
 	// Outputs an array of offset times and names for the tracks in the playlist
 	getOffsetsAndNames(bpm,bpb,paramList)
 	{
-		console.log("BEATS PER MIN: "+bpm);
-		console.log("BEATS PER BLOCK: "+bpb);
 		// The array we will output to
 		let outArr = new Array();
-		// Get the cell this track starts at
-		//let start = Math.round(rect[0].x/this.cellWidth); 
 		// Convert start time to offset cell time
 		for (let i = 0; i < this.trackList.length; i++)
 		{
 			let offsetCell = this.coordToCell(this.trackList[i][0].x);
 			let offsetTime = this.cellsToSeconds(offsetCell,bpm,bpb);
 			let name = this.trackList[i][2];
-			//console.log("Cell offset: "+offset);
-			//console.log("Offset in secs: "+this.cellsToSeconds(offset,bpm,bpb));
-			//console.log("Track name: "+this.trackList[i][2]);
-			//console.log(paramList
-			
 			outArr.push([name,offsetTime]);
 		}
 
