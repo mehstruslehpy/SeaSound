@@ -862,6 +862,10 @@ class Node
 			if (i==params.length-1) paramStr += params[i]; // last param has no comma
 			else paramStr += params[i]+", ";	
 
+		// Set up parentheses for function notation
+		if (params.length > 0) paramStr = "("+paramStr+")";
+		else paramStr = "";
+
 		// Build the list of outputs
 		let outputs = "";
 		for (let i = 0; i < this.outputNodeCount(); i++)
@@ -870,7 +874,7 @@ class Node
 			else 
 				outputs += this.outTypes[i]+this.getName()+"_"+this.getId()+"_"+i+", ";	
 	
-		outString += "\t"+outputs+this.getName()+" "+paramStr+"\n";
+		outString += "\t"+outputs+this.getName()+paramStr+"\n";
 		return outString;	
 	}
 	
