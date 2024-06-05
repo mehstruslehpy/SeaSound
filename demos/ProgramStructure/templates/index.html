@@ -114,10 +114,15 @@
 				</button>
 
 				<!-- Button for rendering the score-->
-				<!--<button class="lr-pad" onclick='alert("RENDER SCORE HERE");'>-->
 				<button class="lr-pad" onclick='viewObj.renderScore(true);'>
 					Render Score
 				</button>
+				<!-- Button for rendering the whole thing to a csd file -->
+				<button class="lr-pad" onclick='viewObj.renderCSD(true);'>
+					Render CSD
+				</button>
+
+
 
 				<!-- Pop up dialog containing csound track -->
 				<dialog id="score-code-dialog">

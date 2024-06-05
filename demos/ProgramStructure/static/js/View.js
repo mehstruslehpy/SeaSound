@@ -599,6 +599,24 @@ class View
 		let orchestra = this.renderOrchestra(false);
 		playCode(score,orchestra);
 	}
+	renderCSD(displayModal)
+	{
+		let outStr = "<CsoundSynthesizer>\n<CsOptions>\n-odac\n</CsOptions>\n<CsInstruments>\n";
+			outStr += "sr = 44100\nksmps = 32\nnchnls = 2\n0dbfs  = 1\n\n";
+		// get the orchestra string
+		outStr += this.renderOrchestra(false);
+		// get the score string
+		outStr += "</CsInstruments>\n<CsScore>\n";
+		outStr += this.renderScore(false);
+		outStr += "e\n</CsScore>\n</CsoundSynthesizer>\n";
+		// Print the score code to modal in browser
+		if (displayModal)
+		{
+			document.getElementById("score-code-dialog").showModal();
+			document.getElementById("score-code-dialog-output").textContent = outStr;
+		}
+		return outStr;
+	}
 }
 
 let viewObj = new View();

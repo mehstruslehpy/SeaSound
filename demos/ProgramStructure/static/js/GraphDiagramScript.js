@@ -3,6 +3,7 @@
 // TODO: Need to control output variable prefixes better, the current output won't work in csound
 // TODO: Add a nice text area for textual instrument input
 // TODO: Need to fix node deletion order to be like pianoroll
+// TODO: Cannot redraw edges after they have been deleted
 class GraphDiagramCanvas
 {
 	coord = {x:0, y:0}; // the coords of the mouse
