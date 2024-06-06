@@ -604,6 +604,10 @@ class View
 		}
 		return outStr;
 	}
+	stopPlayBack()
+	{
+		stopCsound();
+	}
 }
 
 let viewObj = new View();
