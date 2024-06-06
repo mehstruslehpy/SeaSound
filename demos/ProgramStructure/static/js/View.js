@@ -1,7 +1,6 @@
 // TODO: Add load and save code for instruments, widgets, project, etc
 // TODO: We might also be able to add a marker on playback to show playback
 // TODO: Note sorting seems wrong, need to fix for correct output
-// TODO: Should also print score in modal
 // TODO: Node config not working when we have two instruments and change instruments
 class View
 {
@@ -447,8 +446,6 @@ class View
 		if (instrument == "") return;
 		// Get a string with the instrument code
 		let outString = this.instrumentMap.get(instrument).renderToText();
-		// print the instrument to the console.
-		console.log(outString);
 		// Print the instrument code to modal in browser
 		document.getElementById("instr-code-dialog").showModal();
 		document.getElementById("instrument-code-dialog-output").textContent = outString;
@@ -492,8 +489,6 @@ class View
 			}
 			outStr += "\n";
 		}
-		// Print the track string to the console
-		console.log(outStr);
 
 		// Print the instrument code to modal in browser
 		document.getElementById("track-code-dialog").showModal();
@@ -522,8 +517,6 @@ class View
 			score += this.renderTrackByName(Number(bpmText),outEvents[i][0],outEvents[i][1]);
 			score += "\n"; // add a trailing newline
 		}
-		// print the score to the console
-		console.log(score);
 		// Print the score code to modal in browser
 		if (displayModal)
 		{
@@ -578,8 +571,6 @@ class View
 			outString += value.renderToText();
 			outString += "\n";
 		}
-		// print the instrument to the console.
-		console.log(outString);
 		// Print the instrument code to modal in browser
 		if (displayModal)
 		{
@@ -592,9 +583,8 @@ class View
 	playTrack()
 	{
 		// get the score and the orchestra strings
-		let score = this.renderScore(false);
-		let orchestra = this.renderOrchestra(false);
-		playCode(score,orchestra);
+		let csd = this.renderCSD(false);
+		playCode(csd);
 	}
 	renderCSD(displayModal)
 	{
