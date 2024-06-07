@@ -1,5 +1,4 @@
 // TODO: Need a lot more testing, might want to overhaul this code to not output csound code using the functional syntax
-// TODO: Add a nice text area for textual instrument input
 // TODO: Need to fix node deletion order to be like pianoroll
 class GraphDiagramCanvas
 {

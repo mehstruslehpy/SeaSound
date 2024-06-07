@@ -1,7 +1,6 @@
 // TODO: Add load and save code for instruments, widgets, project, etc
 // TODO: We might also be able to add a marker on playback to show playback
 // TODO: Note sorting seems wrong, need to fix for correct output
-// TODO: Node config not working when we have two instruments and change instruments
 class View
 {
 	// There is only one track lane object for the whole program
