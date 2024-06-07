@@ -16,7 +16,7 @@ class View
 	trackMap = new Map();
 
 	// The default number of cells for a pianoroll widget, there are 88 keys on a piano
-	pianoRollVCellDefault = 88;
+	pianoRollVCellDefault = 176;
 
 	//The default number of vertical divisions for slider type widgets
 	sliderVCellDefault = 50;
