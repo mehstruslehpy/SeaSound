@@ -2,6 +2,7 @@
 <!-- TODO: Possibly add tools for automation clip style tools, this might also be doable via globals -->
 <!-- TODO: I think adding to the front will solve the issue with delete modes deleting unexpected things under mouse cursor in canvases -->
 <!-- TODO: Add audio clip editing/arranging features -->
+<!-- TODO: Test reinitializing csound engine button -->
 <!DOCTYPE html>
 <html lang="en-US">
   <head>
@@ -16,7 +17,8 @@
 		let csound = null;
 
 		// Play the csd file in the string code
-		async function playCode(code) {
+		async function playCode(code) 
+		{
 			// if the Csound object is not initialised initialize it
 			if(csound == null) 
 			{
@@ -36,11 +38,20 @@
 		}
 
 		// Stop any sound playback
-		async function stopCsound(code) {
+		async function stopCsound(code) 
+		{
 			// if the Csound object is initialized stop any playback
 			if(csound != null) await csound.stop();
 		}
-
+		async function reinitCsound() 
+		{
+			const { Csound } = await import(csoundjs);
+			// create a Csound engine object
+			csound = await Csound();
+			// set realtime audio (dac) output  
+			await csound.setOption("-odac");
+		}
+		
 	</script>
 	<!-- My scripts are loaded next -->
 	<!-- Library scripts are loaded  before the main script -->
@@ -73,6 +84,10 @@
 			<button class="tab-button" onclick="viewObj.stopPlayBack()">
 				Stop
 			</button>
+			<button class="tab-button" onclick="reinitCsound();">
+				Reinit
+			</button>
+	
 		</div>
 		<div class="tab-container" id="tab-container">
 			<button class="tab-button" 
@@ -268,13 +283,19 @@
 		</div>
 
 		<div id="Configuration" class="tab" style="display:none">
-			Master configuration controls go here.
-			<form>
-				<label>Beats Per Minute:</label>
-				<input type="number" placeholder="140"> </br>
-				<label>Beats Per Measure:</label>
-				<input type="number" placeholder="20"> </br>
-			</form>
+			<label>Score Header:</label> </br>
+			<textarea cols="160" rows="5" id="score-header"></textarea> </br>
+			<label>Score Footer:</label> </br>
+			<textarea cols="160" rows="5" id="score-footer"></textarea> </br>
+			<label>Orchestra Header:</label> </br>
+			<textarea cols="160" rows="5" id="orchestra-header">
+sr = 44100 
+ksmps = 32 
+nchnls = 2 
+0dbfs  = 1
+			</textarea> </br>
+			<label>Orchestra Footer:</label> </br>
+			<textarea cols="160" rows="5" id="orchestra-footer"></textarea> </br>
 		</div>
 
 		<!-- GraphDiagram tab -->
@@ -295,6 +316,12 @@
 				<!-- Button for adding an instrument -->
  				<div class="lr-pad">
   					<label>New Instrument:</label>
+					<select class="lr-pad" id="new-instrument-input-type">
+						<option value="graph">Graph</option>
+						<option value="text">Text</option>
+					</select> 
+	
+
   					<input type="text submit" 
 							id="instrument-name" 
 							name="instrument-name" 
@@ -303,6 +330,7 @@
 															'instrument', 
 															document.getElementById('instrument-name').value)">
 				</div> 
+	
 				<button class="lr-pad" 
 						onclick="viewObj.AddCanvas('instrument-canvases',
 													'instrument',
