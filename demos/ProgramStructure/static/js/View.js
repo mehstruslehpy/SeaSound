@@ -451,7 +451,7 @@ class View
 		document.getElementById("instrument-code-dialog-output").textContent = outString;
 	}
 	// Render the currently selected track
-	renderTrack(offset)
+	renderTrack(offset,displayModal)
 	{
 		// Get the track text name
 		// TODO: This line with track seems unneeded
@@ -491,8 +491,12 @@ class View
 		}
 
 		// Print the instrument code to modal in browser
-		document.getElementById("track-code-dialog").showModal();
-		document.getElementById("track-code-dialog-output").textContent = outStr;
+		if (displayModal)
+		{
+			document.getElementById("track-code-dialog").showModal();
+			document.getElementById("track-code-dialog-output").textContent = outStr;
+		}
+		return outStr;
 	}
 
 	renderScore(displayModal)
@@ -586,6 +590,11 @@ class View
 		let csd = this.renderCSD(false);
 		playCode(csd);
 	}
+	playPattern()
+	{
+		let csd = this.renderPatternCSD();
+		playCode(csd);
+	}
 	renderCSD(displayModal)
 	{
 		let outStr = "<CsoundSynthesizer>\n<CsOptions>\n-odac\n</CsOptions>\n<CsInstruments>\n";
@@ -602,6 +611,20 @@ class View
 			document.getElementById("score-code-dialog").showModal();
 			document.getElementById("score-code-dialog-output").textContent = outStr;
 		}
+		return outStr;
+	}
+	renderPatternCSD()
+	{
+		let outStr = "<CsoundSynthesizer>\n<CsOptions>\n-odac\n</CsOptions>\n<CsInstruments>\n";
+			outStr += "sr = 44100\nksmps = 32\nnchnls = 2\n0dbfs  = 1\n\n";
+		// get the orchestra string
+		outStr += this.renderOrchestra(false);
+		// get the score string
+		outStr += "</CsInstruments>\n<CsScore>\n";
+		//outStr += this.renderScore(false);
+		outStr += this.renderTrack(false);
+		outStr += "e\n</CsScore>\n</CsoundSynthesizer>\n";
+		console.log(outStr);
 		return outStr;
 	}
 	stopPlayBack()

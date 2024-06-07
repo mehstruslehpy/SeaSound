@@ -15,24 +15,32 @@
 		// csound is the Csound engine object (null as we start)
 		let csound = null;
 
-		// this is the JS function to run Csound with the given code as input
-		async function playCode(orcString,scoreString) 
-		{
-			// import the Csound method from csound.js
-			const { Csound } = await import(csoundjs);
-			// create a Csound engine object
-			csound = await Csound();
-			// set realtime audio (dac) output  
-			await csound.setOption("-odac");
-			// compile the orchestra string
-			await csound.compileOrc(orcString);
-			// read the score string
-			await csound.readScore(scoreString);
-			// start the engine
+		// Play the csd file in the string code
+		async function playCode(code) {
+			// if the Csound object is not initialised initialize it
+			if(csound == null) 
+			{
+				// import the Csound method from csound.js
+				const { Csound } = await import(csoundjs);
+				// create a Csound engine object
+				csound = await Csound();
+				// set realtime audio (dac) output  
+				await csound.setOption("-odac");
+			}
+			// reset csound for next output
+			await csound.reset();
+			// compile csound code
+			await csound.compileCsdText(code);
+			// start the engine and play the code
 			await csound.start();
-			// Play the score
-			await csound.perform();
 		}
+
+		// Stop any sound playback
+		async function stopCsound(code) {
+			// if the Csound object is initialized stop any playback
+			if(csound != null) await csound.stop();
+		}
+
 	</script>
 	<!-- My scripts are loaded next -->
 	<!-- Library scripts are loaded  before the main script -->
@@ -56,13 +64,13 @@
 			<button class="tab-button" onclick="viewObj.playTrack();">
 				Play Track
 			</button>
-			<button class="tab-button">
+			<button class="tab-button" onclick="viewObj.playPattern();">
 				Play Pattern
 			</button>
 			<button class="tab-button">
 				Pause
 			</button>
-			<button class="tab-button">
+			<button class="tab-button" onclick="viewObj.stopPlayBack()">
 				Stop
 			</button>
 		</div>
@@ -104,7 +112,7 @@
 				<label class="lr-pad">BPM:</label>
 				<input type="number" id="playlist-bpm" placeholder="140"> </br>
 				<label class="lr-pad">Beats Per Block:</label>
-				<input type="number" id="playlist-bpb" placeholder="1"> </br>
+				<input type="number" id="playlist-bpb" placeholder="4"> </br>
 
 
 				<label class="lr-pad">Reset Playlist:</label>
@@ -188,7 +196,7 @@
 				<!-- Display the currently parameter -->
 				<label class="lr-pad" id="param-num">Current Parameter: *** </label>
 				<!-- Button to kick off rendering the output of the track to text -->
-				<button class="lr-pad" onclick='viewObj.renderTrack(0);'>
+				<button class="lr-pad" onclick='viewObj.renderTrack(0,true);'>
 					Render Track
 				</button>
 	
@@ -232,7 +240,7 @@
 				</div>
 				<div style="display:table-row;">
 					<label style="display:table-cell;">Beats Per Cell:</label>
-					<input style="display:table-cell;"type="number" id="track-beats-per-cell" placeholder="4"> </br>
+					<input style="display:table-cell;"type="number" id="track-beats-per-cell" placeholder="1"> </br>
 				</div>
 	
 				<button id="cancel" type="reset" onclick='document.getElementById("track-dialog").close();'>Cancel</button>
