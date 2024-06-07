@@ -1,13 +1,9 @@
-// TODO: Need to add code to render graph diagram to csound instrument code
-// TODO: Need to add code to name the instrument too
-// TODO: Need to control output variable prefixes better, the current output won't work in csound
+// TODO: Need a lot more testing, might want to overhaul this code to not output csound code using the functional syntax
 // TODO: Add a nice text area for textual instrument input
 // TODO: Need to fix node deletion order to be like pianoroll
-// TODO: Cannot redraw edges after they have been deleted
 class GraphDiagramCanvas
 {
 	coord = {x:0, y:0}; // the coords of the mouse
-	//nodeMode = true; // node mode for drawing nodes, edge mode for drawing edges
 	inputModes = ["NODE","DELETE","EDGE"]; // the possible input modes for the canvas
 	inputMode = "NODE"; // stores the current input mode of the canvas
 	nodeList = new Array(); // we maintain a list of nodes
@@ -67,10 +63,6 @@ class GraphDiagramCanvas
 			controlText += "2: enter edge mode\n"
 			controlText += "3: enter delete mode\n"
 			controlText += "n: change rectangle name\n"
-			//controlText += "4: increment input count\n"
-			//controlText += "5: decrement input count\n"
-			//controlText += "6: increment output count\n"
-			//controlText += "7: decrement output count\n"
 			controlText += "h: display keybinds\n";
 			controlText += "wasd: scroll viewport\n";
 			controlText += "qe: scale viewport\n";
@@ -101,10 +93,6 @@ class GraphDiagramCanvas
 			if (out != null) this.curName = out;
 			else this.curName = "empty";
 		}
-		//else if (ev.key == "4") this.curInputs++;
-		//else if (ev.key == "5" && this.curInputs > 0) this.curInputs--;
-		//else if (ev.key == "6") this.curOutputs++;
-		//else if (ev.key == "7" && this.curOutputs > 0) this.curOutputs--;
 		else if (ev.key == "h") alert(controlText);
 		else if (ev.key == "q") this.ctx.scale(this.scaleAmt,this.scaleAmt);
 		else if (ev.key == "e") this.ctx.scale(1/this.scaleAmt,1/this.scaleAmt);
@@ -236,13 +224,29 @@ class GraphDiagramCanvas
 		for (let i = 0; i < this.nodeList.length; i++)
 			if (this.nodeList[i].boundingCollision(point))
 			{
-				for (let j = 0; j < this.edgeList.length; j++)
+				for (let j = 0; j < this.edgeList.length; j++) // delete any edges connected to this node
 				{
-					
 					let fromCollision = this.nodeList[i].boundingCollision(this.edgeList[j].getFrom());
 					let toCollision = this.nodeList[i].boundingCollision(this.edgeList[j].getTo());
+					// if the from or to points of the edge collided with an input or output of the current node
 					if (fromCollision || toCollision)
 					{
+						// then reset the corresponding input or output parameters
+						let fromIndex = this.nodeList[i].collisionOutputParam(this.edgeList[j].getFrom());
+						if (fromIndex != -1)
+						{
+							let tup = this.nodeList[i].getOutputNode(fromIndex);
+							this.nodeList[i].resetOutput(fromIndex);
+							tup[0].resetInput(tup[2]);
+						}
+						let toIndex = this.nodeList[i].collisionInputParam(this.edgeList[j].getTo());
+						if (toIndex != -1)
+						{
+							let tup = this.nodeList[i].getInputNode(toIndex);
+							this.nodeList[i].resetInput(toIndex);
+							tup[0].resetOutput(tup[1]);
+						}
+						// and remove the edge
 						this.edgeList.splice(j,1);
 						j--;
 					}
@@ -257,8 +261,23 @@ class GraphDiagramCanvas
 	{
 		let point = this.screenToWorldCoords(this.coord);
 		for (let i = 0; i < this.edgeList.length; i++)
-			if (this.edgeList[i].collision(point))
+			if (this.edgeList[i].collision(point)) // if point collides with edge delete the edge
 			{
+				// find and reset the inputs and outputs of the nodes on either side of the edge
+				let fromIndex = -1;	
+				let toIndex = -1;	
+				let fromNode = null;
+				let toNode = null;
+				for (let j = 0; j < this.nodeList.length; j++)
+				{
+					fromIndex = this.nodeList[j].collisionOutputParam(this.edgeList[i].getFrom());
+					if (fromIndex != -1) fromNode = this.nodeList[j];
+					toIndex = this.nodeList[j].collisionInputParam(this.edgeList[i].getTo());
+					if (toIndex != -1) toNode = this.nodeList[j];
+				}
+				fromNode.resetOutput(fromIndex);
+				toNode.resetInput(toIndex);
+				// remove the edge	
 				this.edgeList.splice(i,1);
 				break;
 			}
@@ -888,6 +907,14 @@ class Node
 	{ return this.printedFlag; }
 	setPrintFlag(flag)
 	{ this.printedFlag = flag; }
+	getOutputNode(n)
+	{ return this.outputNodes[n]; }
+	getInputNode(n)
+	{ return this.inputNodes[n]; }
+	resetOutput(n)
+	{ this.outputNodes[n] = null; }
+	resetInput(n)
+	{ this.inputNodes[n] = null; }
 }
 // Draw the divisions
 //let graphDiagramObject = new GraphDiagramCanvas(".graphDiagramCanvas",20);
