@@ -295,11 +295,8 @@ class View
 	// Helper to build all instrument canvases
 	InstrumentCanvasHelper(canvasDiv,name)
 	{
-		// add the associated canvas tag
-		let ele = document.getElementById(canvasDiv);
-		let newCanvas = document.createElement("canvas");
-		newCanvas.setAttribute("tabindex","1");
-		ele.appendChild(newCanvas);
+		// Figure out what type of instrument input we are doing
+		let type = document.getElementById("new-instrument-input-type").value;
 
 		// add the associated select entry
 		let selectEle = document.getElementById(canvasDiv+"-select");
@@ -312,14 +309,41 @@ class View
 		let listOption = document.createElement("option");
 		listOption.value = name;
 		dataList.append(listOption);
-	
-		newCanvas.setAttribute("id","instrument-"+name);
-		newOption.setAttribute("value","instrument-"+name);
-		newCanvas.setAttribute("class","trackLaneCanvas");
-		let instrumentCanvasObject = new GraphDiagramCanvas("instrument-"+name,name,20);
 
-		// Add the instrument canvas to our map of all instruments
-		this.instrumentMap.set(this.CleanName(name),instrumentCanvasObject);
+		if (type=="graph")
+		{
+			// add the associated canvas tag
+			let ele = document.getElementById(canvasDiv);
+			let newCanvas = document.createElement("canvas");
+			newCanvas.setAttribute("tabindex","1");
+			ele.appendChild(newCanvas);
+
+			newCanvas.setAttribute("id","instrument-"+name);
+			newOption.setAttribute("value","instrument-"+name);
+			newCanvas.setAttribute("class","trackLaneCanvas");
+			let instrumentCanvasObject = new GraphDiagramCanvas("instrument-"+name,name,20);
+
+			// Add the instrument canvas to our map of all instruments
+			this.instrumentMap.set(this.CleanName(name),instrumentCanvasObject);
+		}
+		else
+		{
+			// add the associated text area tag
+			let ele = document.getElementById(canvasDiv);
+			let newTextArea = document.createElement("textarea");
+			newTextArea.setAttribute("tabindex","1");
+			ele.appendChild(newTextArea);
+
+			newTextArea.setAttribute("id","instrument-"+name);
+			newTextArea.setAttribute("cols","160");
+			newTextArea.setAttribute("rows","20");
+			newOption.setAttribute("value","instrument-"+name);
+			newTextArea.setAttribute("class","trackLaneCanvas");
+			let instrumentCanvasObject = new TextAreaInstrumentCanvas("instrument-"+name,name);
+
+			// Add the instrument canvas to our map of all instruments
+			this.instrumentMap.set(this.CleanName(name),instrumentCanvasObject);
+		}
 
 		// Clear out old instrument name
 		document.getElementById("instrument-name").value = "";
@@ -598,12 +622,18 @@ class View
 	renderCSD(displayModal)
 	{
 		let outStr = "<CsoundSynthesizer>\n<CsOptions>\n-odac\n</CsOptions>\n<CsInstruments>\n";
-			outStr += "sr = 44100\nksmps = 32\nnchnls = 2\n0dbfs  = 1\n\n";
+			//outStr += "sr = 44100\nksmps = 32\nnchnls = 2\n0dbfs  = 1\n\n";
 		// get the orchestra string
+		outStr += this.getOrchestraHeader()+"\n";
+		outStr += "//orchestra:\n";
 		outStr += this.renderOrchestra(false);
+		outStr += this.getOrchestraFooter()+"\n";
 		// get the score string
 		outStr += "</CsInstruments>\n<CsScore>\n";
+		outStr += this.getScoreHeader() +"\n";
+		outStr += "//score:\n";
 		outStr += this.renderScore(false);
+		outStr += this.getScoreFooter()+"\n";
 		outStr += "e\n</CsScore>\n</CsoundSynthesizer>\n";
 		// Print the score code to modal in browser
 		if (displayModal)
@@ -616,20 +646,39 @@ class View
 	renderPatternCSD()
 	{
 		let outStr = "<CsoundSynthesizer>\n<CsOptions>\n-odac\n</CsOptions>\n<CsInstruments>\n";
-			outStr += "sr = 44100\nksmps = 32\nnchnls = 2\n0dbfs  = 1\n\n";
 		// get the orchestra string
+		outStr += this.getOrchestraHeader();
+		outStr += "//orchestra:\n";
 		outStr += this.renderOrchestra(false);
+		outStr += this.getOrchestraFooter();
 		// get the score string
 		outStr += "</CsInstruments>\n<CsScore>\n";
-		//outStr += this.renderScore(false);
+		outStr += this.getScoreHeader() +"\n";
+		outStr += "//score:\n";
 		outStr += this.renderTrack(false);
+		outStr += this.getScoreFooter() +"\n";
 		outStr += "e\n</CsScore>\n</CsoundSynthesizer>\n";
-		console.log(outStr);
 		return outStr;
 	}
 	stopPlayBack()
 	{
 		stopCsound();
+	}
+	getOrchestraHeader()
+	{
+		return "//orchestra header:\n"+document.getElementById("orchestra-header").value;
+	}
+	getOrchestraFooter()
+	{
+		return "//orchestra footer:\n"+document.getElementById("orchestra-footer").value;
+	}
+	getScoreHeader()
+	{
+		return "//score header:\n"+document.getElementById("score-header").value;
+	}
+	getScoreFooter()
+	{
+		return "//score footer:\n"+document.getElementById("score-footer").value;
 	}
 }
 
