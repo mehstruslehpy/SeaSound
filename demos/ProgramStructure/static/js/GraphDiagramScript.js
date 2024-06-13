@@ -57,17 +57,17 @@ class GraphDiagramCanvas
 	mButtonClick(ev)
 	{
 		let controlText = "";
-			// Maybe add explanation of mouse click controls too
-			controlText += "1: enter node mode\n"
+		// Maybe add explanation of mouse click controls too
+		controlText += "1: enter node mode\n"
 			controlText += "2: enter edge mode\n"
 			controlText += "3: enter delete mode\n"
 			controlText += "n: change rectangle name\n"
 			controlText += "h: display keybinds\n";
-			controlText += "wasd: scroll viewport\n";
-			controlText += "qe: scale viewport\n";
-			controlText += "rf: change amount to translate by\n";
-			controlText += "tg: change amount to zoom by\n";
-	
+		controlText += "wasd: scroll viewport\n";
+		controlText += "qe: scale viewport\n";
+		controlText += "rf: change amount to translate by\n";
+		controlText += "tg: change amount to zoom by\n";
+
 		if (ev.key == "1")
 		{
 			this.inputMode = "NODE";
@@ -293,17 +293,17 @@ class GraphDiagramCanvas
 			this.draw();
 			// drawing working edge
 			let index = this.workingEdge.polyLineList.length - 1; // this is not very good encapsulation
-    		let from = this.workingEdge.polyLineList[index]; // this is not very good encapsulation
-    		let to = {x:this.coord.x, y:this.coord.y}; // the to point in screen coords
+			let from = this.workingEdge.polyLineList[index]; // this is not very good encapsulation
+			let to = {x:this.coord.x, y:this.coord.y}; // the to point in screen coords
 			to = this.screenToWorldCoords(to); // convert the to point to world coords
-		
-    		this.ctx.lineWidth = 6;
-    		this.ctx.strokeStyle = 'black';
 
-    		this.ctx.beginPath();
-    		this.ctx.moveTo(from.x,from.y);
-           	this.ctx.lineTo(to.x,to.y);
-    		this.ctx.stroke();
+			this.ctx.lineWidth = 6;
+			this.ctx.strokeStyle = 'black';
+
+			this.ctx.beginPath();
+			this.ctx.moveTo(from.x,from.y);
+			this.ctx.lineTo(to.x,to.y);
+			this.ctx.stroke();
 		}
 	}
 
@@ -343,7 +343,7 @@ class GraphDiagramCanvas
 
 		// draw all the nodes
 		for (let i = 0; i < this.nodeList.length; i++) this.nodeList[i].draw(this.ctx);
-	
+
 		// draw the working edge if it exists
 		if (this.workingEdge != null) this.workingEdge.draw(this.ctx);
 		// draw all the edges
@@ -358,7 +358,7 @@ class GraphDiagramCanvas
 		if (this.inputMode == "NODE") text = "Node mode. Press h for keybinds ";
 		else if (this.inputMode == "EDGE") text = "Edge mode. Press h for keybinds ";
 		else if (this.inputMode == "DELETE") text = "Delete mode. Press h for keybinds ";
-	
+
 		this.ctx.font = "bold 25px Arial";
 		this.ctx.fillStyle = 'black';
 		let textHeight = this.ctx.measureText('M').width; // The width of capital M approximates height
@@ -414,7 +414,7 @@ class GraphDiagramCanvas
 
 		// The string we will output
 		let outString = "";
-	
+
 		// Print the instrument name using csound instrument name syntax
 		outString = "instr "+this.instrumentName+"\n";
 
@@ -435,6 +435,111 @@ class GraphDiagramCanvas
 	getName()
 	{
 		return this.instrumentName;
+	}
+	// Output a data format representing the current graph. The format is organized into sections delimited by lines of #s
+	// The first section contains graph structure data with nodes replaced by their indices in the nodeList
+	// The next sections contain node data with output/input adjacency list nodes replaced by indices
+	// the last two sections are the input/output adjacency lists in terms of the above indices
+	// this allows us to recreate the various adjacency lists from scratch when we decide to read this file
+	// the individual lines for data are stored using more toText() methods or stringify (though perhaps later)
+	// we will do this differently
+	toText()
+	{
+		let out = "#".repeat(64) + "\n"; // delimiter
+		let nodeIndexDict = {}; //dictionary used to assign each node an index
+		// build list of indices for our nodes as key value pairs
+		for (let i = 0; i < this.nodeList.length; i++)
+			nodeIndexDict[this.nodeList[i].getId()] = i;
+		// output the state of the graph class
+		out += JSON.stringify(this.coord) + "\n";
+		out += JSON.stringify(this.inputModes) + "\n";
+		out += JSON.stringify(this.inputMode) + "\n";
+		out += JSON.stringify(this.workingEdge) + "\n";
+		out += JSON.stringify(this.workingStartNode) + "\n";
+		out += JSON.stringify(this.startEdgeNodeType) + "\n";
+		out += JSON.stringify(this.curInputs) + "\n";
+		out += JSON.stringify(this.curOutputs) + "\n";
+		out += JSON.stringify(this.curName) + "\n";
+		out += JSON.stringify(this.instrumentName) + "\n";
+		out += JSON.stringify(this.translateAmt) + "\n";
+		out += JSON.stringify(this.scaleAmt) + "\n";
+		out += JSON.stringify(this.nodeRadius) + "\n";
+		out += this.edgeList.length + "\n";
+		out += this.nodeList.length + "\n";
+		// output the edge list
+		for (let i = 0; i < this.edgeList.length; i++)
+		{
+			out += "#".repeat(64) + "\n"; // delimiter
+			out += this.edgeList[i].toText();
+		}
+		// output the individual nodes
+		for (let i = 0; i < this.nodeList.length; i++)
+		{
+			out += "#".repeat(64) + "\n"; // delimiter
+			out += this.nodeList[i].toText(nodeIndexDict);
+		}
+		// output the node input adjacency list
+		out += "#".repeat(64) + "\n"; // delimiter
+		for (let i = 0; i < this.nodeList.length; i++)
+		{
+			let adjList = i + " : ";
+			for (let j = 0; j < this.nodeList[i].inputNodeCount(); j++)
+				adjList += nodeIndexDict[this.nodeList[i].inputNodes[j][0].getId()] + " ";
+			out += adjList + "\n";
+		}
+		// output the node output adjacency list
+		out += "#".repeat(64) + "\n"; // delimiter
+		for ( let i = 0; i < this.nodeList.length; i++)
+		{
+			let adjList = i + " : ";
+			for (let j = 0; j < this.nodeList[i].outputNodeCount(); j++)
+				adjList += nodeIndexDict[this.nodeList[i].outputNodes[j][0].getId()] + " ";
+			out += adjList + "\n";
+		}
+		return out;
+	}
+	// Takes in a 2d array file[i][j] where i indexes across the # delimited sections shown above
+	// in toText() and j indexes across the individual lines per section
+	reconfigure(file)
+	{
+		let edgeListLength = file[0][file[0].length - 2];
+		let nodeListLength = file[0][file[0].length - 1];
+		this.nodeList = new Array();
+		for (let i = 0; i < nodeListLength; i++) this.nodeList.push(null);
+		this.edgeList = new Array();
+		for (let i = 0; i < edgeListLength; i++) this.edgeList.push(null);
+		// Load the basic variables for this widget
+		// TODO: some of these don't need to be saved/loaded to/from the file
+		this.coord = JSON.parse(file[0][0]);
+		this.inputModes = JSON.parse(file[0][1]); 
+		this.inputMode = JSON.parse(file[0][2]); 
+		this.workingEdge = JSON.parse(file[0][3]); 
+		this.workingStartNode = JSON.parse(file[0][4]); 
+		this.startEdgeNodeType = JSON.parse(file[0][5]);
+		this.curInputs = JSON.parse(file[0][6]);
+		this.curOutputs = JSON.parse(file[0][7]);
+		this.curName= JSON.parse(file[0][8]);
+		this.instrumentName = JSON.parse(file[0][9]);
+		this.translateAmt = JSON.parse(file[0][10]);
+		this.scaleAmt = JSON.parse(file[0][11]);
+		this.nodeRadius = JSON.parse(file[0][12]);
+		// Load the edge list
+		for (let i = 0; i < edgeListLength; i++)
+		{
+			// load edge i from file[i+1];
+			this.edgeList[i] = new Edge();
+			this.edgeList[i].reconfigure(file[i+1]);
+		}
+		// load the nodes
+		for (let i = 0; i < nodeListLength; i++)
+		{
+			// load node i from file[i+1+edgeListLength]
+			this.nodeList[i] = new	Node({x:0,y:0},"NO NAME",0,[],this.ctx);
+			this.nodeList[i].reconfigure(file[i+1+edgeListLength]);
+		}
+		// set up the edge list values
+		// set up the node input adjacency lists
+		// set up the node output adjacency lists
 	}
 }
 
@@ -481,17 +586,17 @@ class Edge
 		for (let i = 1; i < this.polyLineList.length; i++)
 		{
 			// drawing edge
-    		let from = this.polyLineList[i-1];
-    		let to = this.polyLineList[i];
-		
-    		ctx.lineWidth = 6;
-    		ctx.strokeStyle = 'black';
+			let from = this.polyLineList[i-1];
+			let to = this.polyLineList[i];
 
-    		ctx.beginPath();
-    		ctx.moveTo(from.x,from.y);
-           	ctx.lineTo(to.x,to.y);
-    		ctx.stroke();
-			
+			ctx.lineWidth = 6;
+			ctx.strokeStyle = 'black';
+
+			ctx.beginPath();
+			ctx.moveTo(from.x,from.y);
+			ctx.lineTo(to.x,to.y);
+			ctx.stroke();
+
 			// draw direction arrow at midpoint
 			let midpt = {x: (from.x+to.x)/2, y: (from.y+to.y)/2};
 			this.arrow_helper(ctx,from,midpt);
@@ -500,19 +605,19 @@ class Edge
 	// helper to draw arrows on segments based on SO code
 	arrow_helper(ctx,from,to)
 	{
-  		var headlen = 20; // length of arrow head in pixels
-  		var dx = to.x - from.x;
-  		var dy = to.y - from.y;
-  		var angle = Math.atan2(dy, dx);
-  		ctx.lineWidth = 4;
-   		ctx.strokeStyle = 'black';
-    	ctx.beginPath();
-  		ctx.moveTo(from.x, from.y);
-  		ctx.lineTo(to.x, to.y);
-  		ctx.lineTo(to.x - headlen * Math.cos(angle - Math.PI / 6), to.y - headlen * Math.sin(angle - Math.PI / 6));
-  		ctx.moveTo(to.x, to.y);
-  		ctx.lineTo(to.x - headlen * Math.cos(angle + Math.PI / 6), to.y - headlen * Math.sin(angle + Math.PI / 6));
-    	ctx.stroke();
+		var headlen = 20; // length of arrow head in pixels
+		var dx = to.x - from.x;
+		var dy = to.y - from.y;
+		var angle = Math.atan2(dy, dx);
+		ctx.lineWidth = 4;
+		ctx.strokeStyle = 'black';
+		ctx.beginPath();
+		ctx.moveTo(from.x, from.y);
+		ctx.lineTo(to.x, to.y);
+		ctx.lineTo(to.x - headlen * Math.cos(angle - Math.PI / 6), to.y - headlen * Math.sin(angle - Math.PI / 6));
+		ctx.moveTo(to.x, to.y);
+		ctx.lineTo(to.x - headlen * Math.cos(angle + Math.PI / 6), to.y - headlen * Math.sin(angle + Math.PI / 6));
+		ctx.stroke();
 	}
 
 	// Reverse the direction of this edge
@@ -531,39 +636,50 @@ class Edge
 		for (let i = 1; i < this.polyLineList.length; i++)
 			if (this.intersectSegment(this.polyLineList[i-1],this.polyLineList[i],pt,this.collisionRadius))
 				return true
-		return false;
+					return false;
 	}
 
 	// From: https://codereview.stackexchange.com/questions/192477/circle-line-segment-collision?rq=1
 	// return true if line segment thru AB intercepts the circle of given radius at C	
-    intersectSegment(A, B, C, radius) 
+	intersectSegment(A, B, C, radius) 
 	{
-        var dist;
-        const v1x = B.x - A.x;
-        const v1y = B.y - A.y;
-        const v2x = C.x - A.x;
-        const v2y = C.y - A.y;
-        // get the unit distance along the line of the closest point to
-        // circle center
-        const u = (v2x * v1x + v2y * v1y) / (v1y * v1y + v1x * v1x);
-        
-        // if the point is on the line segment get the distance squared
-        // from that point to the circle center
-        if(u >= 0 && u <= 1)
+		var dist;
+		const v1x = B.x - A.x;
+		const v1y = B.y - A.y;
+		const v2x = C.x - A.x;
+		const v2y = C.y - A.y;
+		// get the unit distance along the line of the closest point to
+		// circle center
+		const u = (v2x * v1x + v2y * v1y) / (v1y * v1y + v1x * v1x);
+
+		// if the point is on the line segment get the distance squared
+		// from that point to the circle center
+		if(u >= 0 && u <= 1)
 		{
-            dist  = (A.x + v1x * u - C.x) ** 2 + (A.y + v1y * u - C.y) ** 2;
-        } 
+			dist  = (A.x + v1x * u - C.x) ** 2 + (A.y + v1y * u - C.y) ** 2;
+		} 
 		else 
 		{
-            // if closest point not on the line segment
-            // use the unit distance to determine which end is closest
-            // and get dist square to circle
-            dist = u < 0 ?
-                  (A.x - C.x) ** 2 + (A.y - C.y) ** 2 :
-                  (B.x - C.x) ** 2 + (B.y - C.y) ** 2;
-        }
-        return dist < radius * radius;
-     }
+			// if closest point not on the line segment
+			// use the unit distance to determine which end is closest
+			// and get dist square to circle
+			dist = u < 0 ?
+				(A.x - C.x) ** 2 + (A.y - C.y) ** 2 :
+				(B.x - C.x) ** 2 + (B.y - C.y) ** 2;
+		}
+		return dist < radius * radius;
+	}
+	toText()
+	{
+		let out = "";
+		//out += nodeIndexDict[this.from.getId()] + "\n";
+		out += JSON.stringify(this.from) + "\n";
+		//out += nodeIndexDict[this.to.getId()] + "\n";
+		out += JSON.stringify(this.to) + "\n";
+		out += JSON.stringify(this.polyLineList) + "\n";
+		out += JSON.stringify(this.collisionRadius) + "\n";
+		return out;
+	}
 }
 
 // TODO: Want to make this a static variable in Node class, but kept get NaN errors
@@ -584,15 +700,15 @@ class Node
 	// Mapping of output type to colors for drawing
 	// Color palette generated from here: https://mokole.com/palette.html
 	outputColorMap = new Map([["a","#006400"],
-								["k","#00008b"],
-								["i","#b03060"],
-								["ga","#ff0000"],
-								["gk","#ffff00"],
-								["gi","#00ff00"],
-								["p","#00ffff"],
-								["S","#ff00ff"],
-								["pvs","#6495ed"],
-								["w","#ffdead"]]);
+			["k","#00008b"],
+			["i","#b03060"],
+			["ga","#ff0000"],
+			["gk","#ffff00"],
+			["gi","#00ff00"],
+			["p","#00ffff"],
+			["S","#ff00ff"],
+			["pvs","#6495ed"],
+			["w","#ffdead"]]);
 
 	printedFlag = false; // a flag used to determine if the current node has been printed
 
@@ -662,7 +778,7 @@ class Node
 		// convert input point back to global coords
 		pt.x += this.pt.x;
 		pt.y += this.pt.y;
-		
+
 		return null;
 	}
 	// Return which type of collision occurred if any else return null
@@ -740,8 +856,8 @@ class Node
 	boundingCollision(pt)
 	{
 		let collision = false
-		// convert input point to local coords
-		pt.x -= this.pt.x;
+			// convert input point to local coords
+			pt.x -= this.pt.x;
 		pt.y -= this.pt.y;
 
 		let origin = {x:0,y:0};
@@ -751,24 +867,24 @@ class Node
 		// convert input point back to global coords
 		pt.x += this.pt.x;
 		pt.y += this.pt.y;
-	
+
 		return collision;
 	}
 	draw(ctx)
 	{	
 		// switch to local coords
 		ctx.translate(this.pt.x,this.pt.y);
-	
+
 		// draw outline
 		let origin = {x:0,y:0};
 		let boundary = {x:this.width,y:this.height};
 		this.drawRectangle([origin,boundary],ctx,"black","white");
-	
+
 		for (let i = 0; i < this.inputList.length; i++)
 		{
 			this.drawRectangle(this.inputList[i],ctx,"black","blue");
 		}
-		
+
 		for (let i = 0; i < this.outputList.length; i++)
 		{
 			let outColor = this.outputColorMap.get(this.outTypes[i]);
@@ -787,26 +903,26 @@ class Node
 	}
 	drawRectangle(pt,ctx,outlineColor,fillColor)
 	{
-    	// Now we can draw the rectangle 
-    	ctx.beginPath();
-    	ctx.moveTo(pt[0].x,pt[0].y);
-    	ctx.lineTo(pt[0].x,pt[1].y);
-    	ctx.lineTo(pt[1].x,pt[1].y);
-    	ctx.lineTo(pt[1].x,pt[0].y);
-    	ctx.lineTo(pt[0].x,pt[0].y);
-    	ctx.fillStyle = fillColor;
-    	ctx.fill();
-	
-    	// Draw rectangle outlines
-    	ctx.beginPath();
-    	ctx.moveTo(pt[0].x,pt[0].y);
-    	ctx.lineTo(pt[0].x,pt[1].y);
-    	ctx.lineTo(pt[1].x,pt[1].y);
-    	ctx.lineTo(pt[1].x,pt[0].y);
-    	ctx.lineTo(pt[0].x,pt[0].y);
-    	ctx.lineWidth = 2;
-    	ctx.strokeStyle = outlineColor;
-    	ctx.stroke();
+		// Now we can draw the rectangle 
+		ctx.beginPath();
+		ctx.moveTo(pt[0].x,pt[0].y);
+		ctx.lineTo(pt[0].x,pt[1].y);
+		ctx.lineTo(pt[1].x,pt[1].y);
+		ctx.lineTo(pt[1].x,pt[0].y);
+		ctx.lineTo(pt[0].x,pt[0].y);
+		ctx.fillStyle = fillColor;
+		ctx.fill();
+
+		// Draw rectangle outlines
+		ctx.beginPath();
+		ctx.moveTo(pt[0].x,pt[0].y);
+		ctx.lineTo(pt[0].x,pt[1].y);
+		ctx.lineTo(pt[1].x,pt[1].y);
+		ctx.lineTo(pt[1].x,pt[0].y);
+		ctx.lineTo(pt[0].x,pt[0].y);
+		ctx.lineWidth = 2;
+		ctx.strokeStyle = outlineColor;
+		ctx.stroke();
 	}
 	pointInRectangle(pt,rect)
 	{
@@ -867,11 +983,11 @@ class Node
 			if(this.inputNodes[i]!=null)
 			{
 				let str = this.inputNodes[i][0].getOutputType(this.inputNodes[i][1]);
-					str += this.inputNodes[i][0].getName();
-					str += "_";
-					str += this.inputNodes[i][0].getId();
-					str += "_";
-					str += this.inputNodes[i][1];
+				str += this.inputNodes[i][0].getName();
+				str += "_";
+				str += this.inputNodes[i][0].getId();
+				str += "_";
+				str += this.inputNodes[i][1];
 				params.push(str);
 			}
 			else params.push("NULL");
@@ -891,11 +1007,11 @@ class Node
 				outputs += this.outTypes[i]+this.getName()+"_"+this.getId()+"_"+i+" = "; // last output is to left of =
 			else 
 				outputs += this.outTypes[i]+this.getName()+"_"+this.getId()+"_"+i+", ";	
-	
+
 		outString += "\t"+outputs+this.getName()+paramStr+"\n";
 		return outString;	
 	}
-	
+
 
 	// Some basic getters and setters
 	getOutputType(n)
@@ -914,6 +1030,46 @@ class Node
 	{ this.outputNodes[n] = null; }
 	resetInput(n)
 	{ this.inputNodes[n] = null; }
+	toText(nodeIndexDict)
+	{
+		let out = "";
+		out += JSON.stringify(this.height) + "\n";
+		out += JSON.stringify(this.fontSize) + "\n";
+		out += JSON.stringify(this.width) + "\n";
+		out += JSON.stringify(this.inputList) + "\n"; 
+		out += JSON.stringify(this.outputList) + "\n"; 
+		out += JSON.stringify(this.name) + "\n";
+		out += JSON.stringify(this.pt) + "\n";
+		//out += this.inputNodes + "\n";
+		for (let i = 0; i < this.inputNodes.length; i++)
+			if (this.inputNodes[i] != null) 
+			{
+				let temp = JSON.stringify([
+								nodeIndexDict[this.inputNodes[i][0].getId()], 
+								this.inputNodes[i][1], 
+								this.inputNodes[i][2]]);
+				out += temp + " ";
+			}
+			else out += "null ";
+		out += "\n";
+		//out += this.outputNodes + "\n";
+		for (let i = 0; i < this.outputNodes.length; i++)
+		{
+			console.log(this.outputNodes[i]);
+			if (this.outputNodes[i] != null) 
+			{
+				let temp = JSON.stringify([
+								nodeIndexDict[this.outputNodes[i][0].getId()], 
+								this.outputNodes[i][1], 
+								this.outputNodes[i][2]]);
+				out += temp + " ";
+			}
+			else out += "null ";
+		}
+		out += "\n";
+		out += JSON.stringify(this.outTypes) + "\n";
+		return out;
+	}
 }
 // Draw the divisions
 //let graphDiagramObject = new GraphDiagramCanvas(".graphDiagramCanvas",20);

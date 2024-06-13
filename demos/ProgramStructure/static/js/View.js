@@ -1,6 +1,7 @@
 // TODO: Add load and save code for instruments, widgets, project, etc
 // TODO: We might also be able to add a marker on playback to show playback
 // TODO: Note sorting seems wrong, need to fix for correct output
+// TODO: Add text instrument loading too
 class View
 {
 	// There is only one track lane object for the whole program
@@ -174,7 +175,7 @@ class View
 	{
 		this.trackLaneObject.decrementBlockSize();
 	}
-	
+
 	// Reset the playlist object
 	ResetPlaylist()
 	{
@@ -411,7 +412,7 @@ class View
 
 		// Register the instruments with each other
 		let instname = document.getElementById("instrument-for-track").value
-		if (instname == "") instname = "EMPTY-INSTRUMENT";
+			if (instname == "") instname = "EMPTY-INSTRUMENT";
 		for (let i = 0; i < tempCanv.length; i++)
 			tempCanv[i].registerInstrument(tempCanv,instname);
 
@@ -487,8 +488,8 @@ class View
 		if (bpmText == "") bpmText = document.getElementById('playlist-bpm').placeholder;
 		// Get the track
 		let params = this.trackMap.get(track)
-		// Geet the note output for the triggering parameter, this includes the start and duration times
-		let paramList = params[0].getNoteOutput(Number(bpmText));
+			// Geet the note output for the triggering parameter, this includes the start and duration times
+			let paramList = params[0].getNoteOutput(Number(bpmText));
 		// Prefix each paramList element with the name of the selected instrument
 		for (let i = 0; i < paramList.length; i++) paramList[i].unshift(params[0].getName());
 		// Add offset times to start times
@@ -530,7 +531,7 @@ class View
 		// Get the beats per minute of the project
 		let bpbText = document.getElementById('playlist-bpb').value; // get the select tag
 		if (bpbText == "") bpbText = document.getElementById('playlist-bpb').placeholder;
-	
+
 		// get the events we intend to output
 		let outEvents = this.trackLaneObject.getOffsetsAndNames(Number(bpmText),Number(bpbText));
 		// For convenience sort all of the events
@@ -587,6 +588,7 @@ class View
 	renderOrchestra(displayModal)
 	{
 		// Get the instrument text name
+		// TODO: Is this line needed?
 		let instrument = document.getElementById('instrument-canvases-select').textContent; // get the select tag
 		instrument = this.CleanName(instrument);
 		// Get a string with the instrument code
@@ -621,7 +623,7 @@ class View
 	renderCSD(displayModal)
 	{
 		let outStr = "<CsoundSynthesizer>\n<CsOptions>\n-odac\n</CsOptions>\n<CsInstruments>\n";
-			//outStr += "sr = 44100\nksmps = 32\nnchnls = 2\n0dbfs  = 1\n\n";
+		//outStr += "sr = 44100\nksmps = 32\nnchnls = 2\n0dbfs  = 1\n\n";
 		// get the orchestra string
 		outStr += this.getOrchestraHeader()+"\n";
 		outStr += "//orchestra:\n";
@@ -678,6 +680,102 @@ class View
 	getScoreFooter()
 	{
 		return "//score footer:\n"+document.getElementById("score-footer").value;
+	}
+	saveInstrument()
+	{
+		// Get the instrument text name
+		let sel = document.getElementById('instrument-canvases-select'); // get the select tag
+		let instrument = sel.options[sel.selectedIndex].text; // the text of the selected option
+		instrument = this.CleanName(instrument);
+		if (instrument == "") return;
+
+		// the filename and contents of the file to be downloaded
+		let filename = instrument+".synth";
+		//let text = JSON.stringify(JSON.decycle(this.instrumentMap.get(instrument)));
+		let text = this.instrumentMap.get(instrument).toText();
+
+		// create and click an invisible link to the file we intend to download, then remove the link.
+		// Comes from SO
+		let element = document.createElement('a');
+		element.setAttribute('href','data:text/plain;charset=utf-8,'+encodeURIComponent(text))
+		element.setAttribute('download',filename);
+		element.style.display = 'none'
+		document.body.appendChild(element);
+		element.click();
+		document.body.removeChild(element);
+	}
+	loadInstrument()
+	{
+		// This is mostly from SO
+
+		// Open a file picker
+		let input = document.createElement('input');
+		input.type = 'file';
+
+		input.onchange = e => { 
+
+			// getting a hold of the file reference
+			let file = e.target.files[0]; 
+
+			// setting up the reader
+			let reader = new FileReader();
+			reader.readAsText(file,'UTF-8');
+
+			// When the reader is done reading we can load/setup the instrument
+			reader.onload = readerEvent => {
+				let text = readerEvent.target.result; // this is the content!
+				console.log(text);
+				let instrument = this.buildInstrument(text);
+			}
+
+		}
+
+		input.click();
+	}
+	// Build instrument given instrument state
+	buildInstrument(text)
+	{
+
+		// break file down into an array of arrays of lines
+		let file = text.split("#".repeat(64)+"\n");
+		file.shift(); // remove the empty starting line
+		for (let i = 0; i < file.length; i++)
+		{
+			file[i] = file[i].split("\n");
+		}
+
+		// Build the page elements for the canvas
+		let canvasDiv = "instrument-canvases";
+		let name = file[0][9].slice(1,-1);
+
+		// add the associated select entry
+		let selectEle = document.getElementById(canvasDiv+"-select");
+		let newOption = document.createElement("option");
+		newOption.innerText = name;
+		selectEle.append(newOption);
+
+		// add to the instrument data list in the track modal
+		let dataList = document.getElementById("instruments-datalist");
+		let listOption = document.createElement("option");
+		listOption.value = name;
+		dataList.append(listOption);
+
+		// add the associated canvas tag
+		let ele = document.getElementById(canvasDiv);
+		let newCanvas = document.createElement("canvas");
+		newCanvas.setAttribute("tabindex","1");
+		ele.appendChild(newCanvas);
+
+		newCanvas.setAttribute("id","instrument-"+name);
+		newOption.setAttribute("value","instrument-"+name);
+		newCanvas.setAttribute("class","trackLaneCanvas");
+		let instrumentCanvasObject = new GraphDiagramCanvas("instrument-"+name,name,20);
+
+		// Add the instrument canvas to our map of all instruments
+		this.instrumentMap.set(this.CleanName(name),instrumentCanvasObject);
+
+		// reconfigure the widget using our file data
+		instrumentCanvasObject.reconfigure(file);	
 	}
 }
 
