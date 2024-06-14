@@ -502,8 +502,8 @@ class GraphDiagramCanvas
 	// in toText() and j indexes across the individual lines per section
 	reconfigure(file)
 	{
-		let edgeListLength = file[0][file[0].length - 2];
-		let nodeListLength = file[0][file[0].length - 1];
+		let edgeListLength = Number(file[0][file[0].length - 2]);
+		let nodeListLength = Number(file[0][file[0].length - 1]);
 		this.nodeList = new Array();
 		for (let i = 0; i < nodeListLength; i++) this.nodeList.push(null);
 		this.edgeList = new Array();
@@ -537,9 +537,20 @@ class GraphDiagramCanvas
 			this.nodeList[i] = new	Node({x:0,y:0},"NO NAME",0,[],this.ctx);
 			this.nodeList[i].reconfigure(file[i+1+edgeListLength]);
 		}
-		// set up the edge list values
 		// set up the node input adjacency lists
+		for (let i = 0; i < this.nodeList.length; i++)
+			for (let j = 0; j < this.nodeList[i].inputNodes.length; j++)
+				if (typeof this.nodeList[this.nodeList[i].inputNodes[j][0]] != "undefined")
+					this.nodeList[i].inputNodes[j][0] = this.nodeList[this.nodeList[i].inputNodes[j][0]];
+				else this.nodeList[i].inputNodes[j][0] = null;
 		// set up the node output adjacency lists
+		for (let i = 0; i < this.nodeList.length; i++)
+			for (let j = 0; j < this.nodeList[i].outputNodes.length; j++)
+				if (typeof this.nodeList[this.nodeList[i].outputNodes[j][0]] != "undefined")
+					this.nodeList[i].outputNodes[j][0] = this.nodeList[this.nodeList[i].outputNodes[j][0]];
+				else this.nodeList[i].outputNodes[j][0] = null;
+		// redraw the screen
+		this.draw();
 	}
 }
 
@@ -679,6 +690,13 @@ class Edge
 		out += JSON.stringify(this.polyLineList) + "\n";
 		out += JSON.stringify(this.collisionRadius) + "\n";
 		return out;
+	}
+	reconfigure(file)
+	{
+		this.from = JSON.parse(file[0]);
+		this.to = JSON.parse(file[1]);
+		this.polyLineList = JSON.parse(file[2]);
+		this.collisionRadius = JSON.parse(file[3]);
 	}
 }
 
@@ -1055,7 +1073,6 @@ class Node
 		//out += this.outputNodes + "\n";
 		for (let i = 0; i < this.outputNodes.length; i++)
 		{
-			console.log(this.outputNodes[i]);
 			if (this.outputNodes[i] != null) 
 			{
 				let temp = JSON.stringify([
@@ -1069,6 +1086,46 @@ class Node
 		out += "\n";
 		out += JSON.stringify(this.outTypes) + "\n";
 		return out;
+	}
+	reconfigure(file)
+	{
+		this.height = JSON.parse(file[0]);
+		this.fontSize = JSON.parse(file[1]);
+		this.width = JSON.parse(file[2]);
+		this.inputList = JSON.parse(file[3]);
+		this.outputList = JSON.parse(file[4]);
+		this.name = JSON.parse(file[5]);
+		this.pt = JSON.parse(file[6]);
+		// Read the array of input nodes from the file (indexed)
+		let temp = new Array();
+		if (file[7] != "") 
+		{
+			let strings = file[7].split(" ");
+			strings.pop();
+			for (let i = 0; i < strings.length; i++) temp.push(JSON.parse(strings[i]));
+		}
+		else temp = new Array();
+		for (let i = 0; i < temp.length; i++)
+		{
+			this.inputNodes[i] = temp[i];
+		}
+		console.log(this.inputNodes);
+		// Read the array of output nodes from the file indexed
+		temp = new Array();
+		if (file[8] != "") 
+		{
+			let strings = file[8].split(" ");
+			strings.pop();
+			for (let i = 0; i < strings.length; i++) temp.push(JSON.parse(strings[i]));
+		}
+		else temp = new Array();
+		for (let i = 0; i < temp.length; i++)
+		{
+			this.outputNodes[i] = temp[i];
+		}
+		console.log(this.outputNodes);
+		// load the final out types variable and we are done
+		this.outTypes = JSON.parse(file[9]);
 	}
 }
 // Draw the divisions

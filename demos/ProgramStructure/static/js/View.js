@@ -724,7 +724,6 @@ class View
 			// When the reader is done reading we can load/setup the instrument
 			reader.onload = readerEvent => {
 				let text = readerEvent.target.result; // this is the content!
-				console.log(text);
 				let instrument = this.buildInstrument(text);
 			}
 
@@ -742,6 +741,7 @@ class View
 		for (let i = 0; i < file.length; i++)
 		{
 			file[i] = file[i].split("\n");
+			file[i].pop(); // remove empty ending line
 		}
 
 		// Build the page elements for the canvas
