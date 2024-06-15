@@ -59,10 +59,10 @@ class GraphDiagramCanvas
 		let controlText = "";
 		// Maybe add explanation of mouse click controls too
 		controlText += "1: enter node mode\n"
-			controlText += "2: enter edge mode\n"
-			controlText += "3: enter delete mode\n"
-			controlText += "n: change rectangle name\n"
-			controlText += "h: display keybinds\n";
+		controlText += "2: enter edge mode\n"
+		controlText += "3: enter delete mode\n"
+		controlText += "n: change rectangle name\n"
+		controlText += "h: display keybinds\n";
 		controlText += "wasd: scroll viewport\n";
 		controlText += "qe: scale viewport\n";
 		controlText += "rf: change amount to translate by\n";
@@ -270,12 +270,20 @@ class GraphDiagramCanvas
 				for (let j = 0; j < this.nodeList.length; j++)
 				{
 					fromIndex = this.nodeList[j].collisionOutputParam(this.edgeList[i].getFrom());
-					if (fromIndex != -1) fromNode = this.nodeList[j];
+					// found the from side of the edge so reset the output of the from node to null
+					if (fromIndex != -1) 
+					{
+						fromNode = this.nodeList[j];
+						fromNode.resetOutput(fromIndex);
+					}
 					toIndex = this.nodeList[j].collisionInputParam(this.edgeList[i].getTo());
-					if (toIndex != -1) toNode = this.nodeList[j];
+					// found the to side of the edge so reset the input of the to node to null
+					if (toIndex != -1) 
+					{
+						toNode = this.nodeList[j];
+						toNode.resetInput(toIndex);
+					}
 				}
-				fromNode.resetOutput(fromIndex);
-				toNode.resetInput(toIndex);
 				// remove the edge	
 				this.edgeList.splice(i,1);
 				break;
@@ -513,12 +521,12 @@ class GraphDiagramCanvas
 		this.coord = JSON.parse(file[0][0]);
 		this.inputModes = JSON.parse(file[0][1]); 
 		this.inputMode = JSON.parse(file[0][2]); 
-		this.workingEdge = JSON.parse(file[0][3]); 
-		this.workingStartNode = JSON.parse(file[0][4]); 
-		this.startEdgeNodeType = JSON.parse(file[0][5]);
-		this.curInputs = JSON.parse(file[0][6]);
-		this.curOutputs = JSON.parse(file[0][7]);
-		this.curName= JSON.parse(file[0][8]);
+		//this.workingEdge = JSON.parse(file[0][3]); 
+		//this.workingStartNode = JSON.parse(file[0][4]); 
+		//this.startEdgeNodeType = JSON.parse(file[0][5]);
+		//this.curInputs = JSON.parse(file[0][6]);
+		//this.curOutputs = JSON.parse(file[0][7]);
+		//this.curName= JSON.parse(file[0][8]);
 		this.instrumentName = JSON.parse(file[0][9]);
 		this.translateAmt = JSON.parse(file[0][10]);
 		this.scaleAmt = JSON.parse(file[0][11]);
@@ -1063,9 +1071,9 @@ class Node
 			if (this.inputNodes[i] != null) 
 			{
 				let temp = JSON.stringify([
-								nodeIndexDict[this.inputNodes[i][0].getId()], 
-								this.inputNodes[i][1], 
-								this.inputNodes[i][2]]);
+						nodeIndexDict[this.inputNodes[i][0].getId()], 
+						this.inputNodes[i][1], 
+						this.inputNodes[i][2]]);
 				out += temp + " ";
 			}
 			else out += "null ";
@@ -1076,9 +1084,9 @@ class Node
 			if (this.outputNodes[i] != null) 
 			{
 				let temp = JSON.stringify([
-								nodeIndexDict[this.outputNodes[i][0].getId()], 
-								this.outputNodes[i][1], 
-								this.outputNodes[i][2]]);
+						nodeIndexDict[this.outputNodes[i][0].getId()], 
+						this.outputNodes[i][1], 
+						this.outputNodes[i][2]]);
 				out += temp + " ";
 			}
 			else out += "null ";
@@ -1109,7 +1117,6 @@ class Node
 		{
 			this.inputNodes[i] = temp[i];
 		}
-		console.log(this.inputNodes);
 		// Read the array of output nodes from the file indexed
 		temp = new Array();
 		if (file[8] != "") 
@@ -1123,10 +1130,7 @@ class Node
 		{
 			this.outputNodes[i] = temp[i];
 		}
-		console.log(this.outputNodes);
 		// load the final out types variable and we are done
 		this.outTypes = JSON.parse(file[9]);
 	}
 }
-// Draw the divisions
-//let graphDiagramObject = new GraphDiagramCanvas(".graphDiagramCanvas",20);

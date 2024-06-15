@@ -1,3 +1,4 @@
+// TODO: Add seek bar to this and other canvases. 
 class TrackLaneCanvas
 {
 	coord = {x:0, y:0}; // the coords of the mouse
