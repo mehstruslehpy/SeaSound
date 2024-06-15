@@ -1,5 +1,6 @@
 //TODO: Add a double parameter matrix widget
 //TODO: Add a spreadsheet widget for manual input
+//TODO: Add code to change the name of the instrument associated to this widget (needs to iterate across this.instrument)
 class PianoRollCanvas
 {
 	coord = {x:0, y:0}; // the coords of the mouse

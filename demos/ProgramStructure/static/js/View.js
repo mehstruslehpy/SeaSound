@@ -1,3 +1,5 @@
+// TODO: Add project wide save/load functionality
+// TODO: Add track level save/load functionality
 // TODO: Add load and save code for instruments, widgets, project, etc
 // TODO: We might also be able to add a marker on playback to show playback
 // TODO: Note sorting seems wrong, need to fix for correct output
@@ -449,6 +451,7 @@ class View
 		let name = document.getElementById("node-name").value;
 		let inputs = document.getElementById("node-inputs").value;
 		let outputs = document.getElementById("node-outputs").value;
+		let type = document.getElementById("node-output-type").value;
 		outputs = this.CleanName(outputs); // clear whitespace
 		outputs = outputs.toLowerCase(); // convert to lower case
 		outputs = outputs.split(','); // split on commas
@@ -458,7 +461,7 @@ class View
 		let instrument = sel.options[sel.selectedIndex].text; // the text of the selected option
 		instrument = this.CleanName(instrument);
 		if (instrument == "") return;
-		this.instrumentMap.get(instrument).configureNode(name,inputs,outputs);
+		this.instrumentMap.get(instrument).configureNode(name,inputs,outputs,type);
 	}
 	// Render the currently selected instrument to text
 	renderInstrument()
@@ -744,7 +747,6 @@ class View
 		// Build the page elements for the canvas
 		let canvasDiv = "instrument-canvases";
 		let name = file[0][2].slice(1,-1);
-		console.log(name);
 
 		// add the associated select entry
 		let selectEle = document.getElementById(canvasDiv+"-select");

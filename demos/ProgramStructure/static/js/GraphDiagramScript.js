@@ -14,6 +14,7 @@ class GraphDiagramCanvas
 	curInputs = 2; // number of inputs for next node
 	curOutputs = ""; // number of outputs for next node
 	curName = "Default"; // the name of the next node
+	curOutputStyle  = "FUNCTIONAL"; // the output style for the next node
 
 	instrumentName = ""; // The name of this instrument
 
@@ -48,11 +49,12 @@ class GraphDiagramCanvas
 
 
 	// Configure the nodes that are created on left click in node mode
-	configureNode(name,inputs,outputs)
+	configureNode(name,inputs,outputs,style)
 	{
 		this.curName = name;
 		this.curInputs = inputs;
 		this.curOutputs = outputs;
+		this.curOutputStyle = style;
 		this.draw();
 	}
 	mButtonClick(ev)
@@ -114,7 +116,7 @@ class GraphDiagramCanvas
 		{
 			// add node to nodeList
 			let val = this.screenToWorldCoords(this.coord);
-			this.nodeList.push(new Node(val,this.curName,this.curInputs,this.curOutputs,this.ctx));
+			this.nodeList.push(new Node(val,this.curName,this.curInputs,this.curOutputs,this.curOutputStyle,this.ctx));
 		}
 		else if (this.inputMode == "DELETE")
 		{
@@ -379,6 +381,10 @@ class GraphDiagramCanvas
 		text = "translate amount: " +this.translateAmt +", zoom amount: " + this.scaleAmt.toFixed(2);
 		textWidth = this.ctx.measureText(text).width;
 		this.ctx.fillText(text,this.width-textWidth,3*textHeight);
+		text = "output style: " +this.curOutputStyle;
+		textWidth = this.ctx.measureText(text).width;
+		this.ctx.fillText(text,this.width-textWidth,4*textHeight);
+	
 	}
 
 	// draw outlines around the viewport
@@ -509,7 +515,7 @@ class GraphDiagramCanvas
 		for (let i = 0; i < nodeListLength; i++)
 		{
 			// load node i from file[i+1+edgeListLength]
-			this.nodeList[i] = new	Node({x:0,y:0},"NO NAME",0,[],this.ctx);
+			this.nodeList[i] = new	Node({x:0,y:0},"NO NAME",0,[],"EMPTY-STYLE",this.ctx);
 			this.nodeList[i].reconfigure(file[i+1+edgeListLength]);
 		}
 		// set up the node input adjacency lists
@@ -705,7 +711,10 @@ class Node
 
 	id = -1; // an identifier for the current node
 
-	constructor(pt,name,inputs,outputs,ctx)
+	// The type of node this is for output purposes, can be "FUNCTIONAL" or "MACRO" for now.
+	nodeType = "FUNCTIONAL";
+
+	constructor(pt,name,inputs,outputs,outStyle,ctx)
 	{	
 		// Generate and assign an id for the current node
 		this.id = nodeCount++;
@@ -736,6 +745,7 @@ class Node
 			this.fontSize--;
 			ctx.font = "bold "+this.fontSize+"px Arial";
 		}
+		this.nodeType = outStyle;
 		this.name = name;
 	}
 
@@ -953,7 +963,9 @@ class Node
 	}
 
 	getName()
-	{ return this.name; }
+	{ 
+		return this.name; 
+	}
 
 	renderToText()
 	{
@@ -961,7 +973,6 @@ class Node
 		let outString = "";
 
 		// Print the inputs to this node if they have not already been printed
-		console.log(this.inputNodes);
 		for (let i = 0; i < this.inputNodeCount(); i++) 
 			if (this.inputNodes[i]!=null && !this.inputNodes[i][0].getPrintFlag())
 				outString += this.inputNodes[i][0].renderToText();
@@ -969,13 +980,35 @@ class Node
 		// We can now print the current node
 		this.printedFlag = true;
 
+		// Build the list of outputs
+		let outputs = "";
+		for (let i = 0; i < this.outputNodeCount(); i++)
+			if (i==this.outputNodeCount()-1) 
+				if (this.nodeType == "MACRO") // macro nodes do not include an equal sign on left of opcode by default
+					outputs += this.outTypes[i]+"_"+this.getId()+"_"+i+" ";
+				else  // functional nodes do include an equal sign on the left of the opcode
+					outputs += this.outTypes[i]+"_"+this.getId()+"_"+i+" = ";
+			else 
+				outputs += this.outTypes[i]+"_"+this.getId()+"_"+i+", ";	
+
+		// Build the output string using the syntax style specified by the nodeType
+		if (this.nodeType == "FUNCTIONAL") outString += "\t"+outputs+this.functionalSyntaxHelper();
+		else outString += "\t"+outputs+this.macroSyntaxHelper();
+
+		// return the finished string
+		return outString;	
+	}
+
+	// Functional syntax is always of the form 'outputs = name(<parameter list>)'
+	// Here we build the 'name(<parameter list>)' part
+	functionalSyntaxHelper()
+	{
 		// Build the list of input parameters to this opcode
 		let params = Array();
 		for (let i = 0; i < this.inputNodeCount(); i++)
 			if(this.inputNodes[i]!=null)
 			{
 				let str = this.inputNodes[i][0].getOutputType(this.inputNodes[i][1]);
-				str += this.inputNodes[i][0].getName();
 				str += "_";
 				str += this.inputNodes[i][0].getId();
 				str += "_";
@@ -992,16 +1025,35 @@ class Node
 		if (params.length > 0) paramStr = "("+paramStr+")";
 		else paramStr = "";
 
-		// Build the list of outputs
-		let outputs = "";
-		for (let i = 0; i < this.outputNodeCount(); i++)
-			if (i==this.outputNodeCount()-1) 
-				outputs += this.outTypes[i]+this.getName()+"_"+this.getId()+"_"+i+" = "; // last output is to left of =
-			else 
-				outputs += this.outTypes[i]+this.getName()+"_"+this.getId()+"_"+i+", ";	
+		return this.getName()+paramStr+"\n";
+	}
 
-		outString += "\t"+outputs+this.getName()+paramStr+"\n";
-		return outString;	
+	// Macro nodes allow us to specify parameters using notation @1,...,@n notation
+	// this allows us to do arithmetic and specify constants as well as to use the more
+	// traditional csound syntax for opcodes in place of the functional syntax.
+	// This function finds and replaces @n with its corresponding parameter using a 
+	// regex
+	macroSyntaxHelper()
+	{
+		// Build the list of input parameters to this opcode
+		let params = Array();
+		for (let i = 0; i < this.inputNodeCount(); i++)
+			if(this.inputNodes[i]!=null)
+			{
+				let str = this.inputNodes[i][0].getOutputType(this.inputNodes[i][1]);
+				str += "_";
+				str += this.inputNodes[i][0].getId();
+				str += "_";
+				str += this.inputNodes[i][1];
+				params.push(str);
+			}
+			else params.push("NULL");
+
+		let paramText = this.getName();
+		for (let i = 0; i < params.length; i++)
+			paramText = paramText.replace(new RegExp("@"+String(i+1),"g"),params[i]);
+		
+		return paramText+"\n";
 	}
 
 
@@ -1030,6 +1082,7 @@ class Node
 		out += JSON.stringify(this.width) + "\n";
 		out += JSON.stringify(this.inputList) + "\n"; 
 		out += JSON.stringify(this.outputList) + "\n"; 
+		out += JSON.stringify(this.nodeType) + "\n"; 
 		out += JSON.stringify(this.name) + "\n";
 		out += JSON.stringify(this.pt) + "\n";
 		// output the input node list
@@ -1068,13 +1121,14 @@ class Node
 		this.width = JSON.parse(file[2]);
 		this.inputList = JSON.parse(file[3]);
 		this.outputList = JSON.parse(file[4]);
-		this.name = JSON.parse(file[5]);
-		this.pt = JSON.parse(file[6]);
+		this.nodeType = JSON.parse(file[5]);
+		this.name = JSON.parse(file[6]);
+		this.pt = JSON.parse(file[7]);
 		// Read the array of input nodes from the file (indexed)
 		let temp = new Array();
-		if (file[7] != "") 
+		if (file[8] != "") 
 		{
-			let strings = file[7].split(" ");
+			let strings = file[8].split(" ");
 			strings.pop();
 			for (let i = 0; i < strings.length; i++) temp.push(JSON.parse(strings[i]));
 		}
@@ -1085,9 +1139,9 @@ class Node
 		}
 		// Read the array of output nodes from the file indexed
 		temp = new Array();
-		if (file[8] != "") 
+		if (file[9] != "") 
 		{
-			let strings = file[8].split(" ");
+			let strings = file[9].split(" ");
 			strings.pop();
 			for (let i = 0; i < strings.length; i++) temp.push(JSON.parse(strings[i]));
 		}
@@ -1097,6 +1151,6 @@ class Node
 			this.outputNodes[i] = temp[i];
 		}
 		// load the final out types variable and we are done
-		this.outTypes = JSON.parse(file[9]);
+		this.outTypes = JSON.parse(file[10]);
 	}
 }
