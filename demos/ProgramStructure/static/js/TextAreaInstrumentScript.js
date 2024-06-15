@@ -26,4 +26,22 @@ class TextAreaInstrumentCanvas
 	{
 		return this.instrumentName;
 	}
+	toText()
+	{
+		let out = "#".repeat(64) + "\n"; // delimiter
+		out += "TextAreaInstrumentCanvas\n";
+		out += this.instrumentId + "\n";
+		out += "\"" + this.instrumentName + "\"\n"; // this should be consistent with the graph canvas file format
+		out += document.getElementById(this.instrumentId).value.replace(/\n/g,"\\n") + "\n";
+		return out;
+	}
+	reconfigure(file)
+	{
+		//this.instrumentName = file[0][2].slice(1,-1);
+		//this.instrumentId = file[0][1];
+		console.log(this.instrumentName);
+		console.log(this.instrumentId);
+		document.getElementById(this.instrumentId).value = file[0][3].replace(/\\n/g,"\n");
+		//this.draw();
+	}
 }

@@ -691,7 +691,6 @@ class View
 
 		// the filename and contents of the file to be downloaded
 		let filename = instrument+".synth";
-		//let text = JSON.stringify(JSON.decycle(this.instrumentMap.get(instrument)));
 		let text = this.instrumentMap.get(instrument).toText();
 
 		// create and click an invisible link to the file we intend to download, then remove the link.
@@ -713,7 +712,6 @@ class View
 		input.type = 'file';
 
 		input.onchange = e => { 
-
 			// getting a hold of the file reference
 			let file = e.target.files[0]; 
 
@@ -734,7 +732,6 @@ class View
 	// Build instrument given instrument state
 	buildInstrument(text)
 	{
-
 		// break file down into an array of arrays of lines
 		let file = text.split("#".repeat(64)+"\n");
 		file.shift(); // remove the empty starting line
@@ -746,7 +743,8 @@ class View
 
 		// Build the page elements for the canvas
 		let canvasDiv = "instrument-canvases";
-		let name = file[0][9].slice(1,-1);
+		let name = file[0][2].slice(1,-1);
+		console.log(name);
 
 		// add the associated select entry
 		let selectEle = document.getElementById(canvasDiv+"-select");
@@ -760,22 +758,45 @@ class View
 		listOption.value = name;
 		dataList.append(listOption);
 
-		// add the associated canvas tag
-		let ele = document.getElementById(canvasDiv);
-		let newCanvas = document.createElement("canvas");
-		newCanvas.setAttribute("tabindex","1");
-		ele.appendChild(newCanvas);
-
-		newCanvas.setAttribute("id","instrument-"+name);
 		newOption.setAttribute("value","instrument-"+name);
-		newCanvas.setAttribute("class","trackLaneCanvas");
-		let instrumentCanvasObject = new GraphDiagramCanvas("instrument-"+name,name,20);
+
+		// Figure out which type of canvas we are loading
+		let instrumentCanvasObject = null;
+		if (file[0][0] == "GraphDiagramCanvas")
+		{
+			// add the associated canvas tag
+			let ele = document.getElementById(canvasDiv);
+			let newCanvas = document.createElement("canvas");
+			newCanvas.setAttribute("tabindex","1");
+			ele.appendChild(newCanvas);
+
+			newCanvas.setAttribute("id","instrument-"+name);
+			newCanvas.setAttribute("class","trackLaneCanvas");
+
+			instrumentCanvasObject = new GraphDiagramCanvas("instrument-"+name,name,20);
+		}
+		else if (file[0][0] == "TextAreaInstrumentCanvas")
+		{
+			// add the associated textarea tag
+			let ele = document.getElementById(canvasDiv);
+			let newTextArea = document.createElement("textarea");
+			newTextArea.setAttribute("tabindex","1");
+			ele.appendChild(newTextArea);
+
+			newTextArea.setAttribute("id","instrument-"+name);
+			newTextArea.setAttribute("cols","160");
+			newTextArea.setAttribute("rows","20");
+			newTextArea.setAttribute("class","trackLaneCanvas");
+	
+			instrumentCanvasObject = new TextAreaInstrumentCanvas("instrument-"+name,name);
+		}
+		else console.log("ERROR: file type read error");
 
 		// Add the instrument canvas to our map of all instruments
 		this.instrumentMap.set(this.CleanName(name),instrumentCanvasObject);
-
 		// reconfigure the widget using our file data
 		instrumentCanvasObject.reconfigure(file);	
+	
 	}
 }
 

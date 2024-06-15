@@ -1,5 +1,6 @@
 // TODO: Need a lot more testing, might want to overhaul this code to not output csound code using the functional syntax
 // TODO: Need to fix node deletion order to be like pianoroll
+// TODO: Need to add node types for functional syntax, traditional syntax, parameters, expressions, constants and so on.
 class GraphDiagramCanvas
 {
 	coord = {x:0, y:0}; // the coords of the mouse
@@ -454,20 +455,13 @@ class GraphDiagramCanvas
 	toText()
 	{
 		let out = "#".repeat(64) + "\n"; // delimiter
+		out += "GraphDiagramCanvas\n";
 		let nodeIndexDict = {}; //dictionary used to assign each node an index
 		// build list of indices for our nodes as key value pairs
 		for (let i = 0; i < this.nodeList.length; i++)
 			nodeIndexDict[this.nodeList[i].getId()] = i;
 		// output the state of the graph class
 		out += JSON.stringify(this.coord) + "\n";
-		out += JSON.stringify(this.inputModes) + "\n";
-		out += JSON.stringify(this.inputMode) + "\n";
-		out += JSON.stringify(this.workingEdge) + "\n";
-		out += JSON.stringify(this.workingStartNode) + "\n";
-		out += JSON.stringify(this.startEdgeNodeType) + "\n";
-		out += JSON.stringify(this.curInputs) + "\n";
-		out += JSON.stringify(this.curOutputs) + "\n";
-		out += JSON.stringify(this.curName) + "\n";
 		out += JSON.stringify(this.instrumentName) + "\n";
 		out += JSON.stringify(this.translateAmt) + "\n";
 		out += JSON.stringify(this.scaleAmt) + "\n";
@@ -486,24 +480,6 @@ class GraphDiagramCanvas
 			out += "#".repeat(64) + "\n"; // delimiter
 			out += this.nodeList[i].toText(nodeIndexDict);
 		}
-		// output the node input adjacency list
-		out += "#".repeat(64) + "\n"; // delimiter
-		for (let i = 0; i < this.nodeList.length; i++)
-		{
-			let adjList = i + " : ";
-			for (let j = 0; j < this.nodeList[i].inputNodeCount(); j++)
-				adjList += nodeIndexDict[this.nodeList[i].inputNodes[j][0].getId()] + " ";
-			out += adjList + "\n";
-		}
-		// output the node output adjacency list
-		out += "#".repeat(64) + "\n"; // delimiter
-		for ( let i = 0; i < this.nodeList.length; i++)
-		{
-			let adjList = i + " : ";
-			for (let j = 0; j < this.nodeList[i].outputNodeCount(); j++)
-				adjList += nodeIndexDict[this.nodeList[i].outputNodes[j][0].getId()] + " ";
-			out += adjList + "\n";
-		}
 		return out;
 	}
 	// Takes in a 2d array file[i][j] where i indexes across the # delimited sections shown above
@@ -517,20 +493,11 @@ class GraphDiagramCanvas
 		this.edgeList = new Array();
 		for (let i = 0; i < edgeListLength; i++) this.edgeList.push(null);
 		// Load the basic variables for this widget
-		// TODO: some of these don't need to be saved/loaded to/from the file
-		this.coord = JSON.parse(file[0][0]);
-		this.inputModes = JSON.parse(file[0][1]); 
-		this.inputMode = JSON.parse(file[0][2]); 
-		//this.workingEdge = JSON.parse(file[0][3]); 
-		//this.workingStartNode = JSON.parse(file[0][4]); 
-		//this.startEdgeNodeType = JSON.parse(file[0][5]);
-		//this.curInputs = JSON.parse(file[0][6]);
-		//this.curOutputs = JSON.parse(file[0][7]);
-		//this.curName= JSON.parse(file[0][8]);
-		this.instrumentName = JSON.parse(file[0][9]);
-		this.translateAmt = JSON.parse(file[0][10]);
-		this.scaleAmt = JSON.parse(file[0][11]);
-		this.nodeRadius = JSON.parse(file[0][12]);
+		this.coord = JSON.parse(file[0][1]);
+		this.instrumentName = JSON.parse(file[0][2]);
+		this.translateAmt = JSON.parse(file[0][3]);
+		this.scaleAmt = JSON.parse(file[0][4]);
+		this.nodeRadius = JSON.parse(file[0][5]);
 		// Load the edge list
 		for (let i = 0; i < edgeListLength; i++)
 		{
@@ -691,9 +658,7 @@ class Edge
 	toText()
 	{
 		let out = "";
-		//out += nodeIndexDict[this.from.getId()] + "\n";
 		out += JSON.stringify(this.from) + "\n";
-		//out += nodeIndexDict[this.to.getId()] + "\n";
 		out += JSON.stringify(this.to) + "\n";
 		out += JSON.stringify(this.polyLineList) + "\n";
 		out += JSON.stringify(this.collisionRadius) + "\n";
@@ -996,6 +961,7 @@ class Node
 		let outString = "";
 
 		// Print the inputs to this node if they have not already been printed
+		console.log(this.inputNodes);
 		for (let i = 0; i < this.inputNodeCount(); i++) 
 			if (this.inputNodes[i]!=null && !this.inputNodes[i][0].getPrintFlag())
 				outString += this.inputNodes[i][0].renderToText();
@@ -1066,7 +1032,7 @@ class Node
 		out += JSON.stringify(this.outputList) + "\n"; 
 		out += JSON.stringify(this.name) + "\n";
 		out += JSON.stringify(this.pt) + "\n";
-		//out += this.inputNodes + "\n";
+		// output the input node list
 		for (let i = 0; i < this.inputNodes.length; i++)
 			if (this.inputNodes[i] != null) 
 			{
@@ -1078,7 +1044,7 @@ class Node
 			}
 			else out += "null ";
 		out += "\n";
-		//out += this.outputNodes + "\n";
+		// output the output node list
 		for (let i = 0; i < this.outputNodes.length; i++)
 		{
 			if (this.outputNodes[i] != null) 
