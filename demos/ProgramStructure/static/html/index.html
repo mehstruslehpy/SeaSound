@@ -216,6 +216,13 @@
 				<button class="lr-pad" onclick='viewObj.renderTrack(0,true);'>
 					Render Track
 				</button>
+				<!-- Buttons for saving/loading tracks -->
+				<button class="lr-pad" onclick='viewObj.saveTrack();'>
+					Save Track
+				</button>
+				<button class="lr-pad" onclick='viewObj.loadTrack();'>
+					Load Track
+				</button>
 	
 				<!-- Pop up dialog containing track parameters -->
 				<dialog id="track-dialog" onclose="viewObj.CheckDialogReopen();">
@@ -347,13 +354,18 @@ nchnls = 2
 				</button>
 				<!-- Button for outputting instrument code -->
 				<button class="lr-pad" onclick='viewObj.renderInstrument();'>
-					Render Instrument
+					Render Instr
 				</button>
 				<!-- Button for outputting all instrument code -->
 				<button class="lr-pad" onclick='viewObj.renderOrchestra(true);'>
-					Render Orchestra
+					Render Orch
 				</button>
-	
+				<button class="lr-pad" onclick='viewObj.saveInstrument()'>
+					Save Instr
+				</button>
+				<button class="lr-pad" onclick='viewObj.loadInstrument();'>
+					Load Instr
+				</button>
 	
 				<!-- Pop up dialog containing node parameters -->
 				<dialog id="node-dialog">
@@ -370,6 +382,15 @@ nchnls = 2
 					<label style="display:table-cell;">Outputs Types:</label>
 					<input style="display:table-cell;" type="text" id="node-outputs" placeholder="a,k,i"></br>
 				</div>
+
+				<div style="display:table-row;">
+					<label style="display:table-cell;">Output Style:</label>
+					<select style="display:table-cell" id="node-output-type">
+						<option value="FUNCTIONAL">Functional</option>
+						<option value="MACRO">Macro</option>
+					</select> 
+				</div>
+
 				<button id="cancel" type="reset" onclick='document.getElementById("node-dialog").close();'>Cancel</button>
 				<button type="submit" 
 						onclick="viewObj.configureNode();">
