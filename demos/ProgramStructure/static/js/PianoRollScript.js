@@ -1,6 +1,7 @@
 //TODO: Add a double parameter matrix widget
 //TODO: Add a spreadsheet widget for manual input
 //TODO: Add code to change the name of the instrument associated to this widget (needs to iterate across this.instrument)
+//TODO: Make line widths consistent. Why are all my line widths different?
 class PianoRollCanvas
 {
 	widgetType = "PianoRollCanvas"; // On file save/load denotes the type of widget this widget is

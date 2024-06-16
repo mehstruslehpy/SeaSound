@@ -1,9 +1,6 @@
 // TODO: Add project wide save/load functionality
-// TODO: Add track level save/load functionality
-// TODO: Add load and save code for instruments, widgets, project, etc
-// TODO: We might also be able to add a marker on playback to show playback
+// TODO: Add seekbars to widgets
 // TODO: Note sorting seems wrong, need to fix for correct output
-// TODO: Add text instrument loading too
 class View
 {
 	// There is only one track lane object for the whole program
@@ -493,8 +490,8 @@ class View
 		if (bpmText == "") bpmText = document.getElementById('playlist-bpm').placeholder;
 		// Get the track
 		let params = this.trackMap.get(track)
-			// Geet the note output for the triggering parameter, this includes the start and duration times
-			let paramList = params[0].getNoteOutput(Number(bpmText));
+		// Get the note output for the triggering parameter, this includes the start and duration times
+		let paramList = params[0].getNoteOutput(Number(bpmText));
 		// Prefix each paramList element with the name of the selected instrument
 		for (let i = 0; i < paramList.length; i++) paramList[i].unshift(params[0].getName());
 		// Add offset times to start times
@@ -908,6 +905,7 @@ class View
 			instr.push(workingWidget);
 		}
 		
+		this.trackMap.set(this.CleanName(name),instr);
 	}
 }
 

@@ -1,4 +1,5 @@
 //TODO: Need to check that deletion works as expected with this one. It might be kind of weird
+//TODO: Scaling looks really weird on this one since it stretches the little lollipop circles
 class SliderCanvas 
 {
 	widgetType = "SliderCanvas"; // On file save/load denotes the type of widget this widget is
