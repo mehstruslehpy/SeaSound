@@ -461,12 +461,12 @@ class GraphDiagramCanvas
 	toText()
 	{
 		let out = "#".repeat(64) + "\n"; // delimiter
-		out += "GraphDiagramCanvas\n";
+		out += "GraphDiagramCanvas\n"; // we need this to distinguish between text and graph widgets
 		let nodeIndexDict = {}; //dictionary used to assign each node an index
 		// build list of indices for our nodes as key value pairs
 		for (let i = 0; i < this.nodeList.length; i++)
 			nodeIndexDict[this.nodeList[i].getId()] = i;
-		// output the state of the graph class
+		// output the state of the graph class, skip the nodeList key to avoid circularity
 		out += JSON.stringify(this, (key,value) => {
 			if(key=="nodeList") 
 			{
@@ -475,6 +475,7 @@ class GraphDiagramCanvas
 			else return value;
 		});
 		out += "\n";
+		// output the number of edges/nodes to facilitate reading them back in from the file later
 		out += this.edgeList.length + "\n";
 		out += this.nodeList.length + "\n";
 		// output the edge list
@@ -495,12 +496,16 @@ class GraphDiagramCanvas
 	// in toText() and j indexes across the individual lines per section
 	reconfigure(file)
 	{
+		// get the node and edge list lengths for later reading
 		let edgeListLength = Number(file[0][file[0].length - 2]);
 		let nodeListLength = Number(file[0][file[0].length - 1]);
+
+		// build the node and edge lists
 		this.nodeList = new Array();
 		for (let i = 0; i < nodeListLength; i++) this.nodeList.push(null);
 		this.edgeList = new Array();
 		for (let i = 0; i < edgeListLength; i++) this.edgeList.push(null);
+
 		// Load the basic variables for this widget
 		let temp = JSON.parse(file[0][1]);
 		this.coord = temp.coord;
@@ -516,6 +521,7 @@ class GraphDiagramCanvas
 			this.edgeList[i] = new Edge();
 			this.edgeList[i].reconfigure(file[i+1]);
 		}
+
 		// load the nodes
 		for (let i = 0; i < nodeListLength; i++)
 		{
@@ -523,18 +529,21 @@ class GraphDiagramCanvas
 			this.nodeList[i] = new	Node({x:0,y:0},"NO NAME",0,[],"EMPTY-STYLE",this.ctx);
 			this.nodeList[i].reconfigure(file[i+1+edgeListLength]);
 		}
+
 		// set up the node input adjacency lists
 		for (let i = 0; i < this.nodeList.length; i++)
 			for (let j = 0; j < this.nodeList[i].inputNodes.length; j++)
 				if (typeof this.nodeList[this.nodeList[i].inputNodes[j][0]] != "undefined")
 					this.nodeList[i].inputNodes[j][0] = this.nodeList[this.nodeList[i].inputNodes[j][0]];
 				else this.nodeList[i].inputNodes[j][0] = null;
+
 		// set up the node output adjacency lists
 		for (let i = 0; i < this.nodeList.length; i++)
 			for (let j = 0; j < this.nodeList[i].outputNodes.length; j++)
 				if (typeof this.nodeList[this.nodeList[i].outputNodes[j][0]] != "undefined")
 					this.nodeList[i].outputNodes[j][0] = this.nodeList[this.nodeList[i].outputNodes[j][0]];
 				else this.nodeList[i].outputNodes[j][0] = null;
+
 		// redraw the screen
 		this.draw();
 	}
@@ -1077,6 +1086,9 @@ class Node
 	{ this.inputNodes[n] = null; }
 	toText(nodeIndexDict)
 	{
+		// to avoid circularity we replace input nodes with their corresponding indices in the nodeIndexDict
+		// These indices represent the index of the node in the output file. Later when we read this file back
+		// in these values will allow us to swap out indices for the actual node objects cleanly.
 		let out = JSON.stringify(this, (key,value) => {
 			if(key=="inputNodes" || key=="outputNodes") 
 			{
