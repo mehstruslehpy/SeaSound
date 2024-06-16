@@ -467,11 +467,14 @@ class GraphDiagramCanvas
 		for (let i = 0; i < this.nodeList.length; i++)
 			nodeIndexDict[this.nodeList[i].getId()] = i;
 		// output the state of the graph class
-		out += JSON.stringify(this.coord) + "\n";
-		out += JSON.stringify(this.instrumentName) + "\n";
-		out += JSON.stringify(this.translateAmt) + "\n";
-		out += JSON.stringify(this.scaleAmt) + "\n";
-		out += JSON.stringify(this.nodeRadius) + "\n";
+		out += JSON.stringify(this, (key,value) => {
+			if(key=="nodeList") 
+			{
+				return new Array();
+			}
+			else return value;
+		});
+		out += "\n";
 		out += this.edgeList.length + "\n";
 		out += this.nodeList.length + "\n";
 		// output the edge list
@@ -499,11 +502,13 @@ class GraphDiagramCanvas
 		this.edgeList = new Array();
 		for (let i = 0; i < edgeListLength; i++) this.edgeList.push(null);
 		// Load the basic variables for this widget
-		this.coord = JSON.parse(file[0][1]);
-		this.instrumentName = JSON.parse(file[0][2]);
-		this.translateAmt = JSON.parse(file[0][3]);
-		this.scaleAmt = JSON.parse(file[0][4]);
-		this.nodeRadius = JSON.parse(file[0][5]);
+		let temp = JSON.parse(file[0][1]);
+		this.coord = temp.coord;
+		this.instrumentName = temp.instrumentName;
+		this.translateAmt = temp.translateAmt;
+		this.scaleAmt = temp.scaleAmt;
+		this.nodeRadius = temp.nodeRadius;
+	
 		// Load the edge list
 		for (let i = 0; i < edgeListLength; i++)
 		{
@@ -663,19 +668,16 @@ class Edge
 	}
 	toText()
 	{
-		let out = "";
-		out += JSON.stringify(this.from) + "\n";
-		out += JSON.stringify(this.to) + "\n";
-		out += JSON.stringify(this.polyLineList) + "\n";
-		out += JSON.stringify(this.collisionRadius) + "\n";
-		return out;
+		let out = JSON.stringify(this);
+		return out+"\n";
 	}
 	reconfigure(file)
 	{
-		this.from = JSON.parse(file[0]);
-		this.to = JSON.parse(file[1]);
-		this.polyLineList = JSON.parse(file[2]);
-		this.collisionRadius = JSON.parse(file[3]);
+		let temp = JSON.parse(file[0]);
+		this.from = temp.from;
+		this.to = temp.to;
+		this.polyLineList = temp.polyLineList;
+		this.collisionRadius = temp.collisionRadius;
 	}
 }
 
@@ -1056,7 +1058,6 @@ class Node
 		return paramText+"\n";
 	}
 
-
 	// Some basic getters and setters
 	getOutputType(n)
 	{ return this.outTypes[n]; }
@@ -1076,81 +1077,28 @@ class Node
 	{ this.inputNodes[n] = null; }
 	toText(nodeIndexDict)
 	{
-		let out = "";
-		out += JSON.stringify(this.height) + "\n";
-		out += JSON.stringify(this.fontSize) + "\n";
-		out += JSON.stringify(this.width) + "\n";
-		out += JSON.stringify(this.inputList) + "\n"; 
-		out += JSON.stringify(this.outputList) + "\n"; 
-		out += JSON.stringify(this.nodeType) + "\n"; 
-		out += JSON.stringify(this.name) + "\n";
-		out += JSON.stringify(this.pt) + "\n";
-		// output the input node list
-		for (let i = 0; i < this.inputNodes.length; i++)
-			if (this.inputNodes[i] != null) 
+		let out = JSON.stringify(this, (key,value) => {
+			if(key=="inputNodes" || key=="outputNodes") 
 			{
-				let temp = JSON.stringify([
-						nodeIndexDict[this.inputNodes[i][0].getId()], 
-						this.inputNodes[i][1], 
-						this.inputNodes[i][2]]);
-				out += temp + " ";
+				return value.map((tup)=>{return [nodeIndexDict[tup[0].getId()],tup[1],tup[2]]; })
 			}
-			else out += "null ";
-		out += "\n";
-		// output the output node list
-		for (let i = 0; i < this.outputNodes.length; i++)
-		{
-			if (this.outputNodes[i] != null) 
-			{
-				let temp = JSON.stringify([
-						nodeIndexDict[this.outputNodes[i][0].getId()], 
-						this.outputNodes[i][1], 
-						this.outputNodes[i][2]]);
-				out += temp + " ";
-			}
-			else out += "null ";
-		}
-		out += "\n";
-		out += JSON.stringify(this.outTypes) + "\n";
-		return out;
+			else return value;
+		});
+		return out+"\n";
 	}
 	reconfigure(file)
 	{
-		this.height = JSON.parse(file[0]);
-		this.fontSize = JSON.parse(file[1]);
-		this.width = JSON.parse(file[2]);
-		this.inputList = JSON.parse(file[3]);
-		this.outputList = JSON.parse(file[4]);
-		this.nodeType = JSON.parse(file[5]);
-		this.name = JSON.parse(file[6]);
-		this.pt = JSON.parse(file[7]);
-		// Read the array of input nodes from the file (indexed)
-		let temp = new Array();
-		if (file[8] != "") 
-		{
-			let strings = file[8].split(" ");
-			strings.pop();
-			for (let i = 0; i < strings.length; i++) temp.push(JSON.parse(strings[i]));
-		}
-		else temp = new Array();
-		for (let i = 0; i < temp.length; i++)
-		{
-			this.inputNodes[i] = temp[i];
-		}
-		// Read the array of output nodes from the file indexed
-		temp = new Array();
-		if (file[9] != "") 
-		{
-			let strings = file[9].split(" ");
-			strings.pop();
-			for (let i = 0; i < strings.length; i++) temp.push(JSON.parse(strings[i]));
-		}
-		else temp = new Array();
-		for (let i = 0; i < temp.length; i++)
-		{
-			this.outputNodes[i] = temp[i];
-		}
-		// load the final out types variable and we are done
-		this.outTypes = JSON.parse(file[10]);
+		let temp = JSON.parse(file[0]);
+		this.height = temp.height;
+		this.fontSize = temp.fontSize;
+		this.width = temp.width;
+		this.inputList = temp.inputList;
+		this.outputList = temp.outputList;
+		this.nodeType = temp.nodeType;
+		this.name = temp.name;
+		this.pt = temp.pt;
+		this.inputNodes = temp.inputNodes;
+		this.outputNodes = temp.outputNodes;
+		this.outTypes = temp.outTypes;
 	}
 }
