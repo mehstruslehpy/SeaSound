@@ -3,6 +3,7 @@
 //TODO: Should be able to add it to end of draw() with suitable coord xforms applied
 class CodedEventCanvas
 {
+	widgetType = "CodedEventCanvas"; // On file save/load denotes the type of widget this widget is
 	coord = {x:0, y:0}; // the coords of the mouse
 	leftClickStart = {x:0, y:0}; // the coords of the mouse at the start of a click
 	leftClickEnd = {x:0, y:0}; // the coords of the mouse at the release of a click
@@ -319,6 +320,8 @@ class CodedEventCanvas
 		this.instrument = inst;
 		this.name = name;
 	}
+	setInstrument(inst)
+	{ this.instrument = inst; }
 
 	getName()
 	{
@@ -514,6 +517,30 @@ class CodedEventCanvas
 	getNotes()
 	{
 		return this.horizontalCells;
+	}
+	reconfigure(state)
+	{
+		this.rectangleList = state.rectangleList;
+		this.workingText = state.workingText;
+
+		this.lineWidth = state.lineWidth;
+
+		this.translateAmt = state.translateAmt;
+		this.scaleAmtX = state.scaleAmtX;
+		this.scaleAmtY = state.scaleAmtY;
+
+		this.triggerMode = state.triggerMode;
+
+		this.instrument = null;
+		this.name = state.name;
+
+		this.beatsPerCell = state.beatsPerCell;
+
+		this.snapAmount = state.snapAmount;
+
+		this.cells = state.cells;
+		this.cellWidth = state.cellWidth;
+		this.draw();
 	}
 }
 // Draw the divisions

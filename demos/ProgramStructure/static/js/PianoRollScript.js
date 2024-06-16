@@ -3,6 +3,7 @@
 //TODO: Add code to change the name of the instrument associated to this widget (needs to iterate across this.instrument)
 class PianoRollCanvas
 {
+	widgetType = "PianoRollCanvas"; // On file save/load denotes the type of widget this widget is
 	coord = {x:0, y:0}; // the coords of the mouse
 	leftClickStart = {x:0, y:0}; // the coords of the mouse at the start of a click
 	leftClickEnd = {x:0, y:0}; // the coords of the mouse at the release of a click
@@ -432,6 +433,10 @@ class PianoRollCanvas
 		this.instrument = inst;
 		this.name = name;
 	}
+	setInstrument(inst)
+	{
+		this.instrument = inst;
+	}
 
 	getName()
 	{
@@ -573,5 +578,25 @@ class PianoRollCanvas
 	getNotes()
 	{
 		return this.verticalCells;
+	}
+	reconfigure(state)
+	{
+		this.rectangleList = state.rectangleList;
+		this.instrument = null;
+		this.name = state.name
+		this.snapAmount = state.snapAmount;
+
+		this.triggerMode = state.triggerMode;
+
+		this.verticalCells = state.verticalCells;
+		this.horizontalCells = state.horizontalCells;
+
+		// The cell width is determined here
+		this.cellWidth = state.cellWidth;
+		this.cellHeight = state.cellHeight;
+
+		// For unit conversion later
+		this.beatsPerCell = state.beatsPerCell;
+		this.draw();
 	}
 }

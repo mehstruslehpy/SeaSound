@@ -1,6 +1,7 @@
 //TODO: Need to check that deletion works as expected with this one. It might be kind of weird
 class SliderCanvas 
 {
+	widgetType = "SliderCanvas"; // On file save/load denotes the type of widget this widget is
 	coord = {x:0, y:0}; // the coords of the mouse
 	leftClickStart = {x:0, y:0}; // the coords of the mouse at the start of a click
 	leftClickEnd = {x:0, y:0}; // the coords of the mouse at the release of a click
@@ -492,7 +493,11 @@ class SliderCanvas
 	{
 		this.instrument = inst;
 		this.name = name;
-	}
+	}	
+	setInstrument(inst)
+	{ this.instrument = inst; }
+
+
 	getName()
 	{
 		return this.name;
@@ -635,6 +640,38 @@ class SliderCanvas
 	getNotes()
 	{
 		return this.horizontalCells;
+	}
+	reconfigure(state)
+	{
+		this.sliderList = state.sliderList;
+
+		this.triggerMode = state.triggerMode;
+
+		this.translateAmt = state.translateAmt;
+		this.scaleAmtX = state.scaleAmtX;
+		this.scaleAmtY = state.scaleAmtY;
+
+		this.instrument = null;
+		this.name = state.name;
+
+		this.beatsPerCell = state.beatsPerCell
+
+		this.snapAmount = state.snapAmount;
+
+		this.maxOut = state.maxOut;
+		this.minOut = state.minOut;
+
+		this.verticalCells = state.verticalCells;
+		this.horizontalCells = state.horizontalCells;
+
+		// The cell width is determined here
+		this.cellWidth = state.cellWidth;
+		this.cellHeight = state.cellHeight;
+
+		this.radius = state.radius;
+
+		this.rectangleStyle = state.rectangleStyle;
+		this.draw();
 	}
 }
 

@@ -194,7 +194,9 @@ class View
 	NextParameter()
 	{
 		let name = document.getElementById("track-canvases-select").value;
-		name = name.split("-")[1];
+		//name = name.split("-")[1];
+		name = name.replace(/instrument-/g,"");
+		console.log(name);
 		let children = document.getElementById("instrument-"+name).children;
 		for (let i = 0; i < children.length; i++)
 		{
@@ -799,6 +801,113 @@ class View
 		// reconfigure the widget using our file data
 		instrumentCanvasObject.reconfigure(file);	
 	
+	}
+	saveTrack()
+	{
+		// Get the track text name
+		let sel = document.getElementById('track-canvases-select'); // get the select tag
+		let track = sel.options[sel.selectedIndex].text; // the text of the selected option
+		track = this.CleanName(track);
+		if (track== "") return;
+
+		// the filename and contents of the file to be downloaded
+		let filename = track+".track";
+		track = this.trackMap.get(track);
+
+		// Convert the track to text, but ignore the instruments value to avoid circularity
+		let text = JSON.stringify(track, (key,value) => {
+			if(key == "instrument")
+			{
+				return new Array();
+			}
+			else return value;
+		});
+
+		// create and click an invisible link to the file we intend to download, then remove the link.
+		// Comes from SO
+		let element = document.createElement('a');
+		element.setAttribute('href','data:text/plain;charset=utf-8,'+encodeURIComponent(text))
+		element.setAttribute('download',filename);
+		element.style.display = 'none'
+		document.body.appendChild(element);
+		element.click();
+		document.body.removeChild(element);
+	}
+	loadTrack()
+	{
+		// This is mostly from SO
+
+		// Open a file picker
+		let input = document.createElement('input');
+		input.type = 'file';
+
+		input.onchange = e => { 
+			// getting a hold of the file reference
+			let file = e.target.files[0]; 
+
+			// setting up the reader
+			let reader = new FileReader();
+			reader.readAsText(file,'UTF-8');
+
+			// When the reader is done reading we can load/setup the instrument
+			reader.onload = readerEvent => {
+				let text = readerEvent.target.result; // this is the content!
+				let instrument = this.buildTrack(text);
+			}
+		}
+
+		input.click();
+	}
+
+	// TODO: The naming here for the constructors "track-p blah blah" should probably be changed
+	buildTrack(text)
+	{
+		// Parse the text from our file
+		let temp = JSON.parse(text);		
+		let name = temp[0].name;
+
+		// Build the corresponding html tags for this instrument
+		// add a div to contain all our parameter canvases
+		let ele = document.getElementById("track-canvases");
+		let instDiv  = document.createElement("div");
+		instDiv.setAttribute("id","instrument-"+name);
+		ele.appendChild(instDiv);
+
+		// add the associated select entry
+		let selectEle = document.getElementById("track-canvases-select");
+		let newOption = document.createElement("option");
+		newOption.value = "instrument-"+name;
+		newOption.innerText = name;
+		selectEle.append(newOption);
+
+		// Display the currently selected parameter
+		document.getElementById("param-num").innerText = "Current Parameter: 0";
+
+		// Build the actual instrument from the file i.e. an array of parameter widgets
+		let instr = new Array();
+		for (let i = 0; i < temp.length; i++)
+		{
+		// create the canvas
+			let newCanvas = document.createElement("canvas");
+			newCanvas.setAttribute("tabindex","1");
+			newCanvas.setAttribute("id","track-p"+i+"-"+name);
+			if (i==0) newCanvas.style.display = "inline";
+			else newCanvas.style.display = "none";
+			instDiv.appendChild(newCanvas);
+		
+			let workingWidget = null;
+			if (temp[i].widgetType == "PianoRollCanvas") 
+				workingWidget = new PianoRollCanvas("track-p"+i+"-"+name,0,0,0);
+			else if (temp[i].widgetType == "SliderCanvas")
+				workingWidget = new SliderCanvas("track-p"+i+"-"+name,0,0,0,"lollipop");
+			else if (temp[i].widgetType == "CodedEventCanvas")
+				workingWidget = new CodedEventCanvas("track-p"+i+"-"+name,0,0);
+			else console.log("ERROR: invalid parameter type on track load.");
+			workingWidget.reconfigure(temp[i]);
+			workingWidget.setInstrument(instr);
+			instr.push(workingWidget);
+		}
+		
 	}
 }
 
