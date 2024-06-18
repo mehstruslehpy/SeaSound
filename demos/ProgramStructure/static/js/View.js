@@ -975,6 +975,8 @@ class View
 						file.async("string")
 						.then( (content) => {
 							console.log(content);
+							let state = JSON.parse(content);
+							that.trackLaneObject.reconfigure(state);
 						});
 					}
 				});

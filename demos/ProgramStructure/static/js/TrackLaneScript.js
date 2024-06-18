@@ -535,4 +535,42 @@ class TrackLaneCanvas
 		let cellsPerSecond = bpm * (1/60);
 		return bpb * c / cellsPerSecond;
 	}
+	// reconfigure the current track lane object from state read in from a file
+	reconfigure(state)
+	{
+		//coord = {x:0, y:0}; // the coords of the mouse
+		//leftClickStart = {x:0, y:0}; // the coords of the mouse at the start of a click
+		//leftClickEnd = {x:0, y:0}; // the coords of the mouse at the release of a click
+		//mousePressed = false; //record whether the mouse has been pressed
+		this.trackList = state.trackList;
+		this.workingRectangle = state.trackList;
+		//existingCollision = false; // flag tracking whether the user has clicked an existing rectangle
+		//moveIndex = -1; // the index that the collision occurred at 
+		//controlPressed = false; // tracks whether control has been pressed
+		this.blockSize = state.blockSize;
+		this.blockName = state.blockName;
+	
+		// values for changing the scale and translate amount
+		this.translateAmt = state.translateAmt;
+		this.scaleAmtX = state.scaleAmtX;
+		this.scaleAmtY = state.scaleAmtY;
+		
+		// Set up cell sizes
+		this.verticalCells = state.verticalCells;
+		this.horizontalCells = state.horizontalCells;
+	
+		// Compute widths and heights of cells
+		this.cellWidth = this.width/this.verticalCells; // the number of vertical cell divisions controls cell widths
+		this.cellHeight = this.height/this.horizontalCells; // the number of horizontal cell divisions controls cell heights
+
+		// set up font height
+		this.ctx.font = "bold "+this.rectangleFontSize+"px Arial";
+		while (this.ctx.measureText('@').width < this.cellHeight) // The width of @ approximates height
+		{
+			this.ctx.font = "bold "+this.rectangleFontSize+"px Arial";
+			this.rectangleFontSize++;
+		}
+
+		this.draw();
+	}
 }
