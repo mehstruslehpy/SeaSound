@@ -940,6 +940,51 @@ class View
 	}
 	loadProject()
 	{
+		// This is mostly from SO
+
+		// Open a file picker
+		let input = document.createElement('input');
+		input.type = 'file';
+
+		var that = this; // so calls below have access to this
+		input.onchange = e => { 
+			var new_zip = new JSZip();
+			new_zip.loadAsync(e.target.files[0])
+			.then(function(zip) {
+				// Iterate across all files in the zip
+				zip.forEach((path, file) => {
+					if (/\.synth$/.test(path)) 
+					{
+						console.log(path + " is a synth file. Unzipping...");
+						file.async("string")
+						.then( (content) => {
+							that.buildInstrument(content);
+						});
+					}
+					else if (/\.track$/.test(path)) 
+					{
+						console.log(path + " is a track file. Unzipping...");
+						file.async("string")
+						.then( (content) => {
+							that.buildTrack(content);
+						});
+					}
+					else if (/\.score$/.test(path)) 
+					{
+						console.log(path + " is a score file. Unzipping...");
+						file.async("string")
+						.then( (content) => {
+							console.log(content);
+						});
+					}
+				});
+			});
+		}
+		input.click();
+	}
+
+	projectLoadHelper(text)
+	{
 	}
 }
 
