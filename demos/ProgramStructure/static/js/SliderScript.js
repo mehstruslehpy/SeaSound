@@ -85,6 +85,7 @@ class SliderCanvas
 			controlText += "x: change snap to grid amount\n";
 			controlText += "nm: change output max/min values\n";
 			controlText += "ctrl: toggle enter/delete modes\n";
+			controlText += "i: change instrument name\n";
 
 		if (ev.key == "Control" && this.triggerMode) this.controlPressed = true;
 		else if (ev.key == "x") 
@@ -110,7 +111,12 @@ class SliderCanvas
 		else if (ev.key == "h") this.scaleAmountAll(this.scaleAmtX,this.scaleAmtY/(1+1/(2**4)));
 		else if (ev.key == "m") this.setMax(prompt("Set maximum output value:"));
 		else if (ev.key == "n") this.setMin(prompt("Set minimum output value:"));
-	
+		else if (ev.key == "i") 
+		{
+			let n = prompt("Input new instrument name:");
+			for (let i = 0; i < this.instrument.length; i++) this.instrument[i].setName(n);
+			for (let i = 0; i < this.instrument.length; i++) this.instrument[i].draw();
+		}
 		this.draw();	
 	}
 
@@ -445,6 +451,10 @@ class SliderCanvas
 		text += ", min output: " + this.minOut.toFixed(2);
 		textWidth = this.ctx.measureText(text).width;
 		this.ctx.fillText(text,this.width-textWidth,4*textHeight);
+		text = "instrument name: " + this.name;
+		textWidth = this.ctx.measureText(text).width;
+		this.ctx.fillText(text,this.width-textWidth,5*textHeight);
+
 	}
 
 	// draw outlines around the viewport
@@ -503,6 +513,8 @@ class SliderCanvas
 	{
 		return this.name;
 	}
+	setName(name)
+	{ this.name = name; }
 	getTriggerMode()
 	{
 		return this.triggerMode;

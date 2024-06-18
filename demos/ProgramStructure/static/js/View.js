@@ -191,9 +191,7 @@ class View
 	NextParameter()
 	{
 		let name = document.getElementById("track-canvases-select").value;
-		//name = name.split("-")[1];
 		name = name.replace(/instrument-/g,"");
-		console.log(name);
 		let children = document.getElementById("instrument-"+name).children;
 		for (let i = 0; i < children.length; i++)
 		{
@@ -745,7 +743,7 @@ class View
 
 		// Build the page elements for the canvas
 		let canvasDiv = "instrument-canvases";
-		let name = file[0][2].slice(1,-1);
+		let name = JSON.parse(file[0][1]).instrumentName; // This is slow and probably unnecessary
 
 		// add the associated select entry
 		let selectEle = document.getElementById(canvasDiv+"-select");

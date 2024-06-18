@@ -1,6 +1,6 @@
 //TODO: Add a double parameter matrix widget
 //TODO: Add a spreadsheet widget for manual input
-//TODO: Add code to change the name of the instrument associated to this widget (needs to iterate across this.instrument)
+//TODO: There is a bug where the instrument name does not immediately visibly load
 //TODO: Make line widths consistent. Why are all my line widths different?
 class PianoRollCanvas
 {
@@ -81,6 +81,7 @@ class PianoRollCanvas
 			controlText += "yh: change Y scaling amount\n";
 			controlText += "x: change snap to grid amount\n";
 			controlText += "ctrl: toggle note/delete modes\n";
+			controlText += "i: change instrument name\n";
 
 		if (ev.key == "Control" && this.triggerMode) this.controlPressed = true;
 		else if (ev.key == "h") alert(controlText);
@@ -104,6 +105,12 @@ class PianoRollCanvas
 		else if (ev.key == "g") this.scaleAmountAll(this.scaleAmtX/(1+1/(2**4)),this.scaleAmtY);
 		else if (ev.key == "y") this.scaleAmountAll(this.scaleAmtX,this.scaleAmtY*(1+1/(2**4)));
 		else if (ev.key == "h") this.scaleAmountAll(this.scaleAmtX,this.scaleAmtY/(1+1/(2**4)));
+		else if (ev.key == "i") 
+		{
+			let n = prompt("Input new instrument name:");
+			for (let i = 0; i < this.instrument.length; i++) this.instrument[i].setName(n);
+			for (let i = 0; i < this.instrument.length; i++) this.instrument[i].draw();
+		}
 	
 		this.draw();	
 	}
@@ -210,17 +217,6 @@ class PianoRollCanvas
 				this.instrument[i].draw();
 			}
 		this.draw();
-	
-		// Send data to backend in post request here
-		/*
-		fetch("http://localhost:4242/pianoroll", {
-  			method: "POST",
-  			headers: {'Content-Type': 'application/json'}, 
-  			body: JSON.stringify({p1:c1,p2:c2})
-		}).then(res => {
-  			console.log("Request complete! response:", res);
-		});
-		*/
 	}
 
 	// Update the current coordinates of the mouse
@@ -395,7 +391,9 @@ class PianoRollCanvas
 		text += ", y zoom amount: " + this.scaleAmtY.toFixed(2);
 		textWidth = this.ctx.measureText(text).width;
 		this.ctx.fillText(text,this.width-textWidth,3*textHeight);
-	
+		text = "instrument name: " + this.name;
+		textWidth = this.ctx.measureText(text).width;
+		this.ctx.fillText(text,this.width-textWidth,4*textHeight);
 	}
 
 	// Converts p a point on the screen (usually a mouse click) to a point in world coords
@@ -442,6 +440,10 @@ class PianoRollCanvas
 	getName()
 	{
 		return this.name;
+	}
+	setName(name)
+	{
+		this.name = name;
 	}
 
 	// Getter for trigger mode variable

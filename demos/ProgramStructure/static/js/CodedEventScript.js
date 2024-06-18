@@ -73,9 +73,10 @@ class CodedEventCanvas
 			controlText += "rf: change amount to translate by\n";
 			controlText += "tg: change X scaling amount\n";
 			controlText += "yh: change Y scaling amount\n";
-			controlText += "i: change input text\n";
+			controlText += "j: change input text\n";
 			controlText += "x: change snap to grid amount\n";
 			controlText += "ctrl: toggle note/delete modes\n";
+			controlText += "i: change instrument name\n";
 
 		if (ev.key == "Control" && this.triggerMode) this.controlPressed = true;
 		else if (ev.key == "x") 
@@ -99,7 +100,13 @@ class CodedEventCanvas
 		else if (ev.key == "g") this.scaleAmountAll(this.scaleAmtX/(1+1/(2**4)),this.scaleAmtY);
 		else if (ev.key == "y") this.scaleAmountAll(this.scaleAmtX,this.scaleAmtY*(1+1/(2**4)));
 		else if (ev.key == "h") this.scaleAmountAll(this.scaleAmtX,this.scaleAmtY/(1+1/(2**4)));
-		else if (ev.key == "i") this.workingText = prompt("Please enter event text.");
+		else if (ev.key == "j") this.workingText = prompt("Please enter event text.");
+		else if (ev.key == "i") 
+		{
+			let n = prompt("Input new instrument name:");
+			for (let i = 0; i < this.instrument.length; i++) this.instrument[i].setName(n);
+			for (let i = 0; i < this.instrument.length; i++) this.instrument[i].draw();
+		}
 		this.draw();	
 	}
 
@@ -312,8 +319,10 @@ class CodedEventCanvas
 		text = "input text: " + this.workingText;
 		textWidth = this.ctx.measureText(text).width;
 		this.ctx.fillText(text,this.width-textWidth,4*textHeight);
+		text = "instrument name: " + this.name;
+		textWidth = this.ctx.measureText(text).width;
+		this.ctx.fillText(text,this.width-textWidth,5*textHeight);
 	}
-
 
 	registerInstrument(inst,name)
 	{
@@ -327,6 +336,8 @@ class CodedEventCanvas
 	{
 		return this.name;
 	}
+	setName(name)
+	{ this.name = name; }
 	getTriggerMode()
 	{
 		return this.triggerMode;
