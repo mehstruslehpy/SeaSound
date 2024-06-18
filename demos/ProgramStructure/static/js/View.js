@@ -1,6 +1,8 @@
 // TODO: Add project wide save/load functionality
 // TODO: Add seekbars to widgets
 // TODO: Note sorting seems wrong, need to fix for correct output
+// TODO: Save and load code is incredibly buggy. Need to test and bugfix it more. Particularly the instrument code.
+// TODO: Loading tracks does not make them selectable on the track lane canvas
 class View
 {
 	// There is only one track lane object for the whole program
@@ -904,6 +906,40 @@ class View
 		}
 		
 		this.trackMap.set(this.CleanName(name),instr);
+	}
+	saveProject()
+	{
+		var zip = new JSZip();
+
+		// Add the instruments to the zip file
+		for (const val of this.instrumentMap.values())
+			zip.file("MyProject/instruments/"+val.getName()+".synth", val.toText());
+
+		// Add the tracks to the zipfile
+		for (const val of this.trackMap.values())
+		{
+			// Convert the track to text, but ignore the instruments value to avoid circularity
+			let text = JSON.stringify(val, (key,value) => {
+				if(key == "instrument")
+				{
+					return new Array();
+				}
+				else return value;
+			});
+
+			// Add the track to the zip file
+			zip.file("MyProject/tracks/"+val[0].getName()+".track", text);
+		}
+		
+		// Now finally add the track lane object to the zipfile
+		zip.file("MyProject/tracklane.score", JSON.stringify(this.trackLaneObject));
+
+		zip.generateAsync({type:"blob"}).then(function (blob) { // 1) generate the zip file
+			saveAs(blob, "MyProject.zip");                          // 2) trigger the download
+		});
+	}
+	loadProject()
+	{
 	}
 }
 

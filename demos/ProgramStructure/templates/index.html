@@ -54,6 +54,8 @@
 		}
 		
 	</script>
+    <script src="../static/jszip/jszip.js" defer></script>
+    <script src="../static/filesaver/FileSaver.js" defer></script>
 	<!-- My scripts are loaded next -->
 	<!-- Library scripts are loaded  before the main script -->
 	<!-- This ensures View.js has access to all the libraries defined in the above scripts -->
@@ -292,6 +294,17 @@
 		</div>
 
 		<div id="Configuration" class="tab" style="display:none">
+			<div class="menu-control-container" id="config-controls">
+				<label class="lr-pad">Project Controls:</label>
+				<button class="lr-pad" onclick='viewObj.saveProject();'>
+					Save Project
+				</button>
+				<button class="lr-pad" onclick='viewObj.loadProject();'>
+					Load Project
+				</button>
+			</div>
+
+
 			<label>Score Header:</label> </br>
 			<textarea cols="160" rows="5" id="score-header"></textarea> </br>
 			<label>Score Footer:</label> </br>
