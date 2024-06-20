@@ -37,8 +37,8 @@ class TextAreaInstrumentCanvas
 	}
 	reconfigure(file)
 	{
-		this.instrumentName = file[0][2].slice(1,-1);
-		this.instrumentId = file[0][1];
+		this.instrumentName = file[0][1].slice(1,-1);
+		this.instrumentId = file[0][2];
 		document.getElementById(this.instrumentId).value = file[0][3].replace(/\\n/g,"\n");
 		//this.draw();
 	}

@@ -1,8 +1,7 @@
 // TODO: Add project wide save/load functionality
 // TODO: Add seekbars to widgets
 // TODO: Note sorting seems wrong, need to fix for correct output
-// TODO: Save and load code is incredibly buggy. Need to test and bugfix it more. Particularly the instrument code.
-// TODO: Loading tracks does not make them selectable on the track lane canvas
+// TODO: Text instruments do not load correctly
 class View
 {
 	// There is only one track lane object for the whole program
@@ -750,8 +749,8 @@ class View
 			name = JSON.parse(file[0][1]).instrumentName; // This is slow and probably unnecessary
 		else if (file[0][0] == "TextAreaInstrumentCanvas")
 		{
+			name = file[0][1].slice(1,-1);
 			console.log(name);
-			name = file[0][2].slice(1,-1);
 		}
 
 		// add the associated select entry
@@ -925,11 +924,12 @@ class View
 	}
 	saveProject()
 	{
+		let projName = prompt("Input the project name.");
 		var zip = new JSZip();
 
 		// Add the instruments to the zip file
 		for (const val of this.instrumentMap.values())
-			zip.file("MyProject/instruments/"+val.getName()+".synth", val.toText());
+			zip.file(projName+"/instruments/"+val.getName()+".synth", val.toText());
 
 		// Add the tracks to the zipfile
 		for (const val of this.trackMap.values())
@@ -944,20 +944,20 @@ class View
 			});
 
 			// Add the track to the zip file
-			zip.file("MyProject/tracks/"+val[0].getName()+".track", text);
+			zip.file(projName+"/tracks/"+val[0].getName()+".track", text);
 		}
 		
 		// Add the track lane object to the zipfile
-		zip.file("MyProject/tracklane.score", JSON.stringify(this.trackLaneObject));
+		zip.file(projName+"/tracklane.score", JSON.stringify(this.trackLaneObject));
 
 		// Add the score and orchestra headers and footers to the file
-		zip.file("MyProject/orchestra_section.header", document.getElementById("orchestra-header").value);
-		zip.file("MyProject/orchestra_section.footer", document.getElementById("orchestra-footer").value);
-		zip.file("MyProject/score_section.header", document.getElementById("score-header").value);
-		zip.file("MyProject/score_section.footer", document.getElementById("score-footer").value);
+		zip.file(projName+"/orchestra_section.header", document.getElementById("orchestra-header").value);
+		zip.file(projName+"/orchestra_section.footer", document.getElementById("orchestra-footer").value);
+		zip.file(projName+"/score_section.header", document.getElementById("score-header").value);
+		zip.file(projName+"/score_section.footer", document.getElementById("score-footer").value);
 
 		zip.generateAsync({type:"blob"}).then(function (blob) { // 1) generate the zip file
-			saveAs(blob, "MyProject.zip");                          // 2) trigger the download
+			saveAs(blob, projName+".zip");                          // 2) trigger the download
 		});
 	}
 	loadProject()
