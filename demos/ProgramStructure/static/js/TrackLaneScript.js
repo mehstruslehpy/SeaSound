@@ -368,7 +368,6 @@ class TrackLaneCanvas
 		this.ctx.stroke();
 
 		// get the correct height
-		console.log(this.rectangleFontSize);
 		this.ctx.font = "bold "+this.rectangleFontSize+"px Arial";
 		this.ctx.fillStyle = 'black';
 		this.ctx.fillText(name,topLeft.x,topLeft.y+this.cellHeight-this.fontPad,Math.abs(topLeft.x-bottomRight.x));

@@ -745,7 +745,14 @@ class View
 
 		// Build the page elements for the canvas
 		let canvasDiv = "instrument-canvases";
-		let name = JSON.parse(file[0][1]).instrumentName; // This is slow and probably unnecessary
+		let name = "";
+		if (file[0][0] == "GraphDiagramCanvas")
+			name = JSON.parse(file[0][1]).instrumentName; // This is slow and probably unnecessary
+		else if (file[0][0] == "TextAreaInstrumentCanvas")
+		{
+			console.log(name);
+			name = file[0][2].slice(1,-1);
+		}
 
 		// add the associated select entry
 		let selectEle = document.getElementById(canvasDiv+"-select");
@@ -841,6 +848,7 @@ class View
 		input.onchange = e => { 
 			// getting a hold of the file reference
 			let file = e.target.files[0]; 
+			console.log(file);
 
 			// setting up the reader
 			let reader = new FileReader();
@@ -849,7 +857,7 @@ class View
 			// When the reader is done reading we can load/setup the instrument
 			reader.onload = readerEvent => {
 				let text = readerEvent.target.result; // this is the content!
-				let instrument = this.buildTrack(text);
+				let instrument = this.buildTrack(text,file.name);
 			}
 		}
 
@@ -857,28 +865,35 @@ class View
 	}
 
 	// TODO: The naming here for the constructors "track-p blah blah" should probably be changed
-	buildTrack(text)
+	buildTrack(text,filename)
 	{
+		filename = filename.split(".track")[0];
 		// Parse the text from our file
 		let temp = JSON.parse(text);		
-		let name = temp[0].name;
 
 		// Build the corresponding html tags for this instrument
 		// add a div to contain all our parameter canvases
 		let ele = document.getElementById("track-canvases");
 		let instDiv  = document.createElement("div");
-		instDiv.setAttribute("id","instrument-"+name);
+		instDiv.setAttribute("id","instrument-"+filename);
 		ele.appendChild(instDiv);
 
 		// add the associated select entry
 		let selectEle = document.getElementById("track-canvases-select");
 		let newOption = document.createElement("option");
-		newOption.value = "instrument-"+name;
-		newOption.innerText = name;
+		newOption.value = "instrument-"+filename;
+		newOption.innerText = filename;
 		selectEle.append(newOption);
 
 		// Display the currently selected parameter
 		document.getElementById("param-num").innerText = "Current Parameter: 0";
+
+		// Playlist editor needs an associated pattern entry too
+		let newPat = document.getElementById("pattern-select");
+		let newOpt = document.createElement("option");
+		newOpt.innerText = filename;
+		newOpt.setAttribute("value","instrument-"+filename);
+		newPat.append(newOpt);
 
 		// Build the actual instrument from the file i.e. an array of parameter widgets
 		let instr = new Array();
@@ -887,25 +902,26 @@ class View
 		// create the canvas
 			let newCanvas = document.createElement("canvas");
 			newCanvas.setAttribute("tabindex","1");
-			newCanvas.setAttribute("id","track-p"+i+"-"+name);
+			newCanvas.setAttribute("id","track-p"+i+"-"+filename);
 			if (i==0) newCanvas.style.display = "inline";
 			else newCanvas.style.display = "none";
 			instDiv.appendChild(newCanvas);
 		
 			let workingWidget = null;
 			if (temp[i].widgetType == "PianoRollCanvas") 
-				workingWidget = new PianoRollCanvas("track-p"+i+"-"+name,0,0,0);
+				workingWidget = new PianoRollCanvas("track-p"+i+"-"+filename,0,0,0);
 			else if (temp[i].widgetType == "SliderCanvas")
-				workingWidget = new SliderCanvas("track-p"+i+"-"+name,0,0,0,"lollipop");
+				workingWidget = new SliderCanvas("track-p"+i+"-"+filename,0,0,0,"lollipop");
 			else if (temp[i].widgetType == "CodedEventCanvas")
-				workingWidget = new CodedEventCanvas("track-p"+i+"-"+name,0,0);
+				workingWidget = new CodedEventCanvas("track-p"+i+"-"+filename,0,0);
 			else console.log("ERROR: invalid parameter type on track load.");
+			temp[i].name = filename;
 			workingWidget.reconfigure(temp[i]);
 			workingWidget.setInstrument(instr);
 			instr.push(workingWidget);
 		}
 		
-		this.trackMap.set(this.CleanName(name),instr);
+		this.trackMap.set(this.CleanName(filename),instr);
 	}
 	saveProject()
 	{
@@ -931,8 +947,14 @@ class View
 			zip.file("MyProject/tracks/"+val[0].getName()+".track", text);
 		}
 		
-		// Now finally add the track lane object to the zipfile
+		// Add the track lane object to the zipfile
 		zip.file("MyProject/tracklane.score", JSON.stringify(this.trackLaneObject));
+
+		// Add the score and orchestra headers and footers to the file
+		zip.file("MyProject/orchestra_section.header", document.getElementById("orchestra-header").value);
+		zip.file("MyProject/orchestra_section.footer", document.getElementById("orchestra-footer").value);
+		zip.file("MyProject/score_section.header", document.getElementById("score-header").value);
+		zip.file("MyProject/score_section.footer", document.getElementById("score-footer").value);
 
 		zip.generateAsync({type:"blob"}).then(function (blob) { // 1) generate the zip file
 			saveAs(blob, "MyProject.zip");                          // 2) trigger the download
@@ -955,7 +977,6 @@ class View
 				zip.forEach((path, file) => {
 					if (/\.synth$/.test(path)) 
 					{
-						console.log(path + " is a synth file. Unzipping...");
 						file.async("string")
 						.then( (content) => {
 							that.buildInstrument(content);
@@ -963,20 +984,49 @@ class View
 					}
 					else if (/\.track$/.test(path)) 
 					{
-						console.log(path + " is a track file. Unzipping...");
 						file.async("string")
 						.then( (content) => {
-							that.buildTrack(content);
+							let filename = file.name.split(".track")[0];
+							filename = filename.split("/");
+							filename = filename[filename.length-1];
+							that.buildTrack(content,filename);
 						});
 					}
 					else if (/\.score$/.test(path)) 
 					{
-						console.log(path + " is a score file. Unzipping...");
 						file.async("string")
 						.then( (content) => {
-							console.log(content);
 							let state = JSON.parse(content);
 							that.trackLaneObject.reconfigure(state);
+						});
+					}
+					else if (/score_section.header$/.test(path)) 
+					{
+						file.async("string")
+						.then( (content) => {
+							document.getElementById("score-header").value = content;
+						});
+
+					}
+					else if (/score_section.footer$/.test(path)) 
+					{
+						file.async("string")
+						.then( (content) => {
+							document.getElementById("score-footer").value = content;
+						});
+					}
+					else if (/orchestra_section.header$/.test(path)) 
+					{
+						file.async("string")
+						.then( (content) => {
+							document.getElementById("orchestra-header").value = content;
+						});
+					}
+					else if (/orchestra_section.footer$/.test(path)) 
+					{
+						file.async("string")
+						.then( (content) => {
+							document.getElementById("orchestra-footer").value = content;
 						});
 					}
 				});
@@ -985,9 +1035,6 @@ class View
 		input.click();
 	}
 
-	projectLoadHelper(text)
-	{
-	}
 }
 
 let viewObj = new View();
