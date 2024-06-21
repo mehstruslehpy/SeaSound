@@ -26,6 +26,7 @@ class CodedEventCanvas
 	// The instrument this widget is a parameter for
 	instrument = null;
 	name = "";
+	trackName = "";
 
 	// Tracks whether control has been pressed or not
 	controlPressed = false;
@@ -36,8 +37,9 @@ class CodedEventCanvas
 	// Snap amount
 	snapAmount = 1;
 	// Initial set up
-	constructor(query,cells,beatsPerCell)
+	constructor(query,trackName,cells,beatsPerCell)
 	{
+		this.trackName = trackName;
 		// Set Up the canvas
 		this.canvas = document.getElementById(query);
 		this.ctx = this.canvas.getContext("2d");
@@ -335,6 +337,10 @@ class CodedEventCanvas
 	getName()
 	{
 		return this.name;
+	}	
+	getTrack()
+	{
+		return this.trackName;
 	}
 	setName(name)
 	{ this.name = name; }
@@ -544,11 +550,13 @@ class CodedEventCanvas
 
 		this.instrument = null;
 		this.name = state.name;
+		this.trackName = state.trackName;
 
 		this.beatsPerCell = state.beatsPerCell;
 
 		this.snapAmount = state.snapAmount;
 
+		this.height = state.height;
 		this.cells = state.cells;
 		this.cellWidth = state.cellWidth;
 		this.draw();

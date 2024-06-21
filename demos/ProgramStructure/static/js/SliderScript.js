@@ -24,6 +24,7 @@ class SliderCanvas
 	// The instrument this widget is a parameter for
 	instrument = null;
 	name = "";
+	trackName = "";
 
 	// For unit conversion
 	beatsPerCell = 1;
@@ -36,8 +37,9 @@ class SliderCanvas
 	minOut = -1;
 
 	// Initial set up
-	constructor(query,horizontalCells,verticalCells,beatsPerCell,rectangleStyle)
+	constructor(query,trackName,horizontalCells,verticalCells,beatsPerCell,rectangleStyle)
 	{
+		this.trackName = trackName;
 		// Set Up the canvas
 		this.canvas = document.getElementById(query);
 		this.ctx = this.canvas.getContext("2d");
@@ -513,6 +515,10 @@ class SliderCanvas
 	{
 		return this.name;
 	}
+	getTrack()
+	{
+		return this.trackName;
+	}
 	setName(name)
 	{ this.name = name; }
 	getTriggerMode()
@@ -666,6 +672,7 @@ class SliderCanvas
 
 		this.instrument = null;
 		this.name = state.name;
+		this.trackName = state.trackName;
 
 		this.beatsPerCell = state.beatsPerCell
 

@@ -555,6 +555,7 @@ class TrackLaneCanvas
 		this.scaleAmtY = state.scaleAmtY;
 		
 		// Set up cell sizes
+		this.height = state.height;
 		this.verticalCells = state.verticalCells;
 		this.horizontalCells = state.horizontalCells;
 	

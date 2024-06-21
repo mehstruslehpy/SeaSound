@@ -395,15 +395,15 @@ class View
 			let canvObj = null;
 			//if (this.paramList[i]=="Pianoroll")canvObj=new PianoRollCanvas("track-p"+i+"-"+name,vCells,hCells);
 			if (this.paramList[i] == "Pianoroll")
-				canvObj=new PianoRollCanvas("track-p"+i+"-"+name,this.pianoRollVCellDefault,hCells,beatsPerCell);
+				canvObj=new PianoRollCanvas("track-p"+i+"-"+name,name,this.pianoRollVCellDefault,hCells,beatsPerCell);
 			else if (this.paramList[i] == "Lollipop")
-				canvObj=new SliderCanvas("track-p"+i+"-"+name,this.sliderVCellDefault,hCells,beatsPerCell,"lollipop");
+				canvObj=new SliderCanvas("track-p"+i+"-"+name,name,this.sliderVCellDefault,hCells,beatsPerCell,"lollipop");
 			else if (this.paramList[i] == "Bars")
-				canvObj=new SliderCanvas("track-p"+i+"-"+name,this.sliderVCellDefault,hCells,beatsPerCell,"solid");
+				canvObj=new SliderCanvas("track-p"+i+"-"+name,name,this.sliderVCellDefault,hCells,beatsPerCell,"solid");
 			else if (this.paramList[i] == "Event")
-				canvObj=new CodedEventCanvas("track-p"+i+"-"+name,hCells,beatsPerCell);
+				canvObj=new CodedEventCanvas("track-p"+i+"-"+name,name,hCells,beatsPerCell);
 			else 
-				canvObj=new PianoRollCanvas("track-p"+i+"-"+name,this.pianoRollVCellDefault,hCells,beatsPerCell);
+				canvObj=new PianoRollCanvas("track-p"+i+"-"+name,name,this.pianoRollVCellDefault,hCells,beatsPerCell);
 			tempCanv.push(canvObj);
 		}
 
@@ -649,10 +649,10 @@ class View
 	{
 		let outStr = "<CsoundSynthesizer>\n<CsOptions>\n-odac\n</CsOptions>\n<CsInstruments>\n";
 		// get the orchestra string
-		outStr += this.getOrchestraHeader();
+		outStr += this.getOrchestraHeader() + "\n";
 		outStr += "//orchestra:\n";
 		outStr += this.renderOrchestra(false);
-		outStr += this.getOrchestraFooter();
+		outStr += this.getOrchestraFooter() + "\n";
 		// get the score string
 		outStr += "</CsInstruments>\n<CsScore>\n";
 		outStr += this.getScoreHeader() +"\n";
@@ -750,7 +750,6 @@ class View
 		else if (file[0][0] == "TextAreaInstrumentCanvas")
 		{
 			name = file[0][1].slice(1,-1);
-			console.log(name);
 		}
 
 		// add the associated select entry
@@ -847,7 +846,6 @@ class View
 		input.onchange = e => { 
 			// getting a hold of the file reference
 			let file = e.target.files[0]; 
-			console.log(file);
 
 			// setting up the reader
 			let reader = new FileReader();
@@ -868,7 +866,8 @@ class View
 	{
 		filename = filename.split(".track")[0];
 		// Parse the text from our file
-		let temp = JSON.parse(text);		
+		let trackName = JSON.parse(text)[0].trackName;
+		let temp = JSON.parse(text);
 
 		// Build the corresponding html tags for this instrument
 		// add a div to contain all our parameter canvases
@@ -908,16 +907,17 @@ class View
 		
 			let workingWidget = null;
 			if (temp[i].widgetType == "PianoRollCanvas") 
-				workingWidget = new PianoRollCanvas("track-p"+i+"-"+filename,0,0,0);
+				workingWidget = new PianoRollCanvas("track-p"+i+"-"+filename,trackName,0,0,0);
 			else if (temp[i].widgetType == "SliderCanvas")
-				workingWidget = new SliderCanvas("track-p"+i+"-"+filename,0,0,0,"lollipop");
+				workingWidget = new SliderCanvas("track-p"+i+"-"+filename,trackName,0,0,0,"lollipop");
 			else if (temp[i].widgetType == "CodedEventCanvas")
-				workingWidget = new CodedEventCanvas("track-p"+i+"-"+filename,0,0);
+				workingWidget = new CodedEventCanvas("track-p"+i+"-"+filename,trackName,0,0);
 			else console.log("ERROR: invalid parameter type on track load.");
-			temp[i].name = filename;
+			//temp[i].name = filename;
 			workingWidget.reconfigure(temp[i]);
 			workingWidget.setInstrument(instr);
 			instr.push(workingWidget);
+			console.log(workingWidget);
 		}
 		
 		this.trackMap.set(this.CleanName(filename),instr);
@@ -943,8 +943,7 @@ class View
 				else return value;
 			});
 
-			// Add the track to the zip file
-			zip.file(projName+"/tracks/"+val[0].getName()+".track", text);
+			zip.file(projName+"/tracks/"+val[0].getTrack()+".track", text);
 		}
 		
 		// Add the track lane object to the zipfile
@@ -1034,7 +1033,6 @@ class View
 		}
 		input.click();
 	}
-
 }
 
 let viewObj = new View();

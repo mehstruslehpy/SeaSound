@@ -29,6 +29,9 @@ class PianoRollCanvas
 	// The name of the instrument this widget is a parameter for
 	name = "";
 
+	// The name of the track this widget is assigned to;
+	trackName = "";
+
 	// For unit conversion
 	beatsPerCell = 1;
 
@@ -36,8 +39,9 @@ class PianoRollCanvas
 	snapAmount = 1;
 
 	// Initial set up
-	constructor(query,horizontalCells,verticalCells,beatsPerCell)
+	constructor(query,trackName,horizontalCells,verticalCells,beatsPerCell)
 	{
+		this.trackName = trackName;
 		// Set Up the canvas
 		this.canvas = document.getElementById(query);
 		this.ctx = this.canvas.getContext("2d");
@@ -441,6 +445,10 @@ class PianoRollCanvas
 	{
 		return this.name;
 	}
+	getTrack()
+	{
+		return this.trackName;
+	}
 	setName(name)
 	{
 		this.name = name;
@@ -586,11 +594,13 @@ class PianoRollCanvas
 	{
 		this.rectangleList = state.rectangleList;
 		this.instrument = null;
-		this.name = state.name
+		this.name = state.name;
+		this.trackName = state.trackName;
 		this.snapAmount = state.snapAmount;
 
 		this.triggerMode = state.triggerMode;
 
+		this.height = state.height;
 		this.verticalCells = state.verticalCells;
 		this.horizontalCells = state.horizontalCells;
 
