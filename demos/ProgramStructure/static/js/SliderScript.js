@@ -584,8 +584,11 @@ class SliderCanvas
 	}
 	addRectangle(rect)
 	{
-		let c1 = {x:rect[0].x,y:rect[0].y};
-		let c2 = {x:rect[1].x,y:rect[1].y};
+		//let c1 = {x:rect[0].x,y:rect[0].y};
+		//let c2 = {x:rect[1].x,y:rect[1].y};
+		let height = 0.25*this.height // this is 75% of the canvas height since the origin is top left
+		let c1 = {x:rect[0].x,y:height};
+		let c2 = {x:rect[1].x,y:height};
 		this.sliderList.push([c1,c2]);
 	}
 	// Check if pt lies in division/snapAmount of left point of rectangle along x axis

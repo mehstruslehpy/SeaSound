@@ -1,4 +1,4 @@
-// TODO: Add seek bar to this and other canvases. 
+// TODO: Fix conversion from seek position to time in seconds. Currently it is way off.
 class TrackLaneCanvas
 {
 	coord = {x:0, y:0}; // the coords of the mouse
@@ -9,7 +9,6 @@ class TrackLaneCanvas
 	workingRectangle = null; // A rectangle not yet saved in the tracklist
 	existingCollision = false; // flag tracking whether the user has clicked an existing rectangle
 	moveIndex = -1; // the index that the collision occurred at 
-	controlPressed = false; // tracks whether control has been pressed
 	blockSize = 1; // length of the rectangle to draw
 	blockName = "EMPTY";
 	rectangleFontSize = 1;
@@ -19,6 +18,13 @@ class TrackLaneCanvas
 	translateAmt = 10;
 	scaleAmtX = 1.15;
 	scaleAmtY = 1.15;
+
+	// The position of the seek line
+	seekPos = {x:0, y:0}; 
+
+	// Input modes and the current input mode
+	inputModes = ["SEEK","BLOCK","DELETE"];
+	inputMode = "BLOCK";
 
 	// Initial set up
 	constructor(query,horizontalCells,verticalCells)
@@ -70,7 +76,7 @@ class TrackLaneCanvas
 		this.workingRectangle = null; // A rectangle not yet saved in the tracklist
 		this.existingCollision = false; // flag tracking whether the user has clicked an existing rectangle
 		this.moveIndex = -1; // the index that the collision occurred at 
-		this.controlPressed = false; // tracks whether control has been pressed
+		this.inputMode = "BLOCK";
 		this.blockSize = 1; // length of the rectangle to draw
 	
 		// values for changing the scale and translate amount
@@ -102,11 +108,33 @@ class TrackLaneCanvas
 			controlText += "tg: change X scaling amount\n";
 			controlText += "yh: change Y scaling amount\n";
 			controlText += "=-: increment/decrement block sizes\n";
-			controlText += "ctrl: toggle block/delete modes\n";
+			//controlText += "ctrl: toggle block/delete modes\n";
+			controlText += "1/2/3: switch between block/seek/delete mode\n";
+			controlText += "4: reset the seek line position\n";
 
-    	if (ev.key == "Control") this.controlPressed = true;
-    	//else if (ev.key == "=") this.incrementBlockSize();
-    	//else if (ev.key == "-") this.decrementBlockSize();
+		if (ev.key == "1") 
+		{
+			this.inputMode = "BLOCK";
+			this.workingRectangle = null;
+			this.draw();
+		}
+		else if (ev.key == "2") 
+		{
+			this.inputMode = "SEEK";
+			this.workingRectangle = null;
+			this.draw();
+		}
+		else if (ev.key == "3") 
+		{
+			this.inputMode = "DELETE";
+			this.workingRectangle = null;
+			this.draw();
+		}
+		else if (ev.key == "4")
+		{
+			this.seekPos = {x:0, y:0};
+			this.draw();
+		}
 		else if (ev.key == "h") alert(controlText);
 		else if (ev.key == "q") this.ctx.scale(this.scaleAmtX,1);
 		else if (ev.key == "e") this.ctx.scale(1/this.scaleAmtX,1);
@@ -140,10 +168,17 @@ class TrackLaneCanvas
 	{
 		this.mousePressed = true;
 
-		// run the delete handler if control is pressed
-		if (this.controlPressed) 
+		// run the delete handler if in delete mode
+		if (this.inputMode == "DELETE") 
 		{
-			this.controlLeftClickDown();
+			this.deleteModeLeftClickDown();
+			this.draw();
+			return;
+		}
+		else if (this.inputMode == "SEEK") // if in seek mode we only need to change the seek line position
+		{
+			this.seekPos.x = this.screenToWorldCoords(this.coord).x;
+			this.draw();
 			return;
 		}
 
@@ -174,7 +209,7 @@ class TrackLaneCanvas
 		this.draw();
 	}
 
-	controlLeftClickDown()
+	deleteModeLeftClickDown()
 	{
 		this.mousePressed = false;
 		let c = this.screenToWorldCoords(this.coord);
@@ -191,14 +226,8 @@ class TrackLaneCanvas
 	leftClickUp()
 	{
 		this.mousePressed = false;
-	
-		// check if control was pressed
-		if (this.controlPressed) 
-		{
-    		this.controlPressed = false; // untoggle controlPressed var and return
-			this.draw();
-    		return;
-		}
+
+		if (this.inputMode == "SEEK" || this.inputMode == "DELETE") return;
 
 		if (this.existingCollision)
 		{
@@ -337,6 +366,14 @@ class TrackLaneCanvas
 		if (this.workingRectangle != null)
 			this.drawRectangle(this.workingRectangle[0],this.workingRectangle[1],this.blockName);
 
+		// draw seek line
+		this.ctx.strokeStyle = 'red';
+		this.ctx.lineWidth = 2;
+		this.ctx.beginPath();
+		this.ctx.moveTo(this.seekPos.x,0);
+		this.ctx.lineTo(this.seekPos.x,this.height);
+		this.ctx.stroke();
+	
 		// Draw the outlines for the canvas too
 		this.viewportOutline();
 	}
@@ -476,8 +513,10 @@ class TrackLaneCanvas
 	{
 		// Draw text showing the mode
 		let text = ""
-		if (this.controlPressed) text = "Delete mode. ";
-		else text = "Block mode. ";
+		if (this.inputMode == "SEEK") text = "Seek mode. ";
+		else if (this.inputMode == "BLOCK") text = "Block mode. ";
+		else if (this.inputMode == "DELETE") text = "Delete mode. ";
+		else text = "Unknown mode. ";
 		text += "Press h for keybinds.";
 	
 		this.ctx.font = "bold 25px Arial";
@@ -534,6 +573,11 @@ class TrackLaneCanvas
 		let cellsPerSecond = bpm * (1/60);
 		return bpb * c / cellsPerSecond;
 	}
+	// Get the horizontal position of the seek bar in seconds
+	seekToSeconds(bpm,bpb)
+	{
+		return this.cellsToSeconds(this.seekPos.x,bpm,bpb);
+	}
 	// reconfigure the current track lane object from state read in from a file
 	reconfigure(state)
 	{
@@ -545,7 +589,7 @@ class TrackLaneCanvas
 		this.workingRectangle = state.trackList;
 		//existingCollision = false; // flag tracking whether the user has clicked an existing rectangle
 		//moveIndex = -1; // the index that the collision occurred at 
-		//controlPressed = false; // tracks whether control has been pressed
+		//this.inputMode = state.inputMode;
 		this.blockSize = state.blockSize;
 		this.blockName = state.blockName;
 	

@@ -1,6 +1,7 @@
 // TODO: Add project wide save/load functionality
 // TODO: Add seekbars to widgets
 // TODO: Note sorting seems wrong, need to fix for correct output
+// TODO: On project load, directories are added to list of loaded samples when it should only be the files themself
 class View
 {
 	// There is only one track lane object for the whole program
@@ -625,6 +626,15 @@ class View
 	}
 	renderCSD(displayModal)
 	{
+		// Get the beats per min and beats per block of the track
+		let bpm = document.getElementById('playlist-bpm').value;
+		if (bpm == "") bpm = document.getElementById('playlist-bpm').placeholder;
+		let bpb = document.getElementById('playlist-bpb').value;
+		if (bpb == "") bpb = document.getElementById('playlist-bpb').placeholder;
+		bpm = Number(bpm);
+		bpb = Number(bpb);
+		let seekPos = this.trackLaneObject.seekToSeconds(bpm,bpb)
+
 		let outStr = "<CsoundSynthesizer>\n<CsOptions>\n-odac\n</CsOptions>\n<CsInstruments>\n";
 		//outStr += "sr = 44100\nksmps = 32\nnchnls = 2\n0dbfs  = 1\n\n";
 		// get the orchestra string
@@ -635,6 +645,7 @@ class View
 		// get the score string
 		outStr += "</CsInstruments>\n<CsScore>\n";
 		outStr += this.getScoreHeader() +"\n";
+		outStr += "a 0 0 "+seekPos+"\n"; // skip to seekPos seconds into track
 		outStr += "//score:\n";
 		outStr += this.renderScore(false);
 		outStr += this.getScoreFooter()+"\n";
@@ -919,7 +930,6 @@ class View
 			workingWidget.reconfigure(temp[i]);
 			workingWidget.setInstrument(instr);
 			instr.push(workingWidget);
-			console.log(workingWidget);
 		}
 		
 		this.trackMap.set(this.CleanName(filename),instr);
@@ -1090,7 +1100,6 @@ class View
 			// When the reader is done reading we can load/setup the instrument
 			reader.onload = readerEvent => {
 				let dat = readerEvent.target.result;
-				console.log(new Uint8Array(dat));
 				csound.fs.writeFile(file.name, new Uint8Array(dat));
 
 				//get the tag to add parameters to
@@ -1107,7 +1116,6 @@ class View
 				newRow.appendChild(content);
 				pListTag.appendChild(newRow);
 
-				console.log(new Uint8Array(dat));
 				// Append file contents to our list of audio files
 				this.audioFiles.push([file.name,new Uint8Array(dat)]);
 			}
