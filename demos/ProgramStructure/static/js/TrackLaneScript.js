@@ -576,7 +576,9 @@ class TrackLaneCanvas
 	// Get the horizontal position of the seek bar in seconds
 	seekToSeconds(bpm,bpb)
 	{
-		return this.cellsToSeconds(this.seekPos.x,bpm,bpb);
+		//return this.cellsToSeconds(this.seekPos.x,bpm,bpb);
+		let val = this.coordToCell(this.seekPos.x);
+		return this.cellsToSeconds(val,bpm,bpb);
 	}
 	// reconfigure the current track lane object from state read in from a file
 	reconfigure(state)
