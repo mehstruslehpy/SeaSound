@@ -1,7 +1,6 @@
 // TODO: Add project wide save/load functionality
 // TODO: Add seekbars to widgets
 // TODO: Note sorting seems wrong, need to fix for correct output
-// TODO: Text instruments do not load correctly
 class View
 {
 	// There is only one track lane object for the whole program
@@ -22,6 +21,9 @@ class View
 	sliderVCellDefault = 50;
 
 	snapAmount = 1;
+
+	// Array containing [name, data] pairs corresponding to all loaded audio files
+	audioFiles = new Array();
 
 	// Opens the corresponding tab
 	OpenTab(tabName, btnID) 
@@ -955,12 +957,22 @@ class View
 		zip.file(projName+"/score_section.header", document.getElementById("score-header").value);
 		zip.file(projName+"/score_section.footer", document.getElementById("score-footer").value);
 
+		// Add the loaded audio files to the zip file
+		for (let i = 0; i < this.audioFiles.length; i++)
+			zip.file(projName+"/"+this.audioFiles[i][0],this.audioFiles[i][1]);
+
 		zip.generateAsync({type:"blob"}).then(function (blob) { // 1) generate the zip file
 			saveAs(blob, projName+".zip");                          // 2) trigger the download
 		});
 	}
 	loadProject()
 	{
+		if (csound == null) 
+		{
+			alert("Csound subsystem must be initialized to load project files.");
+			return;
+		}
+
 		// This is mostly from SO
 
 		// Open a file picker
@@ -1028,10 +1040,83 @@ class View
 							document.getElementById("orchestra-footer").value = content;
 						});
 					}
+					else // load anything else as a raw audio file to the browser filesystem
+					{
+						file.async("uint8array")
+						.then( (content) => {
+							// Load the file into csound
+							let filename = file.name;
+							filename = filename.split("/")[1];
+							csound.fs.writeFile(filename, content);
+							// Add tag to list of loaded samples
+							let pListTag = document.getElementById("sample-list");
+							let newRow = document.createElement("tr");
+							let val = document.createElement("td");
+							val .innerText = file.name;
+							newRow.appendChild(val);
+							pListTag.appendChild(newRow);
+							// Append file contents to our list of audio files
+							that.audioFiles.push([filename,content]);
+						});
+					}
 				});
 			});
 		}
 		input.click();
+	}
+	loadAudioFile()
+	{
+		// This is mostly from SO
+		if (csound == null) 
+		{
+			alert("Csound subsystem must be initialized to load audio files.");
+			return;
+		}
+
+		// Open a file picker
+		let input = document.createElement('input');
+		input.type = 'file';
+
+		input.onchange = e => { 
+			// getting a hold of the file reference
+			let file = e.target.files[0]; 
+			//console.log(file);
+
+			// setting up the reader
+			let reader = new FileReader();
+			//reader.readAsText(file,'UTF-8');
+			reader.readAsArrayBuffer(file);
+
+			// When the reader is done reading we can load/setup the instrument
+			reader.onload = readerEvent => {
+				let dat = readerEvent.target.result;
+				console.log(new Uint8Array(dat));
+				csound.fs.writeFile(file.name, new Uint8Array(dat));
+
+				//get the tag to add parameters to
+				let pListTag = document.getElementById("sample-list");
+
+				//create the tags
+				let newRow = document.createElement("tr");
+				let content = document.createElement("td");
+
+				// the content of the new tag is the filename
+				content.innerText = file.name;
+
+				//build the new element
+				newRow.appendChild(content);
+				pListTag.appendChild(newRow);
+
+				console.log(new Uint8Array(dat));
+				// Append file contents to our list of audio files
+				this.audioFiles.push([file.name,new Uint8Array(dat)]);
+			}
+		}
+		input.click();
+	}
+	getAudioFiles()
+	{
+		return this.audioFiles;
 	}
 }
 

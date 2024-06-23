@@ -571,6 +571,6 @@ class TrackLaneCanvas
 			this.rectangleFontSize++;
 		}
 
-		this.draw();
+		//this.draw();
 	}
 }

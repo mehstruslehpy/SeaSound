@@ -1,6 +1,5 @@
 //TODO: Add a double parameter matrix widget
 //TODO: Add a spreadsheet widget for manual input
-//TODO: There is a bug where the instrument name does not immediately visibly load
 //TODO: Make line widths consistent. Why are all my line widths different?
 class PianoRollCanvas
 {

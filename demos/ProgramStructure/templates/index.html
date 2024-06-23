@@ -13,7 +13,8 @@
 	<!-- Load the csound code -->
 	<script>
 		// csound.js is the Csound WASM module
-		const csoundjs = "../static/node_modules/@csound/browser/dist/csound.js";
+		//const csoundjs = "../static/node_modules/@csound/browser/dist/csound.js";
+		const csoundjs = "../static/csound/csound.js";
 		// csound is the Csound engine object (null as we start)
 		let csound = null;
 
@@ -51,6 +52,11 @@
 			csound = await Csound();
 			// set realtime audio (dac) output  
 			await csound.setOption("-odac");
+			// If necessary reload all the required audio files
+			let audioFiles = [];
+			if (typeof viewObj != 'undefined') audioFiles = viewObj.getAudioFiles();
+			for (let i = 0; i < audioFiles.length; i++)
+				csound.fs.writeFile(audioFiles[i][0], audioFiles[i][1]);
 		}
 		
 	</script>
@@ -302,8 +308,23 @@
 				<button class="lr-pad" onclick='viewObj.loadProject();'>
 					Load Project
 				</button>
+				<button class="lr-pad" onclick='viewObj.loadAudioFile();'>
+					Load Sample
+				</button>
+				<button class="lr-pad" onclick='document.getElementById("sample-dialog").showModal();'>
+					View Samples
+				</button>
 			</div>
 
+			<!-- Pop up dialog containing list of loaded samples -->
+			<dialog id="sample-dialog">
+			<table id="sample-list" style="padding-left:2em;">
+				<!-- List of samples is displayed in this table -->
+			</table>
+			<form method="dialog">
+			<button id="cancel" type="reset" onclick='document.getElementById("sample-dialog").close();'>Close</button>
+			</form>
+			</dialog>
 
 			<label>Score Header:</label> </br>
 			<textarea cols="160" rows="5" id="score-header"></textarea> </br>
