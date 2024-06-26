@@ -1,7 +1,6 @@
 // TODO: Add seekbars to widgets
 // TODO: renderCSD should emit a statements rather than B statements for seek time, need to fix this.
 //			for some reason a statements don't work in my version of csound.
-// TODO: On project load, directories are added to list of loaded samples when it should only be the files themself
 // TODO: Tracklane section requires clicking to redraw
 // TODO: All coords in widgets need to be modified to be screen agnostic. I.e., we need a real global/local coord split.
 // TODO: Make all widget interfaces modal like graph and tracklane, then add note highlighting+copy/paste/delete functionality.
