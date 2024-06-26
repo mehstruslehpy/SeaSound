@@ -1,6 +1,5 @@
-// TODO: Add project wide save/load functionality
 // TODO: Add seekbars to widgets
-// TODO: Note sorting seems wrong, need to fix for correct output
+// TODO: renderCSD should emit a statements rather than B statements for seek time, need to fix this
 // TODO: On project load, directories are added to list of loaded samples when it should only be the files themself
 class View
 {
@@ -615,6 +614,17 @@ class View
 
 	playTrack()
 	{
+		/*
+		// Get the beats per min and beats per block of the track
+		let bpm = document.getElementById('playlist-bpm').value;
+		if (bpm == "") bpm = document.getElementById('playlist-bpm').placeholder;
+		let bpb = document.getElementById('playlist-bpb').value;
+		if (bpb == "") bpb = document.getElementById('playlist-bpb').placeholder;
+		bpm = Number(bpm);
+		bpb = Number(bpb);
+		let seekPos = this.trackLaneObject.seekToSeconds(bpm,bpb)
+		*/
+
 		// get the score and the orchestra strings
 		let csd = this.renderCSD(false);
 		playCode(csd);
@@ -645,7 +655,9 @@ class View
 		// get the score string
 		outStr += "</CsInstruments>\n<CsScore>\n";
 		outStr += this.getScoreHeader() +"\n";
-		outStr += "a 0 0 "+seekPos+"\n"; // skip to seekPos seconds into track
+		//outStr += "//advance time:\n";
+		//outStr += "a 0 0 "+seekPos+"\n"; // skip to seekPos seconds into track
+		outStr += "B -"+seekPos+"\n"; // a statements do not work for me for some reason
 		outStr += "//score:\n";
 		outStr += this.renderScore(false);
 		outStr += this.getScoreFooter()+"\n";
@@ -656,6 +668,7 @@ class View
 			document.getElementById("score-code-dialog").showModal();
 			document.getElementById("score-code-dialog-output").textContent = outStr;
 		}
+
 		return outStr;
 	}
 	renderPatternCSD()
@@ -967,6 +980,13 @@ class View
 		zip.file(projName+"/score_section.header", document.getElementById("score-header").value);
 		zip.file(projName+"/score_section.footer", document.getElementById("score-footer").value);
 
+		// add the bpm and bpb values to the file too
+		if (document.getElementById("playlist-bpm").value == "") zip.file(projName+"/beats_per_min", "140");
+		else zip.file(projName+"/beats_per_min", String(document.getElementById("playlist-bpm").value));
+
+		if (document.getElementById("playlist-bpb").value == "") zip.file(projName+"/beats_per_block","4");
+		else zip.file(projName+"/beats_per_block", document.getElementById("playlist-bpb").value);
+
 		// Add the loaded audio files to the zip file
 		for (let i = 0; i < this.audioFiles.length; i++)
 			zip.file(projName+"/"+this.audioFiles[i][0],this.audioFiles[i][1]);
@@ -1050,6 +1070,22 @@ class View
 							document.getElementById("orchestra-footer").value = content;
 						});
 					}
+					else if (/beats_per_min/.test(path)) 
+					{
+						file.async("string")
+						.then( (content) => {
+							console.log(content);
+							document.getElementById("playlist-bpm").value = Number(content);
+						});
+					}
+					else if (/beats_per_block/.test(path)) 
+					{
+						file.async("string")
+						.then( (content) => {
+							console.log(content);
+							document.getElementById("playlist-bpb").value = Number(content);
+						});
+					}
 					else // load anything else as a raw audio file to the browser filesystem
 					{
 						file.async("uint8array")
@@ -1057,6 +1093,8 @@ class View
 							// Load the file into csound
 							let filename = file.name;
 							filename = filename.split("/")[1];
+							// any filename with no dot as assumed to not be an audio file and skipped
+							if (!filename.includes(".")) return;
 							csound.fs.writeFile(filename, content);
 							// Add tag to list of loaded samples
 							let pListTag = document.getElementById("sample-list");
