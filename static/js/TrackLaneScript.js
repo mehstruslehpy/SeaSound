@@ -26,6 +26,11 @@ class TrackLaneCanvas
 	inputModes = ["SEEK","BLOCK","DELETE"];
 	inputMode = "BLOCK";
 
+	// For note area dimensions in local coords
+	localWidth = 0;
+	localHeight = 0;
+
+
 	// Initial set up
 	constructor(query,horizontalCells,verticalCells)
 	{
@@ -33,21 +38,23 @@ class TrackLaneCanvas
 		this.canvas = document.getElementById(query);
 		this.ctx = this.canvas.getContext("2d");
 
-		// Set up the canvas size
-		let tabsHeight = document.getElementById('master-tab-container').offsetHeight;
-		document.getElementById("PlaylistEditor").style.display="inline"; // by default TrackEditor is hidden
-		tabsHeight += document.getElementById("playlist-controls").offsetHeight;
-		document.getElementById("PlaylistEditor").style.display="none";
-		this.width = (this.canvas.width = window.innerWidth);
-		this.height = (this.canvas.height = window.innerHeight - tabsHeight);
+		// The height offset for the buttons and tabs of our gui
+		let tabsHeight = 2*document.getElementById('tab-container').offsetHeight;
+		tabsHeight += document.getElementById("track-controls").offsetHeight;
+
+		// set up canvas and local coord dimensions
+		this.canvas.width = window.innerWidth;
+		this.canvas.height = window.innerHeight - tabsHeight;
+		this.localWidth = 500;
+		this.localHeight = 500;
 		
 		// Set up cell sizes
 		this.verticalCells = verticalCells;
 		this.horizontalCells = horizontalCells;
 	
 		// Compute widths and heights of cells
-		this.cellWidth = this.width/this.verticalCells; // the number of vertical cell divisions controls cell widths
-		this.cellHeight = this.height/this.horizontalCells; // the number of horizontal cell divisions controls cell heights
+		this.cellWidth = this.localWidth/this.verticalCells; // the number of vertical cell divisions controls cell widths
+		this.cellHeight = this.localHeight/this.horizontalCells; // the number of horizontal cell divisions controls cell heights
 
 		// set up font height
 		this.ctx.font = "bold "+this.rectangleFontSize+"px Arial";
@@ -62,6 +69,16 @@ class TrackLaneCanvas
 		this.canvas.addEventListener('mouseup', function(ev) { that.leftClickUp(); }); 
 		this.canvas.addEventListener('keydown', function(ev) { that.buttonClick(ev); });
 		this.canvas.addEventListener('mousemove', function(ev) { that.updateMouseCoordinates(); }); 
+
+		// this displays the track area nicely on my screen
+		this.ctx.scale(this.scaleAmtX,1);
+		this.ctx.scale(this.scaleAmtX,1);
+		this.ctx.scale(this.scaleAmtX,1);
+		this.ctx.scale(this.scaleAmtX,1);
+		this.ctx.scale(1,1/this.scaleAmtY);
+		this.ctx.translate(this.translateAmt,0);
+		this.ctx.translate(0,this.translateAmt);
+		// do the first draw
 		this.draw();
 	}
 
@@ -89,11 +106,11 @@ class TrackLaneCanvas
 		this.horizontalCells = horizontalCells;
 	
 		// Compute widths and heights of cells
-		this.cellWidth = this.width/this.verticalCells; // the number of vertical cell divisions controls cell widths
-		this.cellHeight = this.height/this.horizontalCells; // the number of horizontal cell divisions controls cell heights
+		this.cellWidth = this.localWidth/this.verticalCells; // the number of vertical cell divisions controls cell widths
+		this.cellHeight = this.localHeight/this.horizontalCells; // the number of horizontal cell divisions controls cell heights
 
+		// do the first draw
 		this.draw();
-
 	}
 
 	// Keyboard button handler
@@ -322,11 +339,7 @@ class TrackLaneCanvas
 
 		// Use the identity matrix while clearing the canvas
 		this.ctx.setTransform(1, 0, 0, 1, 0, 0);
-		this.ctx.clearRect(0, 0, this.width, this.height);
-
-		// Draw outline and helper text to fixed positions in viewport
-		this.helperText();
-		this.viewportOutline();
+		this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
 		// Restore the transform
 		this.ctx.restore();
@@ -339,8 +352,8 @@ class TrackLaneCanvas
 			this.ctx.strokeStyle = 'black';
 			this.ctx.lineWidth = 1;
 			this.ctx.beginPath();
-			this.ctx.moveTo(i*(this.width/this.verticalCells),0);
-			this.ctx.lineTo(i*(this.width/this.verticalCells),this.height);
+			this.ctx.moveTo(i*(this.localWidth/this.verticalCells),0);
+			this.ctx.lineTo(i*(this.localWidth/this.verticalCells),this.localHeight);
 			this.ctx.stroke();
 		}
 
@@ -350,8 +363,8 @@ class TrackLaneCanvas
 			this.ctx.strokeStyle = 'black';
 			this.ctx.lineWidth = 1;
 			this.ctx.beginPath();
-			this.ctx.moveTo(0,i*(this.height/this.horizontalCells));
-			this.ctx.lineTo(this.width,i*(this.height/this.horizontalCells));
+			this.ctx.moveTo(0,i*(this.localHeight/this.horizontalCells));
+			this.ctx.lineTo(this.localWidth,i*(this.localHeight/this.horizontalCells));
 			this.ctx.stroke();
 		}
 
@@ -371,11 +384,26 @@ class TrackLaneCanvas
 		this.ctx.lineWidth = 2;
 		this.ctx.beginPath();
 		this.ctx.moveTo(this.seekPos.x,0);
-		this.ctx.lineTo(this.seekPos.x,this.height);
+		this.ctx.lineTo(this.seekPos.x,this.localHeight);
 		this.ctx.stroke();
-	
+
 		// Draw the outlines for the canvas too
-		this.viewportOutline();
+		this.drawRectangleOutline({x:0,y:0},{x:this.localWidth,y:this.localHeight});
+
+		// Now we want to draw the outlines for the helper text on top of the canvas
+		// Store the current transformation matrix
+		this.ctx.save();
+
+		// Use the identity matrix while clearing the canvas
+		this.ctx.setTransform(1, 0, 0, 1, 0, 0);
+
+		// Draw outline and helper text to fixed positions in viewport
+		this.helperText();
+		this.drawRectangleOutline({x:0,y:0},{x:this.canvas.width,y:this.canvas.height});
+
+		// Restore the transform
+		this.ctx.restore();
+
 	}
 	drawRectangle(topLeft,bottomRight,name)
 	{
@@ -409,6 +437,20 @@ class TrackLaneCanvas
 		this.ctx.fillStyle = 'black';
 		this.ctx.fillText(name,topLeft.x,topLeft.y+this.cellHeight-this.fontPad,Math.abs(topLeft.x-bottomRight.x));
 	}
+
+	drawRectangleOutline(c1,c2)
+	{
+		this.ctx.beginPath();
+		this.ctx.moveTo(c1.x,c1.y);
+		this.ctx.lineTo(c1.x,c2.y);
+		this.ctx.lineTo(c2.x,c2.y);
+		this.ctx.lineTo(c2.x,c1.y);
+		this.ctx.lineTo(c1.x,c1.y);
+		this.ctx.lineWidth = 2;
+		this.ctx.strokeStyle = 'black';
+		this.ctx.stroke();
+	}
+
     // Draw a circle around the input coord
     circleCoord(c)
     {
@@ -493,21 +535,6 @@ class TrackLaneCanvas
 		return this.ctx.getTransform().invertSelf().transformPoint(p);
 	}
 
-	// draw outlines around the viewport
-	viewportOutline()
-	{
-		// Draw the outlines for the canvas too
-		this.ctx.beginPath();
-		this.ctx.moveTo(0,0);
-		this.ctx.lineTo(0,this.height);
-		this.ctx.lineTo(this.width,this.height);
-		this.ctx.lineTo(this.width,0);
-		this.ctx.lineTo(0,0);
-		this.ctx.lineWidth = 6;
-		this.ctx.strokeStyle = 'black';
-		this.ctx.stroke();
-	}
-
 	// print the on screen helper text
 	helperText()
 	{
@@ -523,17 +550,17 @@ class TrackLaneCanvas
 		this.ctx.fillStyle = 'black';
 		let textHeight = this.ctx.measureText('M').width; // The width of capital M approximates height
 		let textWidth = this.ctx.measureText(text).width;
-		this.ctx.fillText(text,this.width-textWidth,textHeight);
+		this.ctx.fillText(text,this.canvas.width-textWidth,textHeight);
 		text = "block size: " + this.blockSize + ", block name: "+this.blockName;
 		textWidth = this.ctx.measureText(text).width;
-		this.ctx.fillText(text,this.width-textWidth,2*textHeight);
+		this.ctx.fillText(text,this.canvas.width-textWidth,2*textHeight);
 		text = "x zoom amount: " + this.scaleAmtX.toFixed(2);
 		text += ", y zoom amount: " + this.scaleAmtY.toFixed(2);
 		textWidth = this.ctx.measureText(text).width;
-		this.ctx.fillText(text,this.width-textWidth,3*textHeight);
+		this.ctx.fillText(text,this.canvas.width-textWidth,3*textHeight);
 		text = "translate amount: " +this.translateAmt;
 		textWidth = this.ctx.measureText(text).width;
-		this.ctx.fillText(text,this.width-textWidth,4*textHeight);
+		this.ctx.fillText(text,this.canvas.width-textWidth,4*textHeight);
 	}
 	setBlockSize(sz)
 	{
@@ -601,13 +628,14 @@ class TrackLaneCanvas
 		this.scaleAmtY = state.scaleAmtY;
 		
 		// Set up cell sizes
-		this.height = state.height;
+		this.localHeight = state.localHeight;
+		this.localWidth = state.localWidth;
 		this.verticalCells = state.verticalCells;
 		this.horizontalCells = state.horizontalCells;
 	
 		// Compute widths and heights of cells
-		this.cellWidth = this.width/this.verticalCells; // the number of vertical cell divisions controls cell widths
-		this.cellHeight = this.height/this.horizontalCells; // the number of horizontal cell divisions controls cell heights
+		this.cellWidth = this.localWidth/this.verticalCells; // the number of vertical cell divisions controls cell widths
+		this.cellHeight = this.localHeight/this.horizontalCells; // the number of horizontal cell divisions controls cell heights
 
 		// set up font height
 		this.ctx.font = "bold "+this.rectangleFontSize+"px Arial";
