@@ -32,5 +32,5 @@ Run `make` and navigate to the address in your browser that is specified by flas
 5. Create a pull request.
 
 ## Licensing
-Per [here](https://choosealicense.com/licenses/gpl-3.0/) I have attempted to license this software using GPL v3. I have included the full statement of the license in the LICENSE.md file. Ideally I would like my code to stay open source and to respect the freedoms of the people who choose to use it if they somehow find my work here interesting/useful. Please let me know if you see that I've done anything wrong. I'm not a lawyer so I'm sure I've made some mistakes with this.
+Per [here](https://choosealicense.com/licenses/gpl-3.0/) I have attempted to license this software using GPL v3. I have included the full statement of the license in the LICENSE.md file. Ideally I would like my code to stay open source, be attributed to myself and to respect the freedoms of the people who choose to use it if they somehow find my work here interesting/useful. Please let me know if you see that I've done anything wrong. I'm not a lawyer so I'm sure I've made some mistakes with this.
 
