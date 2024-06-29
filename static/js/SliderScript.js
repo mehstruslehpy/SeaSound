@@ -1,5 +1,6 @@
 //TODO: Need to check that deletion works as expected with this one. It might be kind of weird
 //TODO: Scaling looks really weird on this one since it stretches the little lollipop circles
+// TODO: Make sure line widths are set up like in pianoroll
 class SliderCanvas 
 {
 	widgetType = "SliderCanvas"; // On file save/load denotes the type of widget this widget is
@@ -36,6 +37,10 @@ class SliderCanvas
 	maxOut = 1;
 	minOut = -1;
 
+	// For note area dimensions in local coords
+	localWidth = 0;
+	localHeight = 0;
+
 	// Initial set up
 	constructor(query,trackName,horizontalCells,verticalCells,beatsPerCell,rectangleStyle)
 	{
@@ -48,15 +53,19 @@ class SliderCanvas
 		let tabsHeight = 2*document.getElementById('tab-container').offsetHeight;
 		tabsHeight += document.getElementById("track-controls").offsetHeight;
 
-		this.width = (this.canvas.width = window.innerWidth);
-		this.height = (this.canvas.height = window.innerHeight - tabsHeight);
+		//this.width = (this.canvas.width = window.innerWidth);
+		//this.height = (this.canvas.height = window.innerHeight - tabsHeight);
+		this.canvas.width = window.innerWidth;
+		this.canvas.height = window.innerHeight - tabsHeight;
+		this.localWidth = 1000;
+		this.localHeight = 1000;
 		
 		this.verticalCells = verticalCells;
 		this.horizontalCells = horizontalCells;
 
 		// The cell width is determined here
-		this.cellWidth = this.width/this.verticalCells;
-		this.cellHeight = this.height/this.horizontalCells;
+		this.cellWidth = this.localWidth/this.verticalCells;
+		this.cellHeight = this.localHeight/this.horizontalCells;
 
 		this.radius = this.cellWidth/6; // the radius for lollipop style
 
@@ -307,7 +316,7 @@ class SliderCanvas
 		// Draw vertical lollipop line
 		this.ctx.beginPath();
 		this.ctx.moveTo(c1.x,c1.y);
-		this.ctx.lineTo(c1.x,this.height);
+		this.ctx.lineTo(c1.x,this.localHeight);
 		this.ctx.lineWidth = 6;
 		this.ctx.strokeStyle = 'black';
 		this.ctx.stroke();
@@ -329,16 +338,16 @@ class SliderCanvas
 		this.ctx.fillStyle = "rgb(0 255 0)";
 		this.ctx.beginPath();
 		this.ctx.moveTo(c1.x,c1.y);
-		this.ctx.lineTo(c1.x,this.height);
-		this.ctx.lineTo(c2.x,this.height);
+		this.ctx.lineTo(c1.x,this.localHeight);
+		this.ctx.lineTo(c2.x,this.localHeight);
 		this.ctx.lineTo(c2.x,c1.y);
 		this.ctx.fill();
 
 		// Draw rectangle outlines
 		this.ctx.beginPath();
 		this.ctx.moveTo(c1.x,c1.y);
-		this.ctx.lineTo(c1.x,this.height);
-		this.ctx.lineTo(c2.x,this.height);
+		this.ctx.lineTo(c1.x,this.localHeight);
+		this.ctx.lineTo(c2.x,this.localHeight);
 		this.ctx.lineTo(c2.x,c1.y);
 		this.ctx.lineTo(c1.x,c1.y);
 		this.ctx.lineWidth = 2;
@@ -355,11 +364,7 @@ class SliderCanvas
 
 		// Use the identity matrix while clearing the canvas
 		this.ctx.setTransform(1, 0, 0, 1, 0, 0);
-		this.ctx.clearRect(0, 0, this.width, this.height);
-
-		// Draw outline and helper text to fixed positions in viewport
-		this.helperText();
-		this.viewportOutline();
+		this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
 		// Restore the transform
 		this.ctx.restore();
@@ -373,8 +378,8 @@ class SliderCanvas
 			this.ctx.strokeStyle = "black";
 			this.ctx.lineWidth = 1;
 			this.ctx.beginPath();
-			this.ctx.moveTo(i*(this.width/this.verticalCells),0);
-			this.ctx.lineTo(i*(this.width/this.verticalCells),this.height);
+			this.ctx.moveTo(i*(this.localWidth/this.verticalCells),0);
+			this.ctx.lineTo(i*(this.localWidth/this.verticalCells),this.localHeight);
 			this.ctx.stroke();
 		}
 
@@ -384,25 +389,32 @@ class SliderCanvas
 			this.ctx.strokeStyle = "black";
 			this.ctx.lineWidth = 1;
 			this.ctx.beginPath();
-			this.ctx.moveTo(0,i*(this.height/this.horizontalCells));
-			this.ctx.lineTo(this.width,i*(this.height/this.horizontalCells));
+			this.ctx.moveTo(0,i*(this.localHeight/this.horizontalCells));
+			this.ctx.lineTo(this.localWidth,i*(this.localHeight/this.horizontalCells));
 			this.ctx.stroke();
 		}
 		
 		// draw the sliders
 		for (let i = 0; i < this.sliderList.length; i++) this.drawSlider(this.sliderList[i]);
 		if (this.workingSlider != null) this.drawSlider(this.workingSlider);
-
+	
 		// Draw the outlines for the canvas too
-		this.ctx.beginPath();
-		this.ctx.moveTo(0,0);
-		this.ctx.lineTo(0,this.height);
-		this.ctx.lineTo(this.width,this.height);
-		this.ctx.lineTo(this.width,0);
-		this.ctx.lineTo(0,0);
-		this.ctx.lineWidth = 6;
-		this.ctx.strokeStyle = 'black';
-		this.ctx.stroke();
+		this.drawRectangleOutline({x:0,y:0},{x:this.localWidth,y:this.localHeight});
+
+		// Now we want to draw the outlines for the helper text on top of the canvas
+		// Store the current transformation matrix
+		this.ctx.save();
+
+		// Use the identity matrix while clearing the canvas
+		this.ctx.setTransform(1, 0, 0, 1, 0, 0);
+
+		// Draw outline and helper text to fixed positions in viewport
+		this.helperText();
+		this.drawRectangleOutline({x:0,y:0},{x:this.canvas.width,y:this.canvas.height});
+
+		// Restore the transform
+		this.ctx.restore();
+
 	}
 
 	drawSlider(slider)
@@ -441,35 +453,34 @@ class SliderCanvas
 		this.ctx.fillStyle = 'black';
 		let textHeight = this.ctx.measureText('M').width; // The width of capital M approximates height
 		let textWidth = this.ctx.measureText(text).width;
-		this.ctx.fillText(text,this.width-textWidth,textHeight);
+		this.ctx.fillText(text,this.canvas.width-textWidth,textHeight);
 		text = "translate amount: " +this.translateAmt +", snap amount: " + this.snapAmount;
 		textWidth = this.ctx.measureText(text).width;
-		this.ctx.fillText(text,this.width-textWidth,2*textHeight);
+		this.ctx.fillText(text,this.canvas.width-textWidth,2*textHeight);
 		text = "x zoom amount: " + this.scaleAmtX.toFixed(2);
 		text += ", y zoom amount: " + this.scaleAmtY.toFixed(2);
 		textWidth = this.ctx.measureText(text).width;
-		this.ctx.fillText(text,this.width-textWidth,3*textHeight);
+		this.ctx.fillText(text,this.canvas.width-textWidth,3*textHeight);
 		text = "max output: " + this.maxOut.toFixed(2);
 		text += ", min output: " + this.minOut.toFixed(2);
 		textWidth = this.ctx.measureText(text).width;
-		this.ctx.fillText(text,this.width-textWidth,4*textHeight);
+		this.ctx.fillText(text,this.canvas.width-textWidth,4*textHeight);
 		text = "instrument name: " + this.name;
 		textWidth = this.ctx.measureText(text).width;
-		this.ctx.fillText(text,this.width-textWidth,5*textHeight);
+		this.ctx.fillText(text,this.canvas.width-textWidth,5*textHeight);
 
 	}
 
-	// draw outlines around the viewport
-	viewportOutline()
+	// draw the outline of a rectangle
+	drawRectangleOutline(c1,c2)
 	{
-		// Draw the outlines for the canvas too
 		this.ctx.beginPath();
-		this.ctx.moveTo(0,0);
-		this.ctx.lineTo(0,this.height);
-		this.ctx.lineTo(this.width,this.height);
-		this.ctx.lineTo(this.width,0);
-		this.ctx.lineTo(0,0);
-		this.ctx.lineWidth = 6;
+		this.ctx.moveTo(c1.x,c1.y);
+		this.ctx.lineTo(c1.x,c2.y);
+		this.ctx.lineTo(c2.x,c2.y);
+		this.ctx.lineTo(c2.x,c1.y);
+		this.ctx.lineTo(c1.x,c1.y);
+		this.ctx.lineWidth = this.lineWidth;
 		this.ctx.strokeStyle = 'black';
 		this.ctx.stroke();
 	}
@@ -586,7 +597,7 @@ class SliderCanvas
 	{
 		//let c1 = {x:rect[0].x,y:rect[0].y};
 		//let c2 = {x:rect[1].x,y:rect[1].y};
-		let height = 0.25*this.height // this is 75% of the canvas height since the origin is top left
+		let height = 0.25*this.localHeight// this is 75% of the canvas height since the origin is top left
 		let c1 = {x:rect[0].x,y:height};
 		let c2 = {x:rect[1].x,y:height};
 		this.sliderList.push([c1,c2]);
@@ -631,7 +642,7 @@ class SliderCanvas
 		let dur = (rect[1].x - rect[0].x)/this.cellWidth; 
 		dur = Math.round(dur * this.snapAmount) / this.snapAmount; // mult/div here preserves snapping
 		// Translate and scale the output value to the appropriate range
-		let val = (this.maxOut - this.minOut) * (this.height - rect[0].y)/this.height + this.minOut;
+		let val = (this.maxOut - this.minOut) * (this.localHeight - rect[0].y)/this.localHeight+ this.minOut;
 		// Convert raw cell values to values in seconds
 		start = this.cellsToSeconds(start,bpm);
 		dur = this.cellsToSeconds(dur,bpm);
@@ -686,6 +697,9 @@ class SliderCanvas
 
 		this.verticalCells = state.verticalCells;
 		this.horizontalCells = state.horizontalCells;
+
+		this.localHeight = state.localHeight;
+		this.localWidth = state.localWidth;
 
 		// The cell width is determined here
 		this.cellWidth = state.cellWidth;

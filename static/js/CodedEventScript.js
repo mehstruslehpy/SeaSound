@@ -36,6 +36,11 @@ class CodedEventCanvas
 
 	// Snap amount
 	snapAmount = 1;
+
+	// For note area dimensions in local coords
+	localWidth = 0;
+	localHeight = 0;
+
 	// Initial set up
 	constructor(query,trackName,cells,beatsPerCell)
 	{
@@ -48,10 +53,13 @@ class CodedEventCanvas
 		let tabsHeight = 2*document.getElementById('tab-container').offsetHeight;
 		tabsHeight += document.getElementById("track-controls").offsetHeight;
 
-		this.width = (this.canvas.width = window.innerWidth);
-		this.height = (this.canvas.height = window.innerHeight - tabsHeight);
+		this.canvas.width = window.innerWidth;
+		this.canvas.height = window.innerHeight - tabsHeight;
+		this.localWidth = 1000;
+		this.localHeight = 1000;
+	
 		this.cells = cells;
-		this.cellWidth = this.width/this.cells;
+		this.cellWidth = this.localWidth/this.cells;
 
 		// For unit conversion later
 		this.beatsPerCell = beatsPerCell;
@@ -251,11 +259,7 @@ class CodedEventCanvas
 
 		// Use the identity matrix while clearing the canvas
 		this.ctx.setTransform(1, 0, 0, 1, 0, 0);
-		this.ctx.clearRect(0, 0, this.width, this.height);
-
-		// Draw outline and helper text to fixed positions in viewport
-		this.helperText();
-		this.viewportOutline();
+		this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
 		// Restore the transform
 		this.ctx.restore();
@@ -268,8 +272,8 @@ class CodedEventCanvas
 			this.ctx.strokeStyle = 'black';
 			this.ctx.lineWidth = this.lineWidth;
 			this.ctx.beginPath();
-			this.ctx.moveTo(i*(this.width/this.cells),0);
-			this.ctx.lineTo(i*(this.width/this.cells),this.height);
+			this.ctx.moveTo(i*(this.localWidth/this.cells),0);
+			this.ctx.lineTo(i*(this.localWidth/this.cells),this.localHeight);
 			this.ctx.stroke();
 		}
 
@@ -279,20 +283,33 @@ class CodedEventCanvas
 			this.drawRectangle([this.workingRectangle[0],this.workingRectangle[1],"..."]);
 		
 		// Draw the outlines for the canvas too
-		this.viewportOutline();
+		this.drawRectangleOutline({x:0,y:0},{x:this.localWidth,y:this.localHeight});
+
+		// Now we want to draw the outlines for the helper text on top of the canvas
+		// Store the current transformation matrix
+		this.ctx.save();
+
+		// Use the identity matrix while clearing the canvas
+		this.ctx.setTransform(1, 0, 0, 1, 0, 0);
+
+		// Draw outline and helper text to fixed positions in viewport
+		this.helperText();
+		this.drawRectangleOutline({x:0,y:0},{x:this.canvas.width,y:this.canvas.height});
+
+		// Restore the transform
+		this.ctx.restore();
 	}
 
-	// draw outlines around the viewport
-	viewportOutline()
+	// draw the outline of a rectangle
+	drawRectangleOutline(c1,c2)
 	{
-		// Draw the outlines for the canvas too
 		this.ctx.beginPath();
-		this.ctx.moveTo(0,0);
-		this.ctx.lineTo(0,this.height);
-		this.ctx.lineTo(this.width,this.height);
-		this.ctx.lineTo(this.width,0);
-		this.ctx.lineTo(0,0);
-		this.ctx.lineWidth = 6;
+		this.ctx.moveTo(c1.x,c1.y);
+		this.ctx.lineTo(c1.x,c2.y);
+		this.ctx.lineTo(c2.x,c2.y);
+		this.ctx.lineTo(c2.x,c1.y);
+		this.ctx.lineTo(c1.x,c1.y);
+		this.ctx.lineWidth = this.lineWidth;
 		this.ctx.strokeStyle = 'black';
 		this.ctx.stroke();
 	}
@@ -310,20 +327,20 @@ class CodedEventCanvas
 		this.ctx.fillStyle = 'black';
 		let textHeight = this.ctx.measureText('M').width; // The width of capital M approximates height
 		let textWidth = this.ctx.measureText(text).width;
-		this.ctx.fillText(text,this.width-textWidth,textHeight);
+		this.ctx.fillText(text,this.canvas.width-textWidth,textHeight);
 		text = "translate amount: " +this.translateAmt + ", snap amount: "+this.snapAmount;
 		textWidth = this.ctx.measureText(text).width;
-		this.ctx.fillText(text,this.width-textWidth,2*textHeight);
+		this.ctx.fillText(text,this.canvas.width-textWidth,2*textHeight);
 		text = "x zoom amount: " + this.scaleAmtX.toFixed(2);
 		text += ", y zoom amount: " + this.scaleAmtY.toFixed(2);
 		textWidth = this.ctx.measureText(text).width;
-		this.ctx.fillText(text,this.width-textWidth,3*textHeight);
+		this.ctx.fillText(text,this.canvas.width-textWidth,3*textHeight);
 		text = "input text: " + this.workingText;
 		textWidth = this.ctx.measureText(text).width;
-		this.ctx.fillText(text,this.width-textWidth,4*textHeight);
+		this.ctx.fillText(text,this.canvas.width-textWidth,4*textHeight);
 		text = "instrument name: " + this.name;
 		textWidth = this.ctx.measureText(text).width;
-		this.ctx.fillText(text,this.width-textWidth,5*textHeight);
+		this.ctx.fillText(text,this.canvas.width-textWidth,5*textHeight);
 	}
 
 	registerInstrument(inst,name)
@@ -417,8 +434,8 @@ class CodedEventCanvas
 		this.ctx.fillStyle = "rgb(0 255 0)";
 		this.ctx.beginPath();
 		this.ctx.moveTo(c1.x,0);
-		this.ctx.lineTo(c1.x,this.height);
-		this.ctx.lineTo(c2.x,this.height);
+		this.ctx.lineTo(c1.x,this.localHeight);
+		this.ctx.lineTo(c2.x,this.localHeight);
 		this.ctx.lineTo(c2.x,0);
 		this.ctx.lineTo(c1.x,0);
 		this.ctx.fill();
@@ -426,8 +443,8 @@ class CodedEventCanvas
 		// Draw rectangle outlines
 		this.ctx.beginPath();
 		this.ctx.moveTo(c1.x,0);
-		this.ctx.lineTo(c1.x,this.height);
-		this.ctx.lineTo(c2.x,this.height);
+		this.ctx.lineTo(c1.x,this.localHeight);
+		this.ctx.lineTo(c2.x,this.localHeight);
 		this.ctx.lineTo(c2.x,0);
 		this.ctx.lineTo(c1.x,0);
 	
@@ -437,7 +454,7 @@ class CodedEventCanvas
 		this.ctx.stroke();
 		this.ctx.font = "bold 50px Arial";
 		this.ctx.fillStyle = 'black';
-		this.ctx.fillText(value,c1.x,this.height/2,Math.abs(c1.x-c2.x));
+		this.ctx.fillText(value,c1.x,this.localHeight/2,Math.abs(c1.x-c2.x));
 	}
 
 	// Converts p a point on the screen (usually a mouse click) to a point in world coords
@@ -556,7 +573,8 @@ class CodedEventCanvas
 
 		this.snapAmount = state.snapAmount;
 
-		this.height = state.height;
+		this.localHeight = state.localHeight;
+		this.localWidth = state.localWidth;
 		this.cells = state.cells;
 		this.cellWidth = state.cellWidth;
 		this.draw();

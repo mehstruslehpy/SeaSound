@@ -1,6 +1,5 @@
 //TODO: Add a double parameter matrix widget
 //TODO: Add a spreadsheet widget for manual input?
-//TODO: Make line widths consistent. Why are all my line widths different?
 class PianoRollCanvas
 {
 	widgetType = "PianoRollCanvas"; // On file save/load denotes the type of widget this widget is
@@ -37,6 +36,10 @@ class PianoRollCanvas
 	// For snapping to grid
 	snapAmount = 1;
 
+	// For note area dimensions in local coords
+	localWidth = 0;
+	localHeight = 0;
+
 	// Initial set up
 	constructor(query,trackName,horizontalCells,verticalCells,beatsPerCell)
 	{
@@ -45,20 +48,21 @@ class PianoRollCanvas
 		this.canvas = document.getElementById(query);
 		this.ctx = this.canvas.getContext("2d");
 
-		// for some reason 2*tab-container height works but not using master-tab-container directly
+		// The height offset for the buttons and tabs of our gui
 		let tabsHeight = 2*document.getElementById('tab-container').offsetHeight;
-		//document.getElementById("TrackEditor").style.display="inline"; // by default TrackEditor is hidden
 		tabsHeight += document.getElementById("track-controls").offsetHeight;
 
-		this.width = (this.canvas.width = window.innerWidth);
-		this.height = (this.canvas.height = window.innerHeight - tabsHeight);
+		this.canvas.width = window.innerWidth;
+		this.canvas.height = window.innerHeight - tabsHeight;
+		this.localWidth = 1000;
+		this.localHeight = 1000;
 
 		this.verticalCells = verticalCells;
 		this.horizontalCells = horizontalCells;
 
 		// The cell width is determined here
-		this.cellWidth = this.width/this.verticalCells;
-		this.cellHeight = this.height/this.horizontalCells;
+		this.cellWidth = this.localWidth/this.verticalCells;
+		this.cellHeight = this.localHeight/this.horizontalCells;
 
 		// For unit conversion later
 		this.beatsPerCell = beatsPerCell;
@@ -262,7 +266,7 @@ class PianoRollCanvas
 
 		// Use the identity matrix while clearing the canvas
 		this.ctx.setTransform(1, 0, 0, 1, 0, 0);
-		this.ctx.clearRect(0, 0, this.width, this.height);
+		this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
 		// Restore the transform
 		this.ctx.restore();
@@ -275,15 +279,16 @@ class PianoRollCanvas
 			// The first rectangle per octave is marked gray
 			if ((this.horizontalCells - i - 1)%12 == 0)
 			{
-				let y = i*this.height/this.horizontalCells;
+				let y = i*this.localHeight/this.horizontalCells;
 				this.ctx.fillStyle = "gray";
-				this.ctx.fillRect(0,y,this.width,this.cellHeight);
+				this.ctx.lineWidth = this.lineWidth;
+				this.ctx.fillRect(0,y,this.localWidth,this.cellHeight);
 			}
 			this.ctx.strokeStyle = 'black';
 			this.ctx.lineWidth = this.lineWidth;
 			this.ctx.beginPath();
-			this.ctx.moveTo(0,i*(this.height/this.horizontalCells));
-			this.ctx.lineTo(this.width,i*(this.height/this.horizontalCells));
+			this.ctx.moveTo(0,i*(this.localHeight/this.horizontalCells));
+			this.ctx.lineTo(this.localWidth,i*(this.localHeight/this.horizontalCells));
 			this.ctx.stroke();
 		}
 
@@ -291,9 +296,10 @@ class PianoRollCanvas
 		for (var i = 0; i < this.verticalCells; i++)
 		{
 			this.ctx.strokeStyle = 'black';
+			this.ctx.lineWidth = this.lineWidth;
 			this.ctx.beginPath();
-			this.ctx.moveTo(i*(this.width/this.verticalCells),0);
-			this.ctx.lineTo(i*(this.width/this.verticalCells),this.height);
+			this.ctx.moveTo(i*(this.localWidth/this.verticalCells),0);
+			this.ctx.lineTo(i*(this.localWidth/this.verticalCells),this.localHeight);
 			this.ctx.stroke();
 		}
 
@@ -308,7 +314,7 @@ class PianoRollCanvas
 		}
 		
 		// Draw the outlines for the canvas too
-		this.viewportOutline();
+		this.drawRectangleOutline({x:0,y:0},{x:this.localWidth,y:this.localHeight});
 
 		// Now we want to draw the outlines for the helper text on top of the canvas
 		// Store the current transformation matrix
@@ -319,7 +325,7 @@ class PianoRollCanvas
 
 		// Draw outline and helper text to fixed positions in viewport
 		this.helperText();
-		this.viewportOutline();
+		this.drawRectangleOutline({x:0,y:0},{x:this.canvas.width,y:this.canvas.height});
 
 		// Restore the transform
 		this.ctx.restore();
@@ -337,6 +343,10 @@ class PianoRollCanvas
 		this.ctx.fill();
 
 		// Draw rectangle outlines
+		this.drawRectangleOutline(c1,c2,"black");
+	}
+	drawRectangleOutline(c1,c2)
+	{
 		this.ctx.beginPath();
 		this.ctx.moveTo(c1.x,c1.y);
 		this.ctx.lineTo(c1.x,c2.y);
@@ -358,20 +368,6 @@ class PianoRollCanvas
 	{
 		return (rect[0].x <= pt.x && pt.x <= rect[1].x);
 	}
-	// draw outlines around the viewport
-	viewportOutline()
-	{
-		// Draw the outlines for the canvas too
-		this.ctx.beginPath();
-		this.ctx.moveTo(0,0);
-		this.ctx.lineTo(0,this.height);
-		this.ctx.lineTo(this.width,this.height);
-		this.ctx.lineTo(this.width,0);
-		this.ctx.lineTo(0,0);
-		this.ctx.lineWidth = 3;
-		this.ctx.strokeStyle = 'black';
-		this.ctx.stroke();
-	}
 
 	// print the on screen helper text
 	helperText()
@@ -386,17 +382,17 @@ class PianoRollCanvas
 		this.ctx.fillStyle = 'black';
 		let textHeight = this.ctx.measureText('M').width; // The width of capital M approximates height
 		let textWidth = this.ctx.measureText(text).width;
-		this.ctx.fillText(text,this.width-textWidth,textHeight);
+		this.ctx.fillText(text,this.canvas.width-textWidth,textHeight);
 		text = "translate amount: " +this.translateAmt +", snap amount: "+this.snapAmount;
 		textWidth = this.ctx.measureText(text).width;
-		this.ctx.fillText(text,this.width-textWidth,2*textHeight);
+		this.ctx.fillText(text,this.canvas.width-textWidth,2*textHeight);
 		text = "x zoom amount: " + this.scaleAmtX.toFixed(2);
 		text += ", y zoom amount: " + this.scaleAmtY.toFixed(2);
 		textWidth = this.ctx.measureText(text).width;
-		this.ctx.fillText(text,this.width-textWidth,3*textHeight);
+		this.ctx.fillText(text,this.canvas.width-textWidth,3*textHeight);
 		text = "instrument name: " + this.name;
 		textWidth = this.ctx.measureText(text).width;
-		this.ctx.fillText(text,this.width-textWidth,4*textHeight);
+		this.ctx.fillText(text,this.canvas.width-textWidth,4*textHeight);
 	}
 
 	// Converts p a point on the screen (usually a mouse click) to a point in world coords
@@ -534,7 +530,7 @@ class PianoRollCanvas
 		let dur = (rect[1].x - rect[0].x)/this.cellWidth; 
 		dur = Math.round(dur * this.snapAmount) / this.snapAmount; // mult/div here preserves snapping
 		// Get the pitch with respect to the bottom left corner of the canvas scaled relative to the cell height
-		let pitch = (this.height - rect[0].y)/this.cellHeight;
+		let pitch = (this.localHeight- rect[0].y)/this.cellHeight;
 		pitch = pitch - 1; // the very bottom note of the canvas is zero rather than 1
 		pitch = Math.round(pitch);
 		// Convert raw cell values to values in seconds
@@ -599,7 +595,8 @@ class PianoRollCanvas
 
 		this.triggerMode = state.triggerMode;
 
-		this.height = state.height;
+		this.localHeight = state.localHeight;
+		this.localWidth = state.localWidth;
 		this.verticalCells = state.verticalCells;
 		this.horizontalCells = state.horizontalCells;
 
