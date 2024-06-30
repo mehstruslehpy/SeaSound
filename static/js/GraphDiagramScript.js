@@ -21,19 +21,26 @@ class GraphDiagramCanvas
 	translateAmt = 10;
 	scaleAmt = 1.15;
 
+	// For note area dimensions in local coords
+	localWidth = 0;
+	localHeight = 0;
+
 	// Initial set up
 	constructor(query,name,size)
 	{
 		// Set Up the canvas
 		this.canvas = document.getElementById(query);
 		this.ctx = this.canvas.getContext("2d");
-		this.width = (this.canvas.width = window.innerWidth);
 
 		// for some reason 2*tab-container height works but not using master-tab-container directly
 		let tabsHeight = 2*document.getElementById('tab-container').offsetHeight;
 		tabsHeight += document.getElementById("instrument-controls").offsetHeight;
 
-		this.height = (this.canvas.height = window.innerHeight - tabsHeight);
+		this.canvas.height = window.innerHeight - tabsHeight;
+		this.canvas.width = window.innerWidth;
+		this.localWidth = 500;
+		this.localHeight = 500;
+
 		this.nodeRadius = size;
 
 		// Set up the instrument name
@@ -340,11 +347,7 @@ class GraphDiagramCanvas
 
 		// Use the identity matrix while clearing the canvas
 		this.ctx.setTransform(1, 0, 0, 1, 0, 0);
-		this.ctx.clearRect(0, 0, this.width, this.height);
-
-		// Draw outline and helper text to fixed positions in viewport
-		this.helperText();
-		this.viewportOutline();
+		this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
 		// Restore the transform
 		this.ctx.restore();
@@ -358,6 +361,24 @@ class GraphDiagramCanvas
 		if (this.workingEdge != null) this.workingEdge.draw(this.ctx);
 		// draw all the edges
 		for (let i = 0; i < this.edgeList.length; i++) this.edgeList[i].draw(this.ctx);
+
+		// Draw the outlines for the canvas too
+		//this.drawRectangleOutline({x:0,y:0},{x:this.localWidth,y:this.localHeight});
+
+		// Now we want to draw the outlines for the helper text on top of the canvas
+		// Store the current transformation matrix
+		this.ctx.save();
+
+		// Use the identity matrix while clearing the canvas
+		this.ctx.setTransform(1, 0, 0, 1, 0, 0);
+
+		// Draw outline and helper text to fixed positions in viewport
+		this.helperText();
+		this.drawRectangleOutline({x:0,y:0},{x:this.canvas.width,y:this.canvas.height});
+
+		// Restore the transform
+		this.ctx.restore();
+
 	}
 
 	// print the on screen helper text
@@ -373,32 +394,16 @@ class GraphDiagramCanvas
 		this.ctx.fillStyle = 'black';
 		let textHeight = this.ctx.measureText('M').width; // The width of capital M approximates height
 		let textWidth = this.ctx.measureText(text).width;
-		this.ctx.fillText(text,this.width-textWidth,textHeight);
+		this.ctx.fillText(text,this.canvas.width-textWidth,textHeight);
 		text = "inputs: " + this.curInputs + ", outputs: " + this.curOutputs + ", name: "+this.curName+" ";
 		textWidth = this.ctx.measureText(text).width;
-		this.ctx.fillText(text,this.width-textWidth,2*textHeight);
+		this.ctx.fillText(text,this.canvas.width-textWidth,2*textHeight);
 		text = "translate amount: " +this.translateAmt +", zoom amount: " + this.scaleAmt.toFixed(2);
 		textWidth = this.ctx.measureText(text).width;
-		this.ctx.fillText(text,this.width-textWidth,3*textHeight);
+		this.ctx.fillText(text,this.canvas.width-textWidth,3*textHeight);
 		text = "output style: " +this.curOutputStyle;
 		textWidth = this.ctx.measureText(text).width;
-		this.ctx.fillText(text,this.width-textWidth,4*textHeight);
-	
-	}
-
-	// draw outlines around the viewport
-	viewportOutline()
-	{
-		// Draw the outlines for the canvas too
-		this.ctx.beginPath();
-		this.ctx.moveTo(0,0);
-		this.ctx.lineTo(0,this.height);
-		this.ctx.lineTo(this.width,this.height);
-		this.ctx.lineTo(this.width,0);
-		this.ctx.lineTo(0,0);
-		this.ctx.lineWidth = 6;
-		this.ctx.strokeStyle = 'black';
-		this.ctx.stroke();
+		this.ctx.fillText(text,this.canvas.width-textWidth,4*textHeight);
 	}
 
 	// Converts p a point on the screen (usually a mouse click) to a point in world coords
@@ -407,7 +412,18 @@ class GraphDiagramCanvas
 		// get and invert the canvas xform coords, then apply them to the input point
 		return this.ctx.getTransform().invertSelf().transformPoint(p);
 	}
-
+	drawRectangleOutline(c1,c2)
+	{
+		this.ctx.beginPath();
+		this.ctx.moveTo(c1.x,c1.y);
+		this.ctx.lineTo(c1.x,c2.y);
+		this.ctx.lineTo(c2.x,c2.y);
+		this.ctx.lineTo(c2.x,c1.y);
+		this.ctx.lineTo(c1.x,c1.y);
+		this.ctx.lineWidth = 6;
+		this.ctx.strokeStyle = 'black';
+		this.ctx.stroke();
+	}
 	renderToText()
 	{
 		// Get all of the nodes with no outputs first
