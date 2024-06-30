@@ -1,5 +1,0 @@
-################################################################
-TextAreaInstrumentCanvas
-"drumsampler"
-instrument-drumsampler
-instr drumsampler\n    ; inputs\n    iamp = p5 ; amplitude\n    ikey = p4 ; key to play\n\n    ; for convenience\n    ihat = 2\n    isnare = 3\n    ikick = 1\n    print ikey\n    ; pick which sample to play\n    if (ikey == 8.02) then\n        asamp loscil iamp, 1, ihat, 1\n    elseif (ikey == 8.01) then\n        asamp loscil iamp, 1, isnare, 1\n    else\n        asamp loscil iamp, 1, ikick, 1\n    endif\n\n    outs asamp, asamp\nendin

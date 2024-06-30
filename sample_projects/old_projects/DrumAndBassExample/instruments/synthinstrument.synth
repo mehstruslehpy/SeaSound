@@ -1,5 +1,0 @@
-################################################################
-TextAreaInstrumentCanvas
-"synthinstrument"
-instrument-synthinstrument
-instr synthinstrument\n	aout vco2 p5, cpspch(p4)\n        outs aout, aout\nendin
