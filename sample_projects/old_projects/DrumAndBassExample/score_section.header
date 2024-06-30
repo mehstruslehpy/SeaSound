@@ -1,0 +1,4 @@
+; load the samples into csound
+f 1 0 0 1 "kick.wav" 0 0 0
+f 2 0 0 1 "hat.wav" 0 0 0
+f 3 0 0 1 "snare.wav" 0 0 0
