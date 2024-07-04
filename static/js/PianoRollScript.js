@@ -9,7 +9,6 @@ class PianoRollCanvas
 	workingRectangle = null; // The rectangle being created this mouse click
 	rectangleList = new Array(); // The list of rectangles created so far
 	mousePressed = false; // For tracking if the mouse has been pressed or not
-	controlPressed = false; // for tracking if control has been pressed or not
 
 	lineWidth = 0.5; // Used for setting width of lines
 
@@ -39,6 +38,14 @@ class PianoRollCanvas
 	// For note area dimensions in local coords
 	localWidth = 0;
 	localHeight = 0;
+
+	// Input modes and the current input mode
+	inputModes = ["SELECT","NOTE","DELETE"];
+	inputMode = "NOTE";
+
+	// variables for select mode selection
+	selectionRectangle = null;
+	selectionOutlineWidth = 2;
 
 	// Initial set up
 	constructor(query,trackName,horizontalCells,verticalCells,beatsPerCell)
@@ -87,10 +94,32 @@ class PianoRollCanvas
 			controlText += "tg: change X scaling amount\n";
 			controlText += "yh: change Y scaling amount\n";
 			controlText += "x: change snap to grid amount\n";
-			controlText += "ctrl: toggle note/delete modes\n";
+			//controlText += "ctrl: toggle note/delete modes\n";
+			controlText += "1/2/3: switch between select/note/delete mode\n";
 			controlText += "i: change instrument name\n";
 
-		if (ev.key == "Control" && this.triggerMode) this.controlPressed = true;
+		//if (ev.key == "Control" && this.triggerMode) this.controlPressed = true;
+		if (ev.key == "1") 
+		{
+			this.inputMode = "SELECT";
+			this.workingRectangle = null;
+			this.mousePressed = false;
+			this.draw();
+		}
+		else if (ev.key == "2") 
+		{
+			this.inputMode = "NOTE";
+			this.workingRectangle = null;
+			this.mousePressed = false;
+			this.draw();
+		}
+		else if (ev.key == "3") 
+		{
+			this.inputMode = "DELETE";
+			this.workingRectangle = null;
+			this.mousePressed = false;
+			this.draw();
+		}
 		else if (ev.key == "h") alert(controlText);
 		else if (ev.key == "x") 
 		{
@@ -141,8 +170,17 @@ class PianoRollCanvas
 	leftClickDown()
 	{
 		if (!this.triggerMode) this.nonTriggerModeClick();
-		else if (this.controlPressed) this.controlLeftClickDown();
-		else
+		//else if (this.controlPressed) this.controlLeftClickDown();
+		if (this.inputMode == "DELETE") this.deleteModeLeftClick();
+		else if (this.inputMode == "SELECT") 
+		{
+			let val = this.screenToWorldCoords(this.coord);
+			///this.leftClickStart = this.snapToGrid(val);
+			//this.workingRectangle = new Array(this.leftClickStart,this.leftClickStart);
+			this.selectionRectangle = [{x:val.x, y:val.y},{x:val.x, y:val.y}];
+			this.mousePressed = true;
+		}
+		else // note mode case
 		{
 			let val = this.screenToWorldCoords(this.coord);
 			this.leftClickStart = this.snapToGrid(val);
@@ -166,7 +204,7 @@ class PianoRollCanvas
 	}
 
 	// Runs on pressing control left click
-	controlLeftClickDown()
+	deleteModeLeftClick()
 	{
 		if (!this.triggerMode) return;
 		let c = {x:this.coord.x, y:this.coord.y};
@@ -193,9 +231,15 @@ class PianoRollCanvas
 	leftClickUp()
 	{
 		if (!this.triggerMode) return;
-		if (this.controlPressed) // if it was a control press
+		if (this.inputMode == "DELETE") // if we are in delete mode
 		{
-			this.controlPressed = false; // untoggle controlPressed var and return
+			this.draw();
+			return;
+		}
+		else if (this.inputMode == "SELECT")
+		{
+			// figure out which notes are in selection rectangle
+			this.selectionRectangle = null;
 			this.draw();
 			return;
 		}
@@ -214,7 +258,6 @@ class PianoRollCanvas
 		this.mousePressed = false; // the mouse is no longer pressed
 		this.workingRectangle = null; // The working rectangle is null again
 		this.rectangleList.push([c1,c2]);
-		//this.rectangleList.unshift([c1,c2]);
 
 		// Update the non-triggering widgets
 		for (let i = 0; i < this.instrument.length; i++)
@@ -235,6 +278,15 @@ class PianoRollCanvas
 		if (this.mousePressed)
 		{
 			this.clickHelper();
+
+			// if necessary convert the point and store it in the selection rectangle
+			if (this.selectionRectangle != null) 
+			{
+				let val  = this.screenToWorldCoords(this.coord);
+				this.selectionRectangle[1] = {x:val.x, y:val.y};
+				console.log(this.selectionRectangle);
+				this.draw();
+			}
 
 			let c1 = { // top left coord of rectangle
 				x: Math.min(this.leftClickStart.x,this.leftClickEnd.x),
@@ -312,9 +364,11 @@ class PianoRollCanvas
 			let c2 = this.rectangleList[i][1];
 			this.drawRectangle(c1,c2);
 		}
+		if (this.selectionRectangle != null) 
+			this.drawSelectionRectangle(this.selectionRectangle[0],this.selectionRectangle[1],this.selectionOutlineWidth);
 		
 		// Draw the outlines for the canvas too
-		this.drawRectangleOutline({x:0,y:0},{x:this.localWidth,y:this.localHeight});
+		this.drawRectangleOutline({x:0,y:0},{x:this.localWidth,y:this.localHeight},this.lineWidth);
 
 		// Now we want to draw the outlines for the helper text on top of the canvas
 		// Store the current transformation matrix
@@ -325,7 +379,7 @@ class PianoRollCanvas
 
 		// Draw outline and helper text to fixed positions in viewport
 		this.helperText();
-		this.drawRectangleOutline({x:0,y:0},{x:this.canvas.width,y:this.canvas.height});
+		this.drawRectangleOutline({x:0,y:0},{x:this.canvas.width,y:this.canvas.height},this.lineWidth);
 
 		// Restore the transform
 		this.ctx.restore();
@@ -345,7 +399,7 @@ class PianoRollCanvas
 		// Draw rectangle outlines
 		this.drawRectangleOutline(c1,c2,"black");
 	}
-	drawRectangleOutline(c1,c2)
+	drawRectangleOutline(c1,c2,width)
 	{
 		this.ctx.beginPath();
 		this.ctx.moveTo(c1.x,c1.y);
@@ -353,9 +407,23 @@ class PianoRollCanvas
 		this.ctx.lineTo(c2.x,c2.y);
 		this.ctx.lineTo(c2.x,c1.y);
 		this.ctx.lineTo(c1.x,c1.y);
-		this.ctx.lineWidth = this.lineWidth;
+		this.ctx.lineWidth = width;
 		this.ctx.strokeStyle = 'black';
 		this.ctx.stroke();
+	}
+	drawSelectionRectangle(c1,c2,width)
+	{
+		this.ctx.fillStyle = "rgb(0 0 0 / 30%)";
+		this.ctx.beginPath();
+		this.ctx.moveTo(c1.x,c1.y);
+		this.ctx.lineTo(c1.x,c2.y);
+		this.ctx.lineTo(c2.x,c2.y);
+		this.ctx.lineTo(c2.x,c1.y);
+		this.ctx.lineTo(c1.x,c1.y);
+		this.ctx.lineWidth = width;
+		this.ctx.strokeStyle = 'black';
+		this.ctx.stroke();
+		this.ctx.fill();
 	}
 	// Check if pt lies inside the rectangle 
 	rectangleCollision(pt,rect)
@@ -374,8 +442,12 @@ class PianoRollCanvas
 	{
 		// Draw text showing the mode
 		let text = "";
-		if (this.controlPressed) text = "Delete mode. ";
-		else text = "Note mode. ";
+		//if (this.controlPressed) text = "Delete mode. ";
+		//else text = "Note mode. ";
+		if (this.inputMode == "DELETE") text = "Delete mode. ";
+		else if (this.inputMode == "SELECT") text = "Select mode. ";
+		else text = "Note mode.";
+		
 		text += "Press h for keybinds.";
 	
 		this.ctx.font = "bold 25px Arial";
