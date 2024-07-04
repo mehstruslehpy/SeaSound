@@ -40,7 +40,7 @@ class PianoRollCanvas
 	localHeight = 0;
 
 	// Input modes and the current input mode
-	inputModes = ["SELECT","NOTE","DELETE"];
+	inputModes = ["SELECT","NOTE","DELETE","PASTE","REMOVE"];
 	inputMode = "NOTE";
 
 	// variables for select mode selection
@@ -106,7 +106,7 @@ class PianoRollCanvas
 			this.workingRectangle = null;
 			this.mousePressed = false;
 			this.selectionRectangle = null;
-			this.selectedRectangles = Array();
+			//this.selectedRectangles = Array();
 			this.draw();
 		}
 		else if (ev.key == "2") 
@@ -115,16 +115,54 @@ class PianoRollCanvas
 			this.workingRectangle = null;
 			this.mousePressed = false;
 			this.selectionRectangle = null;
-			this.selectedRectangles = Array();
+			//this.selectedRectangles = Array();
 			this.draw();
 		}
-		else if (ev.key == "3") 
+		else if (ev.key == "4") 
 		{
 			this.inputMode = "DELETE";
 			this.workingRectangle = null;
 			this.mousePressed = false;
 			this.selectionRectangle = null;
+
+			// get the list of indices to remove and sort in descending order
+			let indices = Array();
+			for (let i = 0; i < this.selectedRectangles.length; i++)
+				indices.push(this.selectedRectangles[i][2]);
+			indices.sort((a,b) => a < b);
+			// delete all the corresponding notes from this and all other widgets
+			for (let i = 0; i < indices.length; i++)
+			{
+				this.splice(indices[i],1);
+				// Update the non-triggering widgets too
+				for (let j = 0; j < this.instrument.length; j++)
+					if (this.instrument[j] != this)
+					{
+						this.instrument[j].splice(indices[i],1);
+						this.instrument[j].draw();
+					}
+			}
+			this.inputMode = "NOTE";
 			this.selectedRectangles = Array();
+
+			this.draw();
+		}
+		else if (ev.key == "3") 
+		{
+			this.inputMode = "PASTE";
+			this.workingRectangle = null;
+			this.mousePressed = false;
+			this.selectionRectangle = null;
+			//this.selectedRectangles = Array();
+			this.draw();
+		}
+		else if (ev.key == "5") 
+		{
+			this.inputMode = "REMOVE";
+			this.workingRectangle = null;
+			this.mousePressed = false;
+			this.selectionRectangle = null;
+			//this.selectedRectangles = Array();
 			this.draw();
 		}
 		else if (ev.key == "h") alert(controlText);
@@ -186,6 +224,38 @@ class PianoRollCanvas
 			this.selectionRectangle = [{x:val.x, y:val.y},{x:val.x, y:val.y}];
 			this.mousePressed = true;
 		}
+		else if (this.inputMode == "PASTE") 
+		{
+			console.log("paste mode click");
+			let val = this.screenToWorldCoords(this.coord);
+			val  = this.snapToGrid(val);
+			// pastes are relative to the left most rectangle in the selection
+			let leftMost = 0
+			for (let i = 0; i < this.selectedRectangles.length; i++)
+				if (this.selectedRectangles[i][0].x < this.selectedRectangles[leftMost][0].x) leftMost = i;
+			let leftMostRect = this.selectedRectangles[leftMost];
+			// Add the shifted selection to the rectangle list
+			for (let i = 0; i < this.selectedRectangles.length; i++)
+			{
+				let c1 = {
+					x: this.selectedRectangles[i][0].x + val.x - leftMostRect[0].x,
+					y: this.selectedRectangles[i][0].y + val.y - leftMostRect[1].y + this.cellHeight
+				};
+				let c2 = {
+					x: this.selectedRectangles[i][1].x + val.x - leftMostRect[0].x,
+					y: this.selectedRectangles[i][1].y + val.y - leftMostRect[1].y + this.cellHeight
+				};
+				this.rectangleList.push([c1,c2]);
+				// Update the non-triggering widgets
+				for (let i = 0; i < this.instrument.length; i++)
+					if (this.instrument[i] != this)
+					{
+						this.instrument[i].addRectangle([c1,c2]); 
+						this.instrument[i].draw();
+					}
+			}
+		}
+		else if (this.inputMode == "REMOVE") return;
 		else // note mode case
 		{
 			let val = this.screenToWorldCoords(this.coord);
@@ -237,7 +307,7 @@ class PianoRollCanvas
 	leftClickUp()
 	{
 		if (!this.triggerMode) return;
-		if (this.inputMode == "DELETE") // if we are in delete mode
+		if (this.inputMode == "DELETE" || this.inputMode == "PASTE" || this.inputMode == "REMOVE")
 		{
 			this.draw();
 			return;
@@ -245,10 +315,11 @@ class PianoRollCanvas
 		else if (this.inputMode == "SELECT")
 		{
 			// figure out which notes are in selection rectangle
+			// we also store the indices here too for ease of deletion
 			for (let i = 0; i < this.rectangleList.length; i++)
 				if (this.inSelectionBounds(this.rectangleList[i]))
-					this.selectedRectangles.push(this.rectangleList[i]);
-			console.log(this.selectedRectangles);
+					this.selectedRectangles.push([this.rectangleList[i][0],this.rectangleList[i][1],i]);
+											
 			this.selectionRectangle = null;
 			this.draw();
 			return;
@@ -268,6 +339,7 @@ class PianoRollCanvas
 		this.mousePressed = false; // the mouse is no longer pressed
 		this.workingRectangle = null; // The working rectangle is null again
 		this.rectangleList.push([c1,c2]);
+		//this.addRectangle([c1,c2]);
 
 		// Update the non-triggering widgets
 		for (let i = 0; i < this.instrument.length; i++)
@@ -486,6 +558,8 @@ class PianoRollCanvas
 		//else text = "Note mode. ";
 		if (this.inputMode == "DELETE") text = "Delete mode. ";
 		else if (this.inputMode == "SELECT") text = "Select mode. ";
+		else if (this.inputMode == "PASTE") text = "Paste mode. ";
+		else if (this.inputMode == "REMOVE") text = "Remove mode. ";
 		else text = "Note mode.";
 		
 		text += "Press h for keybinds.";
