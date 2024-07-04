@@ -46,6 +46,7 @@ class PianoRollCanvas
 	// variables for select mode selection
 	selectionRectangle = null;
 	selectionOutlineWidth = 2;
+	selectedRectangles = Array();
 
 	// Initial set up
 	constructor(query,trackName,horizontalCells,verticalCells,beatsPerCell)
@@ -104,6 +105,8 @@ class PianoRollCanvas
 			this.inputMode = "SELECT";
 			this.workingRectangle = null;
 			this.mousePressed = false;
+			this.selectionRectangle = null;
+			this.selectedRectangles = Array();
 			this.draw();
 		}
 		else if (ev.key == "2") 
@@ -111,6 +114,8 @@ class PianoRollCanvas
 			this.inputMode = "NOTE";
 			this.workingRectangle = null;
 			this.mousePressed = false;
+			this.selectionRectangle = null;
+			this.selectedRectangles = Array();
 			this.draw();
 		}
 		else if (ev.key == "3") 
@@ -118,6 +123,8 @@ class PianoRollCanvas
 			this.inputMode = "DELETE";
 			this.workingRectangle = null;
 			this.mousePressed = false;
+			this.selectionRectangle = null;
+			this.selectedRectangles = Array();
 			this.draw();
 		}
 		else if (ev.key == "h") alert(controlText);
@@ -175,8 +182,7 @@ class PianoRollCanvas
 		else if (this.inputMode == "SELECT") 
 		{
 			let val = this.screenToWorldCoords(this.coord);
-			///this.leftClickStart = this.snapToGrid(val);
-			//this.workingRectangle = new Array(this.leftClickStart,this.leftClickStart);
+			this.selectedRectangles = Array();
 			this.selectionRectangle = [{x:val.x, y:val.y},{x:val.x, y:val.y}];
 			this.mousePressed = true;
 		}
@@ -239,6 +245,10 @@ class PianoRollCanvas
 		else if (this.inputMode == "SELECT")
 		{
 			// figure out which notes are in selection rectangle
+			for (let i = 0; i < this.rectangleList.length; i++)
+				if (this.inSelectionBounds(this.rectangleList[i]))
+					this.selectedRectangles.push(this.rectangleList[i]);
+			console.log(this.selectedRectangles);
 			this.selectionRectangle = null;
 			this.draw();
 			return;
@@ -284,7 +294,6 @@ class PianoRollCanvas
 			{
 				let val  = this.screenToWorldCoords(this.coord);
 				this.selectionRectangle[1] = {x:val.x, y:val.y};
-				console.log(this.selectionRectangle);
 				this.draw();
 			}
 
@@ -357,15 +366,21 @@ class PianoRollCanvas
 
 		// draw all the rectangles
 		if (this.workingRectangle!=null) 
-			this.drawRectangle(this.workingRectangle[0],this.workingRectangle[1]);
+			this.drawRectangle(this.workingRectangle[0],this.workingRectangle[1],"rgb(0 255 0)");
 		for (let i = 0; i < this.rectangleList.length; i++)
 		{
 			let c1 = this.rectangleList[i][0];
 			let c2 = this.rectangleList[i][1];
-			this.drawRectangle(c1,c2);
+			this.drawRectangle(c1,c2,"rgb(0 255 0)");
 		}
 		if (this.selectionRectangle != null) 
 			this.drawSelectionRectangle(this.selectionRectangle[0],this.selectionRectangle[1],this.selectionOutlineWidth);
+		for (let i = 0; i < this.selectedRectangles.length; i++)
+		{
+			let c1 = this.selectedRectangles[i][0];
+			let c2 = this.selectedRectangles[i][1];
+			this.drawRectangle(c1,c2,"rgb(255 0 0)");
+		}	
 		
 		// Draw the outlines for the canvas too
 		this.drawRectangleOutline({x:0,y:0},{x:this.localWidth,y:this.localHeight},this.lineWidth);
@@ -385,10 +400,11 @@ class PianoRollCanvas
 		this.ctx.restore();
 	}
 
-	drawRectangle(c1,c2)
+	drawRectangle(c1,c2,color)
 	{
 		// Now we can draw the rectangle 
-		this.ctx.fillStyle = "rgb(0 255 0)";
+		//this.ctx.fillStyle = "rgb(0 255 0)";
+		this.ctx.fillStyle = color;
 		this.ctx.beginPath();
 		this.ctx.moveTo(c1.x,c1.y);
 		this.ctx.lineTo(c1.x,c2.y);
@@ -429,6 +445,30 @@ class PianoRollCanvas
 	rectangleCollision(pt,rect)
 	{
 		return (rect[0].x <= pt.x && pt.x <= rect[1].x && rect[0].y <= pt.y && pt.y <= rect[1].y);
+	}
+
+	// check if rectA overlaps the selection rectangle
+	inSelectionBounds(rect)
+	{
+		let c1 = { // top left coord of rectangle
+			x: Math.min(this.selectionRectangle[0].x,this.selectionRectangle[1].x),
+   			y: Math.min(this.selectionRectangle[0].y,this.selectionRectangle[1].y)
+		};
+		let c2 = { // bottom right coord of rectangle
+			x: Math.max(this.selectionRectangle[0].x,this.selectionRectangle[1].x),
+			y: Math.max(this.selectionRectangle[0].y,this.selectionRectangle[1].y),
+		};
+		let d1 = { // top left coord of rectangle
+			x: Math.min(rect[0].x,rect[1].x),
+			y: Math.min(rect[0].y,rect[1].y),
+		};
+		let d2 = { // bottom right coord of rectangle
+			x: Math.max(rect[0].x,rect[1].x),
+			y: Math.max(rect[0].y,rect[1].y),
+		};
+		let rectA = [c1,c2];
+		let rectB = [d1,d2];
+		return (rectA[0].x < rectB[1].x && rectA[1].x > rectB[0].x && rectA[0].y < rectB[1].y && rectA[1].y > rectB[0].y);
 	}
 
 	// Check if pt lies between the rectangles x axis bounds
