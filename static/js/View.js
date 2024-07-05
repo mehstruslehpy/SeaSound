@@ -809,6 +809,7 @@ class View
 			newCanvas.setAttribute("class","trackLaneCanvas");
 
 			instrumentCanvasObject = new GraphDiagramCanvas("instrument-"+name,name,20);
+			newCanvas.style.display = "none";
 		}
 		else if (file[0][0] == "TextAreaInstrumentCanvas")
 		{
@@ -824,6 +825,7 @@ class View
 			newTextArea.setAttribute("class","trackLaneCanvas");
 	
 			instrumentCanvasObject = new TextAreaInstrumentCanvas("instrument-"+name,name);
+			newTextArea.style.display = "none";
 		}
 		else console.log("ERROR: file type read error");
 
@@ -946,7 +948,9 @@ class View
 			workingWidget.reconfigure(temp[i]);
 			workingWidget.setInstrument(instr);
 			instr.push(workingWidget);
+			//newCanvas.style.display = "none";
 		}
+		instDiv.style.display = "none";
 		
 		this.trackMap.set(this.CleanName(filename),instr);
 	}
@@ -1113,8 +1117,23 @@ class View
 				});
 			});
 		}
-		input.click();
+		input.click(); // this click triggers project loading callback above
+		//input.onchange = e => { that.hideAllCanvases(); }
+		//input.click(); // this click triggers hiding all the canvases
 	}
+	/*
+	hideAllCanvases()
+	{
+		console.log("hide code runs.");
+		this.OpenTab('TrackEditor','track-editor-tab');
+		let trackCanvases = document.getElementById("track-canvases").childNodes;
+		for (let i = 0; i < trackCanvases.length; i++) trackCanvases[i].style.display = "none";
+		this.OpenTab('InstrumentEditor','instrument-editor-tab');
+		let instrumentCanvases = document.getElementById("instrument-canvases").childNodes;
+		for (let i = 0; i < instrumentCanvases.length; i++) instrumentCanvases[i].style.display = "none";
+		this.OpenTab('Configuration','config-tab');
+	}
+	*/
 	loadAudioFile()
 	{
 		// This is mostly from SO
