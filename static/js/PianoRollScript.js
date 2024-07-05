@@ -118,9 +118,9 @@ class PianoRollCanvas
 			//this.selectedRectangles = Array();
 			this.draw();
 		}
-		else if (ev.key == "4") 
+		else if (ev.key == "5") 
 		{
-			this.inputMode = "DELETE";
+			this.inputMode = "REMOVE";
 			this.workingRectangle = null;
 			this.mousePressed = false;
 			this.selectionRectangle = null;
@@ -156,9 +156,9 @@ class PianoRollCanvas
 			//this.selectedRectangles = Array();
 			this.draw();
 		}
-		else if (ev.key == "5") 
+		else if (ev.key == "4") 
 		{
-			this.inputMode = "REMOVE";
+			this.inputMode = "DELETE";
 			this.workingRectangle = null;
 			this.mousePressed = false;
 			this.selectionRectangle = null;
@@ -226,7 +226,6 @@ class PianoRollCanvas
 		}
 		else if (this.inputMode == "PASTE") 
 		{
-			console.log("paste mode click");
 			let val = this.screenToWorldCoords(this.coord);
 			val  = this.snapToGrid(val);
 			// pastes are relative to the left most rectangle in the selection

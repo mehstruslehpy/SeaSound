@@ -1,4 +1,4 @@
-// TODO: Fix conversion from seek position to time in seconds. Currently it is way off.
+// TODO: Fix draw error on empty project. Empty project throws an error while doing first draw on project loading.
 class TrackLaneCanvas
 {
 	coord = {x:0, y:0}; // the coords of the mouse
@@ -644,7 +644,6 @@ class TrackLaneCanvas
 			this.ctx.font = "bold "+this.rectangleFontSize+"px Arial";
 			this.rectangleFontSize++;
 		}
-
-		//this.draw();
+		this.draw();
 	}
 }
