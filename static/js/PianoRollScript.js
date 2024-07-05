@@ -96,7 +96,7 @@ class PianoRollCanvas
 			controlText += "yh: change Y scaling amount\n";
 			controlText += "x: change snap to grid amount\n";
 			//controlText += "ctrl: toggle note/delete modes\n";
-			controlText += "1/2/3: switch between select/note/delete mode\n";
+			controlText += "1/2/3/4/5: switch between select/note/paste/delete/remove mode\n";
 			controlText += "i: change instrument name\n";
 
 		//if (ev.key == "Control" && this.triggerMode) this.controlPressed = true;
