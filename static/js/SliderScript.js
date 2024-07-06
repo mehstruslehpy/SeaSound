@@ -1,6 +1,6 @@
 //TODO: Need to check that deletion works as expected with this one. It might be kind of weird
 //TODO: Scaling looks really weird on this one since it stretches the little lollipop circles
-// TODO: Make sure line widths are set up like in pianoroll
+//TODO: Make sure line widths are set up like in pianoroll
 class SliderCanvas 
 {
 	widgetType = "SliderCanvas"; // On file save/load denotes the type of widget this widget is

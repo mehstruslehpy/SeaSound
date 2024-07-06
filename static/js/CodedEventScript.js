@@ -1,6 +1,3 @@
-//TODO: Need to fix bug where helper text is drawn under canvas items when there are rectangles to draw.
-//TODO: Need to fix the above on all widgets.
-//TODO: Should be able to add it to end of draw() with suitable coord xforms applied
 class CodedEventCanvas
 {
 	widgetType = "CodedEventCanvas"; // On file save/load denotes the type of widget this widget is

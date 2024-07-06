@@ -1,5 +1,4 @@
 //TODO: Add a double parameter matrix widget
-//TODO: Add a spreadsheet widget for manual input?
 class PianoRollCanvas
 {
 	widgetType = "PianoRollCanvas"; // On file save/load denotes the type of widget this widget is

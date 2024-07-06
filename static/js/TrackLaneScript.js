@@ -1,5 +1,4 @@
 // TODO: Fix draw error on empty project. Empty project throws an error while doing first draw on project loading.
-// TODO: Fix text rendering on blocks. Some letters like p and q overhang the block.
 class TrackLaneCanvas
 {
 	coord = {x:0, y:0}; // the coords of the mouse
@@ -37,6 +36,7 @@ class TrackLaneCanvas
 		// Set Up the canvas
 		this.canvas = document.getElementById(query);
 		this.ctx = this.canvas.getContext("2d");
+		console.log(this.ctx.textBaseline);
 
 		// The height offset for the buttons and tabs of our gui
 		let tabsHeight = 2*document.getElementById('tab-container').offsetHeight;
@@ -437,6 +437,7 @@ class TrackLaneCanvas
 		this.ctx.font = "bold "+this.rectangleFontSize+"px Arial";
 		this.ctx.fillStyle = 'black';
 		this.ctx.fillText(name,topLeft.x,topLeft.y+this.cellHeight,Math.abs(topLeft.x-bottomRight.x)*0.90);
+		this.ctx.textBaseline = "alphabetic";
 	}
 
 	drawRectangleOutline(c1,c2)
