@@ -45,7 +45,6 @@ class TrackLaneCanvas
 		// Set Up the canvas
 		this.canvas = document.getElementById(query);
 		this.ctx = this.canvas.getContext("2d");
-		console.log(this.ctx.textBaseline);
 
 		// The height offset for the buttons and tabs of our gui
 		let tabsHeight = 2*document.getElementById('tab-container').offsetHeight;

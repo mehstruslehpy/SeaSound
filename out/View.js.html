@@ -1,11 +1,39 @@
-/*
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: View.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: View.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/*
 This file is part of SeaSound.
 
 SeaSound is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 
 SeaSound is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License along with SeaSound. If not, see <https://www.gnu.org/licenses/>.
+You should have received a copy of the GNU General Public License along with SeaSound. If not, see &lt;https://www.gnu.org/licenses/>.
 */
 // TODO: Add seekbars to widgets
 // TODO: renderCSD should emit a statements rather than B statements for seek time, need to fix this.
@@ -70,11 +98,11 @@ class View
 		var x = document.getElementsByClassName("tab");
 
 		// Hide all the tabs
-		for (i = 0; i < x.length; i++) x[i].style.display = "none";
+		for (i = 0; i &lt; x.length; i++) x[i].style.display = "none";
 
 		// Color all the tab buttons 
 		var x = document.getElementsByClassName("tab-button");
-		for (i = 0; i < x.length; i++) x[i].style.background = "black";
+		for (i = 0; i &lt; x.length; i++) x[i].style.background = "black";
 
 		// Display the selected tab and color in its corresponding button
 		document.getElementById(tabName).style.display = "block";
@@ -96,7 +124,7 @@ class View
 		// Get the children canvases
 		let children = document.getElementById(divId).children;
 		// Hide whichever canvases are not currently selected and display the one that is
-		for (let i = 0; i < children.length; i++)
+		for (let i = 0; i &lt; children.length; i++)
 			if (children[i].id == value) children[i].style.display = "inline";
 			else children[i].style.display = "none";
 		// Changes track editor tab parameter back to 0 regardless of which tab we call this from
@@ -135,7 +163,7 @@ class View
 		// Get the children canvases
 		let children = document.getElementById(divId).children;
 		// Hide all canvases
-		for (let i = 0; i < children.length; i++) children[i].style.display = "none";
+		for (let i = 0; i &lt; children.length; i++) children[i].style.display = "none";
 		// Changes track editor tab parameter back to 0 regardless of which tab we call this from
 		this.ResetParameter();
 	}
@@ -153,7 +181,7 @@ class View
 
 		// Only add new options that don't already exist
 		let optionCount = document.getElementById(canvasDiv+"-select").options.length;
-		for (let i = 0; i < optionCount; i++)
+		for (let i = 0; i &lt; optionCount; i++)
 			if (prefix+"-"+name == document.getElementById(canvasDiv+"-select").options[i].value)
 				return;
 
@@ -176,7 +204,7 @@ class View
 	*/
 	EnterHandler(e,div,prefix,name)
 	{
-		if (e && e.keyCode == 13) this.AddCanvas(div,prefix,name);
+		if (e &amp;&amp; e.keyCode == 13) this.AddCanvas(div,prefix,name);
 	}
 
 	/**
@@ -187,7 +215,7 @@ class View
 	DeleteSelectOptionHelper(select,value)
 	{
 		let selectTag = document.getElementById(select);
-		for (var i=0; i<selectTag.length; i++)
+		for (var i=0; i&lt;selectTag.length; i++)
 			if (selectTag.options[i].value == value)
 				selectTag.remove(i);
 	}
@@ -223,7 +251,7 @@ class View
 
 		// Remove the corresponding entry in the track modal dropdown
 		let instList = document.getElementById("instruments-datalist");
-		for (var i=0; i<instList.options.length; i++)
+		for (var i=0; i&lt;instList.options.length; i++)
 			if (instList.options[i].value == name)
 				instList.children[i].remove();
 	}
@@ -266,7 +294,7 @@ class View
 		let name = document.getElementById("track-canvases-select").value;
 		name = name.replace(/instrument-/g,"");
 		let children = document.getElementById("instrument-"+name).children;
-		for (let i = 0; i < children.length; i++)
+		for (let i = 0; i &lt; children.length; i++)
 		{
 			if (children[i].style.display == "inline")
 			{
@@ -286,7 +314,7 @@ class View
 		let name = document.getElementById("track-canvases-select").value;
 		name = name.split("-")[1];
 		let children = document.getElementById("instrument-"+name).children;
-		for (let i = 0; i < children.length; i++)
+		for (let i = 0; i &lt; children.length; i++)
 		{
 			if (children[i].style.display == "inline")
 			{
@@ -308,7 +336,7 @@ class View
 		let ele = document.getElementById("instrument-"+name);
 		if (ele == null) return;
 		let children = ele.children;
-		for (let i = 0; i < children.length; i++)
+		for (let i = 0; i &lt; children.length; i++)
 		{
 			children[i].style.display = "none";
 		}
@@ -476,7 +504,7 @@ class View
 		// Collect the canvas objects in a list
 		let tempCanv = Array();
 		// create one canvas per parameter
-		for (let i = 0; i < this.paramList.length; i++)
+		for (let i = 0; i &lt; this.paramList.length; i++)
 		{
 			// create the canvas
 			let newCanvas = document.createElement("canvas");
@@ -507,12 +535,12 @@ class View
 		// Register the instruments with each other
 		let instname = document.getElementById("instrument-for-track").value
 			if (instname == "") instname = "EMPTY-INSTRUMENT";
-		for (let i = 0; i < tempCanv.length; i++)
+		for (let i = 0; i &lt; tempCanv.length; i++)
 			tempCanv[i].registerInstrument(tempCanv,instname);
 
 		// Set up the canvas trigger modes
 		tempCanv[0].setTriggerMode(true);
-		for (let i = 1; i < tempCanv.length; i++) tempCanv[i].setTriggerMode(false);
+		for (let i = 1; i &lt; tempCanv.length; i++) tempCanv[i].setTriggerMode(false);
 
 		// Playlist editor needs an associated pattern entry too
 		let newPat = document.getElementById("pattern-select");
@@ -582,7 +610,7 @@ class View
 	* Render the currently selected track.
 	* @param {number} offset - A time to offset generated times of track by.
 	* @param {boolean} displayModal - If true displays a modal containing generated code.
-	* @return {string} Returns string containing the text of the generated code.
+	* @return {string} - Returns string containing the text of the generated code.
 	*/
 	renderTrack(offset,displayModal)
 	{
@@ -600,23 +628,23 @@ class View
 		// Get the note output for the triggering parameter, this includes the start and duration times
 		let paramList = params[0].getNoteOutput(Number(bpmText));
 		// Prefix each paramList element with the name of the selected instrument
-		for (let i = 0; i < paramList.length; i++) paramList[i].unshift(params[0].getName());
+		for (let i = 0; i &lt; paramList.length; i++) paramList[i].unshift(params[0].getName());
 		// Add offset times to start times
-		for (let i = 0; i < paramList.length; i++) paramList[i][1] += offset;
+		for (let i = 0; i &lt; paramList.length; i++) paramList[i][1] += offset;
 		// Get the remaining parameters
-		for (let i = 1; i < params.length; i++)
+		for (let i = 1; i &lt; params.length; i++)
 		{
 			let out = params[i].getNoteOutput(Number(bpmText));
-			for (let j = 0; j < out.length; j++) paramList[j].push(out[j][2]);
+			for (let j = 0; j &lt; out.length; j++) paramList[j].push(out[j][2]);
 		}
 		// For convenience sort the notes by their start times, csound does this anyway, so this is for easy reading
 		params.sort(function(a,b){ return a[1] > b[1]; });
 		// Convert the track to a string
 		let outStr = "";
-		for (let i = 0; i < paramList.length; i++) // for every note 
+		for (let i = 0; i &lt; paramList.length; i++) // for every note 
 		{
 			outStr += "i \""+paramList[i][0]+"\""; // instrument name, named instruments are surrounded in quotes
-			for (let j = 1; j < paramList[i].length; j++) // for every parameter of the note
+			for (let j = 1; j &lt; paramList[i].length; j++) // for every parameter of the note
 			{
 				outStr += " "+String(paramList[i][j]); // add the parameter to the current line
 			}
@@ -631,11 +659,7 @@ class View
 		}
 		return outStr;
 	}
-	/**
-	* Render the entire score.
-	* @param {boolean} displayModal - If true displays a modal containing generated code.
-	* @return {string} Returns string containing the text of the generated code.
-	*/
+
 	renderScore(displayModal)
 	{
 		// Get the beats per minute of the project
@@ -652,7 +676,7 @@ class View
 		// We will store the score in this string
 		let score = "";
 		// Get all of the track blocks
-		for (let i = 0; i < outEvents.length; i++)
+		for (let i = 0; i &lt; outEvents.length; i++)
 		{
 			score += "// track="+outEvents[i][0] + ", offset="+outEvents[i][1]+"\n";
 			score += this.renderTrackByName(Number(bpmText),outEvents[i][0],outEvents[i][1]);
@@ -666,13 +690,7 @@ class View
 		}
 		return score;
 	}	
-	/**
-	* Render a track by name.
-	* @param {number} bpm - Bpm to use for rendering track.
-	* @param {string} - The name of the track to render.
-	* @param {number} offset - Time to offset note events by.
-	* @return {string} Returns string containing the text of the generated code.
-	*/
+	// Render a track given the bpm, name and an offset
 	renderTrackByName(bpm,name,offset)
 	{
 		// Get the track
@@ -680,23 +698,23 @@ class View
 		// Geet the note output for the triggering parameter, this includes the start and duration times
 		let paramList = params[0].getNoteOutput(bpm);
 		// Prefix each paramList element with the name of the selected instrument
-		for (let i = 0; i < paramList.length; i++) paramList[i].unshift(params[0].getName());
+		for (let i = 0; i &lt; paramList.length; i++) paramList[i].unshift(params[0].getName());
 		// Add offset times to start times
-		for (let i = 0; i < paramList.length; i++) paramList[i][1] += offset;
+		for (let i = 0; i &lt; paramList.length; i++) paramList[i][1] += offset;
 		// Get the remaining parameters
-		for (let i = 1; i < params.length; i++)
+		for (let i = 1; i &lt; params.length; i++)
 		{
 			let out = params[i].getNoteOutput(bpm);
-			for (let j = 0; j < out.length; j++) paramList[j].push(out[j][2]);
+			for (let j = 0; j &lt; out.length; j++) paramList[j].push(out[j][2]);
 		}
 		// For convenience sort the notes by their start times, csound does this anyway, so this is for easy reading
 		params.sort(function(a,b){ return a[1] > b[1]; });
 		// Convert the track to a string
 		let outStr = "";
-		for (let i = 0; i < paramList.length; i++) // for every note 
+		for (let i = 0; i &lt; paramList.length; i++) // for every note 
 		{
 			outStr += "i \""+paramList[i][0]+"\""; // instrument name, named instruments are surrounded in quotes
-			for (let j = 1; j < paramList[i].length; j++) // for every parameter of the note
+			for (let j = 1; j &lt; paramList[i].length; j++) // for every parameter of the note
 			{
 				outStr += " "+String(paramList[i][j]); // add the parameter to the current line
 			}
@@ -730,6 +748,17 @@ class View
 
 	playTrack()
 	{
+		/*
+		// Get the beats per min and beats per block of the track
+		let bpm = document.getElementById('playlist-bpm').value;
+		if (bpm == "") bpm = document.getElementById('playlist-bpm').placeholder;
+		let bpb = document.getElementById('playlist-bpb').value;
+		if (bpb == "") bpb = document.getElementById('playlist-bpb').placeholder;
+		bpm = Number(bpm);
+		bpb = Number(bpb);
+		let seekPos = this.trackLaneObject.seekToSeconds(bpm,bpb)
+		*/
+
 		// get the score and the orchestra strings
 		let csd = this.renderCSD(false);
 		playCode(csd);
@@ -750,7 +779,7 @@ class View
 		bpb = Number(bpb);
 		let seekPos = this.trackLaneObject.seekToSeconds(bpm,bpb)
 
-		let outStr = "<CsoundSynthesizer>\n<CsOptions>\n-odac\n</CsOptions>\n<CsInstruments>\n";
+		let outStr = "&lt;CsoundSynthesizer>\n&lt;CsOptions>\n-odac\n&lt;/CsOptions>\n&lt;CsInstruments>\n";
 		//outStr += "sr = 44100\nksmps = 32\nnchnls = 2\n0dbfs  = 1\n\n";
 		// get the orchestra string
 		outStr += this.getOrchestraHeader()+"\n";
@@ -758,7 +787,7 @@ class View
 		outStr += this.renderOrchestra(false);
 		outStr += this.getOrchestraFooter()+"\n";
 		// get the score string
-		outStr += "</CsInstruments>\n<CsScore>\n";
+		outStr += "&lt;/CsInstruments>\n&lt;CsScore>\n";
 		outStr += this.getScoreHeader() +"\n";
 		//outStr += "//advance time:\n";
 		//outStr += "a 0 0 "+seekPos+"\n"; // skip to seekPos seconds into track
@@ -766,7 +795,7 @@ class View
 		outStr += "//score:\n";
 		outStr += this.renderScore(false);
 		outStr += this.getScoreFooter()+"\n";
-		outStr += "e\n</CsScore>\n</CsoundSynthesizer>\n";
+		outStr += "e\n&lt;/CsScore>\n&lt;/CsoundSynthesizer>\n";
 		// Print the score code to modal in browser
 		if (displayModal)
 		{
@@ -778,19 +807,19 @@ class View
 	}
 	renderPatternCSD()
 	{
-		let outStr = "<CsoundSynthesizer>\n<CsOptions>\n-odac\n</CsOptions>\n<CsInstruments>\n";
+		let outStr = "&lt;CsoundSynthesizer>\n&lt;CsOptions>\n-odac\n&lt;/CsOptions>\n&lt;CsInstruments>\n";
 		// get the orchestra string
 		outStr += this.getOrchestraHeader() + "\n";
 		outStr += "//orchestra:\n";
 		outStr += this.renderOrchestra(false);
 		outStr += this.getOrchestraFooter() + "\n";
 		// get the score string
-		outStr += "</CsInstruments>\n<CsScore>\n";
+		outStr += "&lt;/CsInstruments>\n&lt;CsScore>\n";
 		outStr += this.getScoreHeader() +"\n";
 		outStr += "//score:\n";
 		outStr += this.renderTrack(false);
 		outStr += this.getScoreFooter() +"\n";
-		outStr += "e\n</CsScore>\n</CsoundSynthesizer>\n";
+		outStr += "e\n&lt;/CsScore>\n&lt;/CsoundSynthesizer>\n";
 		return outStr;
 	}
 	stopPlayBack()
@@ -867,7 +896,7 @@ class View
 		// break file down into an array of arrays of lines
 		let file = text.split("#".repeat(64)+"\n");
 		file.shift(); // remove the empty starting line
-		for (let i = 0; i < file.length; i++)
+		for (let i = 0; i &lt; file.length; i++)
 		{
 			file[i] = file[i].split("\n");
 			file[i].pop(); // remove empty ending line
@@ -1028,7 +1057,7 @@ class View
 
 		// Build the actual instrument from the file i.e. an array of parameter widgets
 		let instr = new Array();
-		for (let i = 0; i < temp.length; i++)
+		for (let i = 0; i &lt; temp.length; i++)
 		{
 		// create the canvas
 			let newCanvas = document.createElement("canvas");
@@ -1095,7 +1124,7 @@ class View
 		else zip.file(projName+"/beats_per_block", document.getElementById("playlist-bpb").value);
 
 		// Add the loaded audio files to the zip file
-		for (let i = 0; i < this.audioFiles.length; i++)
+		for (let i = 0; i &lt; this.audioFiles.length; i++)
 			zip.file(projName+"/"+this.audioFiles[i][0],this.audioFiles[i][1]);
 
 		zip.generateAsync({type:"blob"}).then(function (blob) { // 1) generate the zip file
@@ -1272,3 +1301,26 @@ class View
 }
 
 let viewObj = new View();
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="View.html">View</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.3</a> on Fri Jul 05 2024 21:46:44 GMT-0700 (Pacific Daylight Time)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>
