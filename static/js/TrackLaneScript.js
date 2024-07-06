@@ -1,4 +1,5 @@
 // TODO: Fix draw error on empty project. Empty project throws an error while doing first draw on project loading.
+// TODO: Fix text rendering on blocks. Some letters like p and q overhang the block.
 class TrackLaneCanvas
 {
 	coord = {x:0, y:0}; // the coords of the mouse
@@ -12,7 +13,6 @@ class TrackLaneCanvas
 	blockSize = 1; // length of the rectangle to draw
 	blockName = "EMPTY";
 	rectangleFontSize = 1;
-	fontPad = 1.5; // padding to force text into rectangle
 	
 	// values for changing the scale and translate amount
 	translateAmt = 10;
@@ -433,9 +433,10 @@ class TrackLaneCanvas
 		this.ctx.stroke();
 
 		// get the correct height
+		this.ctx.textBaseline = "bottom";
 		this.ctx.font = "bold "+this.rectangleFontSize+"px Arial";
 		this.ctx.fillStyle = 'black';
-		this.ctx.fillText(name,topLeft.x,topLeft.y+this.cellHeight-this.fontPad,Math.abs(topLeft.x-bottomRight.x));
+		this.ctx.fillText(name,topLeft.x,topLeft.y+this.cellHeight,Math.abs(topLeft.x-bottomRight.x)*0.90);
 	}
 
 	drawRectangleOutline(c1,c2)
