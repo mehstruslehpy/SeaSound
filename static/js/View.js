@@ -7,6 +7,7 @@ SeaSound is distributed in the hope that it will be useful, but WITHOUT ANY WARR
 
 You should have received a copy of the GNU General Public License along with SeaSound. If not, see <https://www.gnu.org/licenses/>.
 */
+
 // TODO: Add seekbars to widgets
 // TODO: renderCSD should emit a statements rather than B statements for seek time, need to fix this.
 //			for some reason a statements don't work in my version of csound.
