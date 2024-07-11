@@ -666,6 +666,7 @@ class View
 		}
 		return score;
 	}	
+
 	/**
 	* Render a track by name.
 	* @param {number} bpm - Bpm to use for rendering track.
@@ -704,6 +705,11 @@ class View
 		}
 		return outStr;
 	}
+	/**
+	* Render the orchestra.
+	* @param {boolean} displayModal - true/false to display a modal on the page containing the orchestra code.
+	* @return {string} Returns string containing the text of the generated code.
+	*/
 	renderOrchestra(displayModal)
 	{
 		// Get the instrument text name
@@ -727,18 +733,28 @@ class View
 		}
 		return outString;
 	}
-
+	/**
+	* Render and play back the entire project so far.
+	*/
 	playTrack()
 	{
 		// get the score and the orchestra strings
 		let csd = this.renderCSD(false);
 		playCode(csd);
 	}
+	/**
+	* Render and play back the currently selected pattern.
+	*/
 	playPattern()
 	{
 		let csd = this.renderPatternCSD();
 		playCode(csd);
 	}
+	/**
+	* Render a CSD corresponding the whole project so far.
+	* @param {boolean} displayModal - true/false to display a modal on the page containing the rendered code.
+	* @return {string} Returns string containing the text of the generated code.
+	*/
 	renderCSD(displayModal)
 	{
 		// Get the beats per min and beats per block of the track
@@ -776,6 +792,11 @@ class View
 
 		return outStr;
 	}
+	/**
+	* Render a CSD corresponding the currently selected pattern.
+	* @param {boolean} displayModal - true/false to display a modal on the page containing the rendered code.
+	* @return {string} Returns string containing the text of the generated code.
+	*/
 	renderPatternCSD()
 	{
 		let outStr = "<CsoundSynthesizer>\n<CsOptions>\n-odac\n</CsOptions>\n<CsInstruments>\n";
@@ -793,26 +814,48 @@ class View
 		outStr += "e\n</CsScore>\n</CsoundSynthesizer>\n";
 		return outStr;
 	}
+	/**
+	* Stops playback if csound backend is playing audio.
+	*/
 	stopPlayBack()
 	{
 		stopCsound();
 	}
+	/**
+	* Returns a string containing code intended to be emitted at the start of the orchestra code.
+	* @return {string} Returns string containing the desired code.
+	*/
 	getOrchestraHeader()
 	{
 		return "//orchestra header:\n"+document.getElementById("orchestra-header").value;
 	}
+	/**
+	* Returns a string containing code intended to be emitted at the end of the orchestra code.
+	* @return {string} Returns string containing the desired code.
+	*/
 	getOrchestraFooter()
 	{
 		return "//orchestra footer:\n"+document.getElementById("orchestra-footer").value;
 	}
+	/**
+	* Returns a string containing code intended to be emitted at the start of the score code.
+	* @return {string} Returns string containing the desired code.
+	*/
 	getScoreHeader()
 	{
 		return "//score header:\n"+document.getElementById("score-header").value;
 	}
+	/**
+	* Returns a string containing code intended to be emitted at the end of the score code.
+	* @return {string} Returns string containing the desired code.
+	*/
 	getScoreFooter()
 	{
 		return "//score footer:\n"+document.getElementById("score-footer").value;
 	}
+	/**
+	* Generate and download a .synth file containing the currently selected instrument.
+	*/
 	saveInstrument()
 	{
 		// Get the instrument text name
@@ -835,6 +878,9 @@ class View
 		element.click();
 		document.body.removeChild(element);
 	}
+	/**
+	* Prompt user for .synth file and create/load the instrument from the selected file.
+	*/
 	loadInstrument()
 	{
 		// This is mostly from SO
@@ -861,7 +907,11 @@ class View
 
 		input.click();
 	}
-	// Build instrument given instrument state
+	/**
+	* Given instrument state in a string create/load the instrument into the project.
+	* See saveInstrument() code to better understand the instrument text format.
+	* @param {string} text - An instrument in text form.
+	*/
 	buildInstrument(text)
 	{
 		// break file down into an array of arrays of lines
@@ -937,6 +987,9 @@ class View
 		instrumentCanvasObject.reconfigure(file);	
 	
 	}
+	/**
+	* Generate and download a .track file containing the currently selected track.
+	*/
 	saveTrack()
 	{
 		// Get the track text name
@@ -968,6 +1021,9 @@ class View
 		element.click();
 		document.body.removeChild(element);
 	}
+	/**
+	* Prompt user for .track file and create/load the track from the selected file.
+	*/
 	loadTrack()
 	{
 		// This is mostly from SO
@@ -995,6 +1051,12 @@ class View
 	}
 
 	// TODO: The naming here for the constructors "track-p blah blah" should probably be changed
+	/**
+	* Given track state in a string create/load the track into the project.
+	* See saveTrack() code to better understand the instrument text format.
+	* @param {string} text - A track in text form.
+	* @param {string} filename - Name of the file the track is being loaded from.
+	*/
 	buildTrack(text,filename)
 	{
 		filename = filename.split(".track")[0];
@@ -1053,7 +1115,11 @@ class View
 		instDiv.style.display = "none";
 		
 		this.trackMap.set(this.CleanName(filename),instr);
-	}
+	}	
+	/**
+	* Create a zip file containing the full state of the current project and download it
+	* to the user computer.
+	*/
 	saveProject()
 	{
 		let projName = prompt("Input the project name.");
@@ -1102,6 +1168,11 @@ class View
 			saveAs(blob, projName+".zip");                          // 2) trigger the download
 		});
 	}
+	/**
+	* Prompt user for a zip file containing a project and load the project from the file.
+	* NOTE: This code requires the csound engine already be initialized to run due to
+	* csound needing to be initialized in order for us to load samples into memory correctly.
+	*/
 	loadProject()
 	{
 		if (csound == null) 
@@ -1217,7 +1288,11 @@ class View
 		}
 		input.click(); // this click triggers project loading callback above
 	}
-
+	/**
+	* Prompt user for an audio file and load the audio file into memory/csound.
+	* NOTE: This code requires the csound engine already be initialized to run due to
+	* csound needing to be initialized in order for us to load samples into it.
+	*/
 	loadAudioFile()
 	{
 		// This is mostly from SO
@@ -1265,6 +1340,9 @@ class View
 		}
 		input.click();
 	}
+	/**
+	* Returns the array of audio files that View keeps track of.
+	*/
 	getAudioFiles()
 	{
 		return this.audioFiles;
