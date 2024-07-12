@@ -9,6 +9,7 @@ You should have received a copy of the GNU General Public License along with Sea
 */
 
 //TODO: Add a double parameter matrix widget
+
 /**
 * The pianoroll class stores state and methods for dealing with pianoroll canvas widgets.
 * @class
