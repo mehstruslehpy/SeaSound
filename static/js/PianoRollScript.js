@@ -574,6 +574,12 @@ class PianoRollCanvas
 		this.ctx.restore();
 	}
 
+	/**
+	* Draw a rectangle with the given points and color.
+	* @param {object} c1 - Object denoting top left coord of rectangle.
+	* @param {object} c2 - Object denoting bottom right coord of rectangle.
+	* @param {string} color - String containing the color of the rectangle.
+	*/
 	drawRectangle(c1,c2,color)
 	{
 		// Now we can draw the rectangle 
@@ -589,6 +595,13 @@ class PianoRollCanvas
 		// Draw rectangle outlines
 		this.drawRectangleOutline(c1,c2,"black");
 	}
+
+	/**
+	* Draw a rectangle outline with the given points.
+	* @param {object} c1 - Object denoting top left coord of rectangle.
+	* @param {object} c2 - Object denoting bottom right coord of rectangle.
+	* @param {number} width - Number denoting the width of the rectangle outline.
+	*/
 	drawRectangleOutline(c1,c2,width)
 	{
 		this.ctx.beginPath();
@@ -601,6 +614,13 @@ class PianoRollCanvas
 		this.ctx.strokeStyle = 'black';
 		this.ctx.stroke();
 	}
+
+	/**
+	* Draw a rectangle denoting selection of notes.
+	* @param {object} c1 - Object denoting top left coord of rectangle.
+	* @param {object} c2 - Object denoting bottom right coord of rectangle.
+	* @param {number} width - Number denoting the width of the rectangle outline.
+	*/
 	drawSelectionRectangle(c1,c2,width)
 	{
 		this.ctx.fillStyle = "rgb(0 0 0 / 30%)";
@@ -615,13 +635,22 @@ class PianoRollCanvas
 		this.ctx.stroke();
 		this.ctx.fill();
 	}
-	// Check if pt lies inside the rectangle 
+	/**
+	* Checks if point pt lies inside rectangle rect.
+	* @param {object} pt - Point to test for inclusion.
+	* @param {object} rect - Rectangle (array containing topleft/bottom right coords) to test inclusion of pt against.
+	* @returns true or false depending on if pt lies in rect.
+	*/
 	rectangleCollision(pt,rect)
 	{
 		return (rect[0].x <= pt.x && pt.x <= rect[1].x && rect[0].y <= pt.y && pt.y <= rect[1].y);
 	}
 
-	// check if rectA overlaps the selection rectangle
+	/**
+	* Checks if the given rectangle overlaps with the selection rectangle.
+	* @param {object} rect - Rectangle (array containing topleft/bottom right coords) to test intersection against.
+	* @returns true or false depending on if rect intersects with the selection rectangle.
+	*/
 	inSelectionBounds(rect)
 	{
 		let c1 = { // top left coord of rectangle
@@ -645,13 +674,20 @@ class PianoRollCanvas
 		return (rectA[0].x < rectB[1].x && rectA[1].x > rectB[0].x && rectA[0].y < rectB[1].y && rectA[1].y > rectB[0].y);
 	}
 
-	// Check if pt lies between the rectangles x axis bounds
+	/**
+	* Checks if point pt's x coordinate lies inside rectangle rect's x axis bounds.
+	* @param {object} pt - Point to test with.
+	* @param {object} rect - Rectangle (array containing topleft/bottom right coords) to test against.
+	* @returns true or false depending on if the x coord of pt lies within the x axis bounds of rect.
+	*/
 	rectangleXAxisCollision(pt,rect)
 	{
 		return (rect[0].x <= pt.x && pt.x <= rect[1].x);
 	}
 
-	// print the on screen helper text
+	/**
+	* Prints helper text to the top right corner of the widget.
+	*/
 	helperText()
 	{
 		// Draw text showing the mode
@@ -683,13 +719,19 @@ class PianoRollCanvas
 		this.ctx.fillText(text,this.canvas.width-textWidth,4*textHeight);
 	}
 
-	// Converts p a point on the screen (usually a mouse click) to a point in world coords
+	/**
+	* Converts the coordinates of the input point in screen coordinates to local/world coordinates.
+	* @param {object} p - Point to convert.
+	* @returns A new point with transformed x and y coords.
+	*/
 	screenToWorldCoords(p)
 	{
 		// get and invert the canvas xform coords, then apply them to the input point
 		return this.ctx.getTransform().invertSelf().transformPoint(p);
 	}
-	
+	/**
+	* Helper that sets up leftClickEnd and leftClickStarts coordinates.
+	*/
 	clickHelper()
 	{
 		// set up left click coords
@@ -713,102 +755,167 @@ class PianoRollCanvas
 		this.leftClickEnd = this.snapToGrid(this.leftClickEnd);
 	}
 
-	// Store the instrument array for the current parameter
+	/**
+	* Stores the instrument array corresponding to this parameter widget.
+	* @param {object} inst - The instrument array.
+	* @param {string} name - The name of the instrument containing this parameter widget.
+	*/
 	registerInstrument(inst,name)
 	{
 		this.instrument = inst;
 		this.name = name;
 	}
+	/**
+	* Sets the instrument array corresponding to this parameter widget.
+	* @param {object} inst - The instrument array.
+	*/
 	setInstrument(inst)
 	{
 		this.instrument = inst;
 	}
-
+	/**
+	* Get the name of the instrument associated with this parameter widget.
+	* @returns The above mentioned name.
+	*/
 	getName()
 	{
 		return this.name;
 	}
+	/**
+	* Get the trackname associated to the instrument this parameter widget is assigned to.
+	* @returns The above mentioned name.
+	*/
 	getTrack()
 	{
 		return this.trackName;
 	}
+	/**
+	* Sets the name of the instrument associated with this parameter widget.
+	* @param {string} name - The name to set.
+	*/
 	setName(name)
 	{
 		this.name = name;
 	}
 
-	// Getter for trigger mode variable
+	/**
+	* Gets the trigger mode for this parameter widget.
+	* @returns The trigger mode of this parameter widget.
+	*/
 	getTriggerMode()
 	{
 		return this.triggerMode;
 	}
 
-	// Setter for trigger mode variable
+	/**
+	* Sets the trigger mode for this parameter widget.
+	* @param {boolean} t - True if this parameter widget is in trigger mode else false.
+	*/
 	setTriggerMode(t)
 	{
 		this.triggerMode = t;
 	}
 
-	// Scale all params in the instrument array (including this one)
+	/**
+	* Scale all params in the instrument array (including this one).
+	* @param {number} x - Scale factor in x direction.
+	* @param {number} y - Scale factor in y direction.
+	*/
 	scaleAll(x,y)
 	{
 		for (let i = 0; i < this.instrument.length; i++)
 			this.instrument[i].applyScale(x,y);
 	}
 
-	// Translate all params in the instrument array (including this one)
+	/**
+	* Translate all params in the instrument array (including this one).
+	* @param {number} x - Translation amount in x direction.
+	* @param {number} y - Translation amount in y direction.
+	*/
 	translateAll(x,y)
 	{
 		for (let i = 0; i < this.instrument.length; i++)
 			this.instrument[i].applyTranslate(x,y);
 	}
 
-	// Set scale amount for all params in the instrument array (including this one)
-	scaleAmountAll()
+	/**
+	* Set scale amount for all params in the instrument array (including this one).
+	* @param {number} x - Scale factor in x direction.
+	* @param {number} y - Scale factor in y direction.
+	*/
+	scaleAmountAll(x,y)
 	{
 		for (let i = 0; i < this.instrument.length; i++)
 			this.instrument[i].setScaleAmount(x,y);
 	}
-	// Set translate amount for all params in the instrument array (including this one)
+	/**
+	* Set translate amount for all params in the instrument array (including this one).
+	* @param {number} x - Translate amount in x direction.
+	* @param {number} y - Translate amount in y direction.
+	*/
 	translateAmountAll(x,y)
 	{
 		for (let i = 0; i < this.instrument.length; i++)
 			this.instrument[i].setTranslateAmount(x,y);
 	}
 
-	// Apply a scaling to the current instrument
+	/**
+	* Apply a scaling to the current instrument.
+	* @param {number} x - Scale factor in x direction.
+	* @param {number} y - Scale factor in y direction.
+	*/
 	applyScale(x,y)
 	{
 		this.ctx.scale(x,y);
 		this.draw();
 	}
-	// Apply a translation to the current instrument
+	/**
+	* Apply a translation to the current instrument.
+	* @param {number} x - Translation amount in x direction.
+	* @param {number} y - Translation amount in y direction.
+	*/
 	applyTranslate(x,y)
 	{
 		this.ctx.translate(x,y);
 		this.draw();
 	}
-	// Set the scaling amount for the current instrument
+	/**
+	* Set the scaling amount for the current instrument.
+	* @param {number} x - Scale factor in x direction.
+	* @param {number} y - Scale factor in y direction.
+	*/
 	setScaleAmount(x,y)
 	{
 		this.scaleAmtX = x;
 		this.scaleAmtY = y;	
 		this.draw();
 	}
-	// Set the translation amount for the current instrument
+	/**
+	* Set the translation amount for the current instrument
+	* @param {number} x - Translation amount in x direction.
+	* @param {number} y - Translation amount in y direction.
+	*/
 	setTranslateAmount(x)
 	{
 		this.translateAmount = x;	
 		this.draw();
 	}
+	/**
+	* Add rectangle to the rectangle list of this object.
+	* @param {object} rect - The rectangle to add to the list.
+	*/
 	addRectangle(rect)
 	{
 		let c1 = {x:rect[0].x,y:0};
 		let c2 = {x:rect[1].x,y:this.cellHeight};
 		this.rectangleList.push([c1,c2]);
-		//this.rectangleList.unshift([c1,c2]);
 	}
-	// Convert the input rectangle to a triple [start time, duration, note]
+	/**
+	* Converts the input rectangle to a quadruple [start time, duration, note].
+	* @param {object} rect - The input rectangle to convert.
+	* @param {number} bpm - Beats per minute, required to do unit conversion of times.
+	* @returns Tuple containing tuple in form [start, time, duration, note] for input note with bpm.
+	*/
 	convertRectToNote(rect,bpm)
 	{
 		// Get the start time relative to the cell scaling of the left point
@@ -826,6 +933,11 @@ class PianoRollCanvas
 		dur = this.cellsToSeconds(dur,bpm);
 		return [start,dur,this.noteToPitchClass(pitch)];
 	}
+	/**
+	* Creates array of note quadruples in [start, time, duration, note] format from rectangle list.
+	* @param {number} bpm - Beats per minute, required to do unit conversion of times.
+	* @returns Array containing list of tuples in the above form.
+	*/
 	getNoteOutput(bpm)
 	{
 		let out = new Array();
@@ -836,13 +948,22 @@ class PianoRollCanvas
 		}
 		return out;
 	}
+	/**
+	* Convert a raw cell number to a value in seconds.
+	* @param {number} c - The cell number to convert.
+	* @param {number} bpm - Beats per minute, required to do unit conversion of times.
+	* @returns Converted value described above.
+	*/
 	cellsToSeconds(c,bpm)
 	{
 		let cellsPerSecond = bpm * (1/this.beatsPerCell) * (1/60);
 		return c/cellsPerSecond;
 	}
 
-	// Setter for the snap to grid amount
+	/**
+	* Setter for the fraction of a cell that snapping occurs to.
+	* @param {number} n - Fraction of a cell to snap to.
+	*/
 	setSnapAmount(n)
 	{
 		if (n>=1) this.snapAmount = Math.trunc(n);
@@ -850,11 +971,21 @@ class PianoRollCanvas
 		// sometimes our snap code skips drawing so force a draw
 		//this.draw();
 	}
+	/**
+	* Splice the rectangle list. See javascript array splice() method documentation.
+	* @param {number} i - The index to remove items from.
+	* @param {number} j - The number of items to be removed.
+	*/
 	splice(i,j)
 	{
 		this.rectangleList.splice(i,j);
 	}
 	// Converts a note to a pitch class value
+	/**
+	* Converts a note to a pitch class value.
+	* @param {number} n - The note number to convert.
+	* @returns String containing pitch class and octave information of the note n.
+	*/
 	noteToPitchClass(n)
 	{
 		let octave = Math.floor(n/12);
@@ -863,16 +994,26 @@ class PianoRollCanvas
 		return String(octave)+"."+String(remainder);
 	}
 
-	// Getter for the number of cells per beat
+	/**
+	* Getter for the number of cells per beat.
+	* @returns The number of cells per beat.
+	*/
 	getBeatsPerCell()
 	{
 		return this.beatsPerCell;
 	}
-	// Getter for the number of notes
+	/**
+	* Getter for the number of notes displayed vertically by this widget.
+	* @returns The number of cells per beat.
+	*/
 	getNotes()
 	{
 		return this.verticalCells;
 	}
+	/**
+	* Set up the state of the widget based on the input argument.
+	* @param {object} state - The state used to configure the widget.
+	*/
 	reconfigure(state)
 	{
 		this.rectangleList = state.rectangleList;
