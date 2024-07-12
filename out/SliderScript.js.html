@@ -1,11 +1,39 @@
-/*
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: SliderScript.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: SliderScript.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/*
 This file is part of SeaSound.
 
 SeaSound is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 
 SeaSound is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License along with SeaSound. If not, see <https://www.gnu.org/licenses/>.
+You should have received a copy of the GNU General Public License along with SeaSound. If not, see &lt;https://www.gnu.org/licenses/>.
 
 */
 
@@ -186,12 +214,12 @@ class SliderCanvas
 			controlText += "ctrl: toggle enter/delete modes\n";
 			controlText += "i: change instrument name\n";
 
-		if (ev.key == "Control" && this.triggerMode) this.controlPressed = true;
+		if (ev.key == "Control" &amp;&amp; this.triggerMode) this.controlPressed = true;
 		else if (ev.key == "x") 
 		{
 			let n = prompt("Input snap to grid amount:");
-			for (let i = 0; i < this.instrument.length; i++) this.instrument[i].setSnapAmount(n);
-			for (let i = 0; i < this.instrument.length; i++) this.instrument[i].draw();
+			for (let i = 0; i &lt; this.instrument.length; i++) this.instrument[i].setSnapAmount(n);
+			for (let i = 0; i &lt; this.instrument.length; i++) this.instrument[i].draw();
 		}
 		else if (ev.key == "h") alert(controlText);
 		else if (ev.key == "q") this.scaleAll(this.scaleAmtX,1);
@@ -213,8 +241,8 @@ class SliderCanvas
 		else if (ev.key == "i") 
 		{
 			let n = prompt("Input new instrument name:");
-			for (let i = 0; i < this.instrument.length; i++) this.instrument[i].setName(n);
-			for (let i = 0; i < this.instrument.length; i++) this.instrument[i].draw();
+			for (let i = 0; i &lt; this.instrument.length; i++) this.instrument[i].setName(n);
+			for (let i = 0; i &lt; this.instrument.length; i++) this.instrument[i].draw();
 		}
 		this.draw();	
 	}
@@ -270,7 +298,7 @@ class SliderCanvas
 	{
 		let c = {x:this.coord.x, y:this.coord.y};
 		c = this.screenToWorldCoords(c);
-		for (let i = 0; i < this.sliderList.length; i++)
+		for (let i = 0; i &lt; this.sliderList.length; i++)
 			switch (this.rectangleStyle)
 			{
 				case "lollipop":
@@ -313,7 +341,7 @@ class SliderCanvas
 					{
 						this.sliderList.splice(i,1);
 						// Update the non-triggering widgets
-						for (let j = 0; j < this.instrument.length; j++)
+						for (let j = 0; j &lt; this.instrument.length; j++)
 							if (this.instrument[j] != this)
 							{
 								this.instrument[j].splice(i,1);
@@ -326,7 +354,7 @@ class SliderCanvas
 					{
 						this.sliderList.splice(i,1);
 						// Update the non-triggering widgets
-						for (let j = 0; j < this.instrument.length; j++)
+						for (let j = 0; j &lt; this.instrument.length; j++)
 							if (this.instrument[j] != this)
 							{
 								this.instrument[j].splice(i,1);
@@ -372,7 +400,7 @@ class SliderCanvas
 		this.sliderList.push([c1,c2]);
 
 		// Update the non-triggering widgets
-		for (let i = 0; i < this.instrument.length; i++)
+		for (let i = 0; i &lt; this.instrument.length; i++)
 			if (this.instrument[i] != this)
 			{
 				this.instrument[i].addRectangle([c1,c2]); 
@@ -406,7 +434,7 @@ class SliderCanvas
    				y: c1.y+this.cellHeight
 			};
 			// if mouse is pressed and held there is stuff to draw
-			if (this.mousePressed && this.workingSlider != null)
+			if (this.mousePressed &amp;&amp; this.workingSlider != null)
 			{
 				this.workingSlider[0] = c1;
 				this.workingSlider[1] = c2;
@@ -486,7 +514,7 @@ class SliderCanvas
 
 		//draw vertical divisions
 		this.ctx.strokeStyle = "black";
-		for (var i = 0; i < this.verticalCells; i++)
+		for (var i = 0; i &lt; this.verticalCells; i++)
 		{
 			this.ctx.strokeStyle = "black";
 			this.ctx.lineWidth = 1;
@@ -497,7 +525,7 @@ class SliderCanvas
 		}
 
 		//draw horizontal divisions
-		for (var i = 0; i < this.horizontalCells; i++)
+		for (var i = 0; i &lt; this.horizontalCells; i++)
 		{
 			this.ctx.strokeStyle = "black";
 			this.ctx.lineWidth = 1;
@@ -508,7 +536,7 @@ class SliderCanvas
 		}
 		
 		// draw the sliders
-		for (let i = 0; i < this.sliderList.length; i++) this.drawSlider(this.sliderList[i]);
+		for (let i = 0; i &lt; this.sliderList.length; i++) this.drawSlider(this.sliderList[i]);
 		if (this.workingSlider != null) this.drawSlider(this.workingSlider);
 	
 		// Draw the outlines for the canvas too
@@ -550,7 +578,7 @@ class SliderCanvas
 	*/
 	lollipopCollision(c,slider)
 	{
-		return this.distance(c,slider[0]) < this.radius
+		return this.distance(c,slider[0]) &lt; this.radius
 	}
 	/**
 	* Checks for collision between the input point and the input slider in solid mode.
@@ -560,9 +588,9 @@ class SliderCanvas
 	*/
 	solidCollision(c,slider)
 	{
-		let horiz = slider[0].x <= c.x && c.x <= slider[1].x;
+		let horiz = slider[0].x &lt;= c.x &amp;&amp; c.x &lt;= slider[1].x;
 		let vert = c.x >= slider[0].y;
-		return horiz && vert;
+		return horiz &amp;&amp; vert;
 	}
 	/**
 	* Calculates the distance between the input points.
@@ -635,13 +663,13 @@ class SliderCanvas
 
 		let division = 1/this.snapAmount;
 		// Line the two x coords up to snap to the appropriate rectangle edges
-		if (this.leftClickStart.x <= this.leftClickEnd.x) 
+		if (this.leftClickStart.x &lt;= this.leftClickEnd.x) 
 			this.leftClickEnd.x += this.cellWidth * division;
 		else 
 			this.leftClickEnd.x = this.leftClickStart.x+this.cellWidth * division;
 
 		// Line the two y coords up to snap to the appropriate rectangle edges
-		if (this.leftClickStart.y <= this.leftClickEnd.y)
+		if (this.leftClickStart.y &lt;= this.leftClickEnd.y)
 			this.leftClickEnd.y += this.cellHeight;
 		else
 			this.leftClickStart.y += this.cellHeight;
@@ -722,7 +750,7 @@ class SliderCanvas
 	*/
 	scaleAll(x,y)
 	{
-		for (let i = 0; i < this.instrument.length; i++)
+		for (let i = 0; i &lt; this.instrument.length; i++)
 			this.instrument[i].applyScale(x,y);
 	}
 
@@ -733,7 +761,7 @@ class SliderCanvas
 	*/
 	translateAll(x,y)
 	{
-		for (let i = 0; i < this.instrument.length; i++)
+		for (let i = 0; i &lt; this.instrument.length; i++)
 			this.instrument[i].applyTranslate(x,y);
 	}
 
@@ -744,7 +772,7 @@ class SliderCanvas
 	*/
 	scaleAmountAll()
 	{
-		for (let i = 0; i < this.instrument.length; i++)
+		for (let i = 0; i &lt; this.instrument.length; i++)
 			this.instrument[i].setScaleAmount(x,y);
 	}
 	/**
@@ -754,7 +782,7 @@ class SliderCanvas
 	*/
 	translateAmountAll(x,y)
 	{
-		for (let i = 0; i < this.instrument.length; i++)
+		for (let i = 0; i &lt; this.instrument.length; i++)
 			this.instrument[i].setTranslateAmount(x,y);
 	}
 
@@ -820,7 +848,7 @@ class SliderCanvas
 	*/
 	rectangleXAxisCollision1(pt,rect)
 	{
-		return (rect[0].x <= pt.x && pt.x <= rect[0].x+this.cellWidth/this.snapAmount);
+		return (rect[0].x &lt;= pt.x &amp;&amp; pt.x &lt;= rect[0].x+this.cellWidth/this.snapAmount);
 	}
 	// Check if pt lies in x bounds of the given rectangle
 	/**
@@ -831,7 +859,7 @@ class SliderCanvas
 	*/
 	rectangleXAxisCollision2(pt,rect)
 	{
-		return (rect[0].x <= pt.x && pt.x <= rect[1].x);
+		return (rect[0].x &lt;= pt.x &amp;&amp; pt.x &lt;= rect[1].x);
 	}
 	/**
 	* Setter for the fraction of a cell that snapping occurs to.
@@ -898,7 +926,7 @@ class SliderCanvas
 	getNoteOutput(bpm)
 	{
 		let out = new Array();
-		for (let i = 0; i < this.sliderList.length; i++)
+		for (let i = 0; i &lt; this.sliderList.length; i++)
 		{
 			let note = this.convertRectToNote(this.sliderList[i],bpm);
 			out.push(note);	
@@ -979,3 +1007,26 @@ class SliderCanvas
 
 //let sliderObject = new SliderCanvas(".sliderCanvas",20,20,"lollipop");
 //let sliderObject = new SliderCanvas(".sliderCanvas",20,20,"solid");
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="PianoRollCanvas.html">PianoRollCanvas</a></li><li><a href="SliderCanvas.html">SliderCanvas</a></li><li><a href="View.html">View</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.3</a> on Thu Jul 11 2024 22:09:51 GMT-0700 (Pacific Daylight Time)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

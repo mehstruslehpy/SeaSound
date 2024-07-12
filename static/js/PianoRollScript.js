@@ -12,6 +12,7 @@ You should have received a copy of the GNU General Public License along with Sea
 
 /**
 * The pianoroll class stores state and methods for dealing with pianoroll canvas widgets.
+* Pianoroll widgets store collections of rectangles denoting the pitches and times of a short piece of music.
 * @class
 * @public
 */
@@ -289,6 +290,7 @@ class PianoRollCanvas
 	/**
 	* Snap input coordinates to grid and return the resulting coord
 	* @param {number} c - the coordinate to snap to the grid.
+	* @returns The coordinate resulting from snapping c to the grid.
 	*/
 	snapToGrid(c)
 	{
@@ -996,8 +998,8 @@ class PianoRollCanvas
 	}
 
 	/**
-	* Getter for the number of cells per beat.
-	* @returns The number of cells per beat.
+	* Getter for the number of beats per cell.
+	* @returns The number of beats per cell.
 	*/
 	getBeatsPerCell()
 	{
