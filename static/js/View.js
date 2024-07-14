@@ -423,6 +423,7 @@ class View
 			let ele = document.getElementById(canvasDiv);
 			let newTextArea = document.createElement("textarea");
 			newTextArea.setAttribute("tabindex","1");
+			newTextArea.setAttribute("spellcheck","false");
 			ele.appendChild(newTextArea);
 
 			newTextArea.setAttribute("id","instrument-"+name);
@@ -970,6 +971,7 @@ class View
 			let ele = document.getElementById(canvasDiv);
 			let newTextArea = document.createElement("textarea");
 			newTextArea.setAttribute("tabindex","1");
+			newTextArea.setAttribute("spellcheck","false");
 			ele.appendChild(newTextArea);
 
 			newTextArea.setAttribute("id","instrument-"+name);

@@ -7,12 +7,28 @@ SeaSound is distributed in the hope that it will be useful, but WITHOUT ANY WARR
 
 You should have received a copy of the GNU General Public License along with SeaSound. If not, see <https://www.gnu.org/licenses/>.
 */
+
+/**
+* The text area class is the main class for dealing with text area instrument widgets.
+* @class
+* @public
+*/
 class TextAreaInstrumentCanvas
 {
-	instrumentName = ""; // The name of this instrument
-	instrumentId = ""; // The html id attribute for the text area for this instrument
+	/**
+	* The name of this instrument.
+	*/
+	instrumentName = "";
+	/**
+	* The html id attribute for the text area for this instrument
+	*/
+	instrumentId = "";
 
-	// Initial set up
+	/**
+	* Construct a text area.
+	* @param {string} id - String containing html id of the textarea we are constructing for.
+	* @param {string} name - String containing the instrument name that this widget corresponds to.
+	*/
 	constructor(id,name)
 	{
 		this.instrumentName = name;
@@ -21,20 +37,35 @@ class TextAreaInstrumentCanvas
 	}
 
 
+	/**
+	* This is a dummy method for graph diagram canvas class compatibility. This method does nothing.
+	*/
 	configureNode(name,inputs,outputs)
 	{
 		// Dummy function for compatibility with graph diagram canvas class. Does nothing.
 	}
-
+	/**
+	* Get the text from the textarea element corresponding to this instrument on the page.
+	* @returns The text of the instrument.
+	*/
 	renderToText()
 	{
 		// Get the text from the textarea on the page.
 		return document.getElementById(this.instrumentId).value;
 	}
+	/**
+	* Get the name of this instrument.
+	* @returns The name of the instrument.
+	*/
 	getName()
 	{
 		return this.instrumentName;
 	}
+	/**
+	* Get the text from the textarea element corresponding to this instrument on the page in a format
+	* which matches that of the graph diagrams toText() for saving the instrument to a file.
+	* @returns The textual representation of the instrument described above.
+	*/
 	toText()
 	{
 		let out = "#".repeat(64) + "\n"; // delimiter
@@ -44,6 +75,12 @@ class TextAreaInstrumentCanvas
 		out += document.getElementById(this.instrumentId).value.replace(/\n/g,"\\n") + "\n";
 		return out;
 	}
+	/**
+	* Set up the state of the widget based on the input file.
+	* Takes in a 2d array file[i][j] where i indexes across the # delimited sections specified 
+	* in toText() and j indexes across the individual lines per section.
+	* @param {object} file - The file as a double array of strings to load the graph from.
+	*/
 	reconfigure(file)
 	{
 		this.instrumentName = file[0][1].slice(1,-1);

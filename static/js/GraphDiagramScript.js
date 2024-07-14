@@ -99,7 +99,7 @@ class GraphDiagramCanvas
 	/**
 	* Construct a graph diagram canvas widget instance and draw it to the screen.
 	* @param {string} query - String containing html id of the canvas we are constructing for.
-	* @param {string} trackName - String containing the instrument name that this widget corresponds to.
+	* @param {string} name - String containing the instrument name that this widget corresponds to.
 	* @param {number} size - Sizes of nodes.
 	*/
 	constructor(query,name,size)
