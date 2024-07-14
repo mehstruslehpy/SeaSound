@@ -1,7 +1,9 @@
-body {
+body 
+{
 	margin: 0;
 }
-.tab-button {
+.tab-button 
+{
 	background-color: #000000;
 	color: #FFFFFF;
 	padding: 10px;
@@ -11,16 +13,19 @@ body {
 	font-size: medium;
 }
 
-.tab-container {
+.tab-container 
+{
 	align-items: center;
 	display: flex;
 }
 
-.menu-control-container {
+.menu-control-container 
+{
 	align-items: center;
 	display: flex;
 }
-.lr-pad{
+.lr-pad
+{
   padding-top: 5px;
   padding-right: 10px;
   padding-bottom: 5px;

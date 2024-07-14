@@ -52,6 +52,7 @@ You should have received a copy of the GNU General Public License along with Sea
 			await csound.start();
 		}
 
+		// TODO: I don't think I need the code variable here.
 		/**
 		* Stop any sound playback.
 		*/
@@ -177,7 +178,7 @@ You should have received a copy of the GNU General Public License along with Sea
 
 				<!-- Pop up dialog containing csound track -->
 				<dialog id="score-code-dialog">
-				<textarea readonly id="score-code-dialog-output" style="width:500px;height:150px;">
+				<textarea readonly id="score-code-dialog-output" style="width:500px;height:150px;" spellcheck="false">
 				</textarea>
 				<form method="dialog">
 				<button id="cancel" type="reset" onclick='document.getElementById("score-code-dialog").close();'>Close</button>
@@ -305,7 +306,7 @@ You should have received a copy of the GNU General Public License along with Sea
 
 			<!-- Pop up dialog containing csound track -->
 			<dialog id="track-code-dialog">
-			<textarea readonly id="track-code-dialog-output" style="width:500px;height:150px;">
+			<textarea readonly id="track-code-dialog-output" style="width:500px;height:150px;" spellcheck="false">
 			</textarea>
 			<form method="dialog">
 			<button id="cancel" type="reset" onclick='document.getElementById("track-code-dialog").close();'>Close</button>
@@ -346,18 +347,18 @@ You should have received a copy of the GNU General Public License along with Sea
 			</dialog>
 
 			<label>Score Header:</label> </br>
-			<textarea cols="160" rows="5" id="score-header"></textarea> </br>
+			<textarea cols="160" rows="5" id="score-header" spellcheck="false"></textarea> </br>
 			<label>Score Footer:</label> </br>
-			<textarea cols="160" rows="5" id="score-footer"></textarea> </br>
+			<textarea cols="160" rows="5" id="score-footer" spellcheck="false"></textarea> </br>
 			<label>Orchestra Header:</label> </br>
-			<textarea cols="160" rows="5" id="orchestra-header">
+			<textarea cols="160" rows="5" id="orchestra-header" spellcheck="false">
 sr = 44100 
 ksmps = 32 
 nchnls = 2 
 0dbfs  = 1
 			</textarea> </br>
 			<label>Orchestra Footer:</label> </br>
-			<textarea cols="160" rows="5" id="orchestra-footer"></textarea> </br>
+			<textarea cols="160" rows="5" id="orchestra-footer" spellcheck="false"></textarea> </br>
 		</div>
 
 		<!-- GraphDiagram tab -->
@@ -455,7 +456,7 @@ nchnls = 2
 
 				<!-- Pop up dialog containing node parameters -->
 				<dialog id="instr-code-dialog">
-				<textarea readonly id="instrument-code-dialog-output" style="width:500px;height:150px;">
+				<textarea readonly id="instrument-code-dialog-output" style="width:500px;height:150px;" spellcheck="false">
 				</textarea>
 				<form method="dialog">
 				<button id="cancel" type="reset" onclick='document.getElementById("instr-code-dialog").close();'>Close</button>
