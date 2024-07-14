@@ -6,6 +6,7 @@ SeaSound is an experimental browser based front-end to csound for simple music c
 - [Start-up](#start-up)
 - [Demo](#demo)
 - [Tutorial](#tutorial)
+- [Documentation](#documentation)
 - [Contributing](#contributing)
 - [Licensing](#licensing)
 

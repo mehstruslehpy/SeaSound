@@ -539,6 +539,7 @@ class GraphDiagramCanvas
 	}
 	/**
 	* Render the graph described by the graph into properly formed csound instrument code.
+	* @returns The string containing the above mentioned code.
 	*/
 	renderToText()
 	{
@@ -594,6 +595,7 @@ class GraphDiagramCanvas
 	* This allows us to recreate the various adjacency lists from scratch when we decide to read this file.
 	* The individual lines for data are stored using more toText() methods or stringify (though perhaps later)
 	* we will do this differently.
+	* @returns the above mentioned format (as a string).
 	*/
 	toText()
 	{
@@ -726,6 +728,7 @@ class Edge
 	/**
 	* Return true if this edge has an empty polyline.
 	* This occurs only if no points have been added to the current edge for connection.
+	* @returns true if empty polyline list else false.
 	*/
 	empty()
 	{
@@ -733,10 +736,12 @@ class Edge
 	}
 	/**
 	* Get the from coord of this edge.
+	* @retuns the from coord of this edge.
 	*/
 	getFrom() { return this.from; }
 	/**
 	* Get the to coord of this edge.
+	* @returns The to coord of this edge.
 	*/
 	getTo() { return this.to; }
 	/**
@@ -828,6 +833,8 @@ class Edge
 
 	/**
 	* Detect if the input point collides with this edge.
+	* @param {object} pt - The point to test edge collision against.
+	* @returns True if input point collides with this edge and false otherwise.
 	*/
 	collision(pt)
 	{
@@ -844,6 +851,7 @@ class Edge
 	* @param {object} B - The ending point of the segment to detect collision on.
 	* @param {object} C - The point to test segment collision with.
 	* @param {number} radius - The radius in which collisions may occur.
+	* @returns True if line segment thru AB intercepts the circle centered at C of the given radius else false.
 	*/
 	intersectSegment(A, B, C, radius) 
 	{
@@ -875,6 +883,7 @@ class Edge
 	}
 	/**
 	* Converts the given edge to a textual representation.
+	* @returns JSON representation of the edge in a string.
 	*/
 	toText()
 	{
@@ -897,21 +906,65 @@ class Edge
 
 // TODO: Want to make this a static variable in Node class, but kept get NaN errors
 nodeCount = 0; // Tracks the number of nodes we have created so far
+/**
+* The node class is used to represent the individual nodes of our graphs.
+* @class
+* @public
+*/
 class Node
 {
-	height = 100; // height of the rectangle
-	fontSize = 25; // the size of the font for our rectangle
-	width = 100; // width of the rectangle
+	/**
+	* The height of the rectangle representing our node.
+	*/
+	height = 100;
+	/**
+	* The size of the font for our rectangle.
+	*/
+	fontSize = 25;
+	/**
+	* The width of the rectangle representing our node.
+	*/
+	width = 100;
+	/**
+	* The list of input rectangles for the node.
+	* These rectangles denote the inputs to the node on the main rectangle denoting the node.
+	*/
 	inputList = Array(); // the list of input rectangles
-	outputList = Array(); // the list of output rectangles
-	name = ""; // the name of this node
-	pt = {x:0, y:0}; // the location of this node
+	/**
+	* The list of output rectangles for the node.
+	* These rectangles denote the outputs to the node on the main rectangle denoting the node.
+	*/
+	outputList = Array();
+	/**
+	* The name of this node.
+	*/
+	name = "";
+	/**
+	* The location of this node.
+	*/
+	pt = {x:0, y:0};
 
-	inputNodes = Array(); // The list of nodes hooked up to be inputs to this node
-	outputNodes = Array(); // The list of nodes hooked up to be outputs from this node
-	outTypes = ""; // string containing the types corresponding to each output
-	// Mapping of output type to colors for drawing
+	/**
+	* The list of nodes connected to this one as inputs to this node.
+	*/
+	inputNodes = Array();
+	/**
+	* The list of nodes connected to this one as outputs from this node.
+	*/
+	outputNodes = Array();
+	/**
+	* The string containing the types corresponding to the types for each outputs of this node.
+	* This is a string in csv format.
+	* Each entry is the variable type prefix from csound of the corresponding output.
+	* The node outputs are specified in order in the list from left to right.
+	* See the outputColorMap variables initial values for the support output types (and their associated color coding).
+	*/
+	outTypes = "";
 	// Color palette generated from here: https://mokole.com/palette.html
+	/**
+	* Mapping of output type to colors for drawing.
+	* This allows for the rectangles representing outputs on this node to be color coded based on their type.
+	*/
 	outputColorMap = new Map([["a","#006400"],
 			["k","#00008b"],
 			["i","#b03060"],
@@ -923,13 +976,33 @@ class Node
 			["pvs","#6495ed"],
 			["w","#ffdead"]]);
 
-	printedFlag = false; // a flag used to determine if the current node has been printed
+	/**
+	* A flag used to determine whether or not the current node has been printed by objects using this node class.
+	*/
+	printedFlag = false;
 
-	id = -1; // an identifier for the current node
+	/**
+	* A numerical identifier for the current node.
+	* Nodes are numbered by their order of creation.
+	*/
+	id = -1;
 
-	// The type of node this is for output purposes, can be "FUNCTIONAL" or "MACRO" for now.
+	/**
+	* The type of node this is for output purposes, can be "FUNCTIONAL" or "MACRO" for now.
+	* In functional mode code is emitted using csound opcode functional notation (without typing).
+	* In macro mode code is emitted as is but with some inputs substituted for text based macros of the form @
+	* where n is an integer.
+	*/
 	nodeType = "FUNCTIONAL";
-
+	/**
+	* Construct a node instance.
+	* @param {object} pt - The point containing the location of the node.
+	* @param {string} name - The name of the node.
+	* @param {number} inputs - The number of inputs to the node.
+	* @param {string} outputs - String containing csv format list of output types.
+	* @param {string} outStyle - The output style of the node (should be "FUNCTIONAL" or "MACRO").
+	* @param {object} ctx - The html canvas context the node draws itself to.
+	*/
 	constructor(pt,name,inputs,outputs,outStyle,ctx)
 	{	
 		// Generate and assign an id for the current node
@@ -965,7 +1038,11 @@ class Node
 		this.name = name;
 	}
 
-	// if collision with input rectangle occurs return its midpoint, else return null
+	/**
+	* If collision between argument pt and an input rectangle occurs return the rectangle midpoint, else return null.
+	* @param {object} pt - The point to test collision against.
+	* @returns midpoint of rectangle collision occurs with or null.
+	*/
 	collision(pt)
 	{
 		// convert input point to local coords
@@ -998,7 +1075,12 @@ class Node
 
 		return null;
 	}
-	// Return which type of collision occurred if any else return null
+	/**
+	* Checks input argument for collision with an input or output rectangle and returns the type of collision that occurs
+	* or null if no collision.
+	* @param {object} pt - The point to test collision against.
+	* @returns "INPUT" or "OUTPUT" if collision occurs with an input or output rectangle else null if no collision occurs.
+	*/
 	collisionType(pt)
 	{
 		// convert input point to local coords
@@ -1027,7 +1109,12 @@ class Node
 		pt.y += this.pt.y;
 		return null;
 	}
-	// Return which input parameter number the input point collides with or -1 if no collision
+	/**
+	* Check if input argument point collides with an input rectangle and return the index of the collision input rectangle if
+	* collision occurs else returns -1.
+	* @param {object} pt - The point to test collision against.
+	* @returns The index of the input rectangle that collision occurs with else -1.
+	*/
 	collisionInputParam(pt)
 	{
 		// convert input point to local coords
@@ -1048,7 +1135,12 @@ class Node
 		pt.y += this.pt.y;
 		return -1;
 	}
-	// Return which output parameter number the output collides with or -1 if no collision
+	/**
+	* Check if input argument point collides with an output rectangle and return the index of the collision output rectangle  if
+	* collision occurs else returns -1.
+	* @param {object} pt - The point to test collision against.
+	* @returns The index of the output rectangle that collision occurs with else -1.
+	*/
 	collisionOutputParam(pt)
 	{
 		// convert input point to local coords
@@ -1069,7 +1161,11 @@ class Node
 		return -1;
 	}
 
-	// return true if point collides inside the bounds of the rectangle
+	/**
+	* Check if input argument pt collides with node bounding rectangle.
+	* @param {object} pt - The point to test collision against.
+	* @returns True if point lies in node bounding rectangle else false.
+	*/
 	boundingCollision(pt)
 	{
 		let collision = false
@@ -1087,6 +1183,12 @@ class Node
 
 		return collision;
 	}
+	// TODO: There is no point in storing the context this node draws itself to if we're just going to pass in the context each
+	// draw.
+	/**
+	* Draw this node to the supplied canvas context.
+	* @param {object} ctx - The canvas context to be drawn to.
+	*/
 	draw(ctx)
 	{	
 		// switch to local coords
@@ -1118,6 +1220,13 @@ class Node
 		// switch back to regular coords
 		ctx.translate(-this.pt.x,-this.pt.y);
 	}
+	/**
+	* Draw this node to the supplied canvas context.
+	* @param {object} pt - Array of pts containing the rectangle to draw.
+	* @param {object} ctx - The canvas context to be drawn to.
+	* @param {string} outlineColor - The color to outline the rectangle with.
+	* @param {string} fillColor - The color to fill the rectangle with.
+	*/
 	drawRectangle(pt,ctx,outlineColor,fillColor)
 	{
 		// Now we can draw the rectangle 
@@ -1141,6 +1250,12 @@ class Node
 		ctx.strokeStyle = outlineColor;
 		ctx.stroke();
 	}
+	/**
+	* Check if the argument pt lies in the argument rectangle.
+	* @param {object} pt - The point to test.
+	* @param {object} rect - The rectangle to test the point with.
+	* @returns True if pt lies in rect else false.
+	*/
 	pointInRectangle(pt,rect)
 	{
 		let xBound = rect[0].x <= pt.x && pt.x <= rect[1].x;
@@ -1148,22 +1263,33 @@ class Node
 		return xBound && yBound;
 	}
 
-	// Return the number of input nodes for this node
+	/**
+	* Return the number of input nodes for this node.
+	* @returns the number of input nodes for this node.
+	*/
 	inputNodeCount()
 	{
 		return this.inputNodes.length;
 	}
 
-	// Return the number of input nodes for this node
+	/**
+	* Return the number of output nodes for this node.
+	* @returns the number of output nodes for this node.
+	*/
 	outputNodeCount()
 	{
 		return this.outputNodes.length;
 	}
 
-	// Add an input node to the list of input nodes
-	// We cannot have multiple outputs connect to the same input
-	// So return true if the adding the new node is successful
-	// return false otherwise
+	/**
+	* Add an node to the list of input nodes of this node.
+	* We cannot have multiple outputs connect to the same input, so return true if the adding the new node is successful and
+	* return false otherwise.
+	* @param {object} node - The node to add to the list of input nodes.
+	* @param {object} fromParam - The index that the node outputting to this node is outputting from.
+	* @param {object} toParam - The index this node is receiving input to.
+	* @returns True if adding the node succeeds else return false.
+	*/
 	addInputNode(node,fromParam,toParam)
 	{
 		if (this.inputNodes[toParam]!=null) return false;
@@ -1171,18 +1297,28 @@ class Node
 		return true;
 	}
 
-	// Add an output node to the list of output nodes
-	// We can have arbitrarily many output nodes
+	/**
+	* Add an node to the list of output nodes of this node.
+	* @param {object} node - The node to add to the list of output nodes.
+	* @param {object} fromParam - The index that this node is outputting from.
+	* @param {object} toParam - The index that the node receiving input from this node is receiving input to.
+	*/
 	addOutputNode(node,fromParam,toParam)
 	{
 		this.outputNodes[fromParam] = [node,fromParam,toParam];
 	}
-
+	/**
+	* Returns the name of this node.
+	* @returns The name of this node.
+	*/
 	getName()
 	{ 
 		return this.name; 
 	}
-
+	/**
+	* Emit this node and all of its inputs (if they have not already been rendered) as csound code.
+	* @returns A string containing csound code for this node and all of its inputs.
+	*/
 	renderToText()
 	{
 		// We recursively build the following string
@@ -1215,8 +1351,12 @@ class Node
 		return outString;	
 	}
 
-	// Functional syntax is always of the form 'outputs = name(<parameter list>)'
-	// Here we build the 'name(<parameter list>)' part
+	/**
+	* Helper function for rendering the current node in functional mode.
+	* Functional syntax is always of the form '<outputs> = name(<parameter list>)'.
+	* Here we build the 'name(<parameter list>)' part.
+	* @returns A string in the above mentioned format.	
+	*/
 	functionalSyntaxHelper()
 	{
 		// Build the list of input parameters to this opcode
@@ -1249,6 +1389,14 @@ class Node
 	// traditional csound syntax for opcodes in place of the functional syntax.
 	// This function finds and replaces @n with its corresponding parameter using a 
 	// regex
+	/**
+	* Helper function for rendering the current node in macro mode.
+	* Macro nodes allow us to specify parameters using notation @1,...,@n notation.
+	* This allows us to do arithmetic and specify constants in csound as well as to use the more
+	* traditional csound syntax for opcodes in place of the functional syntax.
+	* This function finds and replaces @n with its corresponding parameter using a regex.
+	* @returns A string in the above mentioned format.	
+	*/
 	macroSyntaxHelper()
 	{
 		// Build the list of input parameters to this opcode
@@ -1272,23 +1420,66 @@ class Node
 		return paramText+"\n";
 	}
 
-	// Some basic getters and setters
+	/**
+	* Get the output type of the nth output for this node.
+	* @param {number} n - Index of the nth output.
+	* @returns The type of the nth output.
+	*/
 	getOutputType(n)
 	{ return this.outTypes[n]; }
+	/**
+	* Get the ID of this node.
+	* @returns The ID of this node.
+	*/
 	getId()
 	{ return this.id; }
+	/**
+	* Get the print flag of this node.
+	* @returns The print flag of this node.
+	*/
 	getPrintFlag()
 	{ return this.printedFlag; }
+	/**
+	* Set the print flag of this node.
+	* @param {boolean} flag - The value to set the flag to.
+	*/
 	setPrintFlag(flag)
 	{ this.printedFlag = flag; }
+	/**
+	* Get the nth output node of this node.
+	* @param {number} n - The node to retrieve from the list of output nodes.
+	* @returns The corresponding output node.
+	*/
 	getOutputNode(n)
 	{ return this.outputNodes[n]; }
+	/**
+	* Get the nth input node of this node.
+	* @param {number} n - The node to retrieve from the list of input nodes.
+	* @returns The corresponding input node.
+	*/
 	getInputNode(n)
 	{ return this.inputNodes[n]; }
+	/**
+	* Reset the nth output node of this node to null.
+	* @param {number} n - The node to reset.
+	*/
 	resetOutput(n)
 	{ this.outputNodes[n] = null; }
+	/**
+	* Reset the nth input node of this node to null.
+	* @param {number} n - The node to reset.
+	*/
 	resetInput(n)
 	{ this.inputNodes[n] = null; }
+	/**
+	* Render the current node to JSON string. 
+	* This is used for saving/loading nodes to a file.
+	* to avoid circularity we replace input nodes with their corresponding indices using the nodeIndexDict argument.
+	* These indices represent the index of the node in the output file. Later when we read this file back
+	* in these values will allow us to swap out indices for the actual node objects cleanly.
+	* @param {dictionary} nodeIndexDict - Dictionary containing the node/index mapping mentioned above.
+	* @returns A textual representation of this node.
+	*/
 	toText(nodeIndexDict)
 	{
 		// to avoid circularity we replace input nodes with their corresponding indices in the nodeIndexDict
@@ -1303,6 +1494,10 @@ class Node
 		});
 		return out+"\n";
 	}
+	/**
+	* Set up the state of the widget based on the input file.
+	* @param {object} file - The file as an array of strings to load the node from.
+	*/
 	reconfigure(file)
 	{
 		let temp = JSON.parse(file[0]);
