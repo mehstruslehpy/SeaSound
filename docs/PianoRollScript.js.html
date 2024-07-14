@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>JSDoc: Source: CodedEventScript.js</title>
+    <title>JSDoc: Source: PianoRollScript.js</title>
 
     <script src="scripts/prettify/prettify.js"> </script>
     <script src="scripts/prettify/lang-css.js"> </script>
@@ -17,7 +17,7 @@
 
 <div id="main">
 
-    <h1 class="page-title">Source: CodedEventScript.js</h1>
+    <h1 class="page-title">Source: PianoRollScript.js</h1>
 
     
 
@@ -35,18 +35,21 @@ SeaSound is distributed in the hope that it will be useful, but WITHOUT ANY WARR
 
 You should have received a copy of the GNU General Public License along with SeaSound. If not, see &lt;https://www.gnu.org/licenses/>.
 */
+
+//TODO: Add a double parameter matrix widget
+
 /**
-* The coded event class stores state and methods for dealing with coded event canvas widgets.
-* Coded event canvas widgets are used to emit textual events with respect to time.
+* The pianoroll class stores state and methods for dealing with pianoroll canvas widgets.
+* Pianoroll widgets store collections of rectangles denoting the pitches and times of a short piece of music.
 * @class
 * @public
 */
-class CodedEventCanvas
+class PianoRollCanvas
 {
 	/**
 	* On file save/load denotes the type of widget that this widget is.
 	*/
-	widgetType = "CodedEventCanvas";
+	widgetType = "PianoRollCanvas";
 	/**
 	* The coords of the mouse.
 	*/
@@ -60,26 +63,28 @@ class CodedEventCanvas
 	*/
 	leftClickEnd = {x:0, y:0};
 	/**
-	* The array of created events (as rectangles).
-	*/
-	rectangleList = Array();
-	/**
-	* The in progress event (as a rectangle).
+	* The rectangle being created this mouse click.
 	*/
 	workingRectangle = null;
 	/**
-	* The input text for the next event.
+	* The list of rectangles created so far.
 	*/
-	workingText = "...";
+	rectangleList = new Array();
 	/**
-	* Indicates whether or not we are in the middle of a mouse click.
+	* Tracks if mouse has been pressed or not.
 	*/
 	mousePressed = false;
 
 	/**
-	* Width of lines for drawing.
+	* Used for setting width of lines.
 	*/
-	lineWidth = 1;
+	lineWidth = 0.5;
+
+	/**
+	* Controls whether the widget triggers notes or controls parameters.
+	*/
+	triggerMode = false;
+
 	/**
 	* Amount translate changes by.
 	*/
@@ -94,27 +99,19 @@ class CodedEventCanvas
 	scaleAmtY = 1.15;
 
 	/**
-	* Controls whether the widget triggers notes or controls parameters.
-	*/
-	triggerMode = false;
-
-	/**
 	* The instrument this widget is a parameter for (as a list of widgets).
 	*/
 	instrument = null;
+
 	/**
 	* The name of the instrument this widget is a parameter for.
 	*/
 	name = "";
+
 	/**
 	* The name of the track this widget is assigned to.
 	*/
 	trackName = "";
-
-	/**
-	* Indicates whether we are in delete mode or not.
-	*/
-	controlPressed = false;
 
 	/**
 	* The number of beats per cell of our piano roll grid.
@@ -136,20 +133,46 @@ class CodedEventCanvas
 	localHeight = 0;
 
 	/**
-	* Construct a coded event canvas widget instance and draw it to the screen.
+	* The various input modes of this widget. Select mode is used for selecting several notes at once. Note mode
+	* is used for entering notes via mouse clicks. Delete mode is used to remove notes by individually clicking on
+	* them. Paste mode copies notes currently selected from using the select mode to the current cursor position.
+	* Remove mode deletes collections of notes which were selected via the select mode.
+	*/
+	inputModes = ["SELECT","NOTE","DELETE","PASTE","REMOVE"];
+	/**
+	* The current input mode.
+	*/
+	inputMode = "NOTE";
+
+	/**
+	* The rectangle used for select mode. All notes within this rectangle's bounds are selected.
+	*/
+	selectionRectangle = null;
+	/**
+	* The outline width of the selection rectangle for drawing it to the screen.
+	*/
+	selectionOutlineWidth = 2;
+	/**
+	* The collection of rectangles (notes) selected while in select mode.
+	*/
+	selectedRectangles = Array();
+
+	/**
+	* Construct a pianoroll canvas widget instance and draw it to the screen.
 	* @param {string} query - String containing html id of the canvas we are constructing for.
 	* @param {string} trackName - String containing the track name that this widget corresponds to.
-	* @param {number} cells - The number of horizontal cells to draw.
+	* @param {number} horizontalCells - The number of horizontal cells to draw.
+	* @param {number} verticalCells - The number of vertical cells to draw.
 	* @param {number} beatsPerCell - The number of beats each cell containg.
 	*/
-	constructor(query,trackName,cells,beatsPerCell)
+	constructor(query,trackName,horizontalCells,verticalCells,beatsPerCell)
 	{
 		this.trackName = trackName;
 		// Set Up the canvas
 		this.canvas = document.getElementById(query);
 		this.ctx = this.canvas.getContext("2d");
 
-		// for some reason 2*tab-container height works but not using master-tab-container directly
+		// The height offset for the buttons and tabs of our gui
 		let tabsHeight = 2*document.getElementById('tab-container').offsetHeight;
 		tabsHeight += document.getElementById("track-controls").offsetHeight;
 
@@ -157,9 +180,13 @@ class CodedEventCanvas
 		this.canvas.height = window.innerHeight - tabsHeight;
 		this.localWidth = 1000;
 		this.localHeight = 1000;
-	
-		this.cells = cells;
-		this.cellWidth = this.localWidth/this.cells;
+
+		this.verticalCells = verticalCells;
+		this.horizontalCells = horizontalCells;
+
+		// The cell width is determined here
+		this.cellWidth = this.localWidth/this.verticalCells;
+		this.cellHeight = this.localHeight/this.horizontalCells;
 
 		// For unit conversion later
 		this.beatsPerCell = beatsPerCell;
@@ -167,8 +194,8 @@ class CodedEventCanvas
 		var that = this;
 		this.canvas.addEventListener('mousedown', function(ev) { that.leftClickDown(); }); 
 		this.canvas.addEventListener('mouseup', function(ev) { that.leftClickUp(); }); 
-		this.canvas.addEventListener('mousemove', function(ev) { that.updateMouseCoordinates(); }); 
 		this.canvas.addEventListener('keydown', function(ev) { that.buttonClick(ev); });
+		this.canvas.addEventListener('mousemove', function(ev) { that.updateMouseCoordinates(); }); 
 		this.draw();
 	}
 
@@ -186,19 +213,84 @@ class CodedEventCanvas
 			controlText += "rf: change amount to translate by\n";
 			controlText += "tg: change X scaling amount\n";
 			controlText += "yh: change Y scaling amount\n";
-			controlText += "j: change input text\n";
 			controlText += "x: change snap to grid amount\n";
-			controlText += "ctrl: toggle note/delete modes\n";
+			//controlText += "ctrl: toggle note/delete modes\n";
+			controlText += "1/2/3/4/5: switch between select/note/paste/delete/remove mode\n";
 			controlText += "i: change instrument name\n";
 
-		if (ev.key == "Control" &amp;&amp; this.triggerMode) this.controlPressed = true;
+		//if (ev.key == "Control" &amp;&amp; this.triggerMode) this.controlPressed = true;
+		if (ev.key == "1") 
+		{
+			this.inputMode = "SELECT";
+			this.workingRectangle = null;
+			this.mousePressed = false;
+			this.selectionRectangle = null;
+			//this.selectedRectangles = Array();
+			this.draw();
+		}
+		else if (ev.key == "2") 
+		{
+			this.inputMode = "NOTE";
+			this.workingRectangle = null;
+			this.mousePressed = false;
+			this.selectionRectangle = null;
+			//this.selectedRectangles = Array();
+			this.draw();
+		}
+		else if (ev.key == "5") 
+		{
+			this.inputMode = "REMOVE";
+			this.workingRectangle = null;
+			this.mousePressed = false;
+			this.selectionRectangle = null;
+
+			// get the list of indices to remove and sort in descending order
+			let indices = Array();
+			for (let i = 0; i &lt; this.selectedRectangles.length; i++)
+				indices.push(this.selectedRectangles[i][2]);
+			indices.sort((a,b) => a &lt; b);
+			// delete all the corresponding notes from this and all other widgets
+			for (let i = 0; i &lt; indices.length; i++)
+			{
+				this.splice(indices[i],1);
+				// Update the non-triggering widgets too
+				for (let j = 0; j &lt; this.instrument.length; j++)
+					if (this.instrument[j] != this)
+					{
+						this.instrument[j].splice(indices[i],1);
+						this.instrument[j].draw();
+					}
+			}
+			this.inputMode = "NOTE";
+			this.selectedRectangles = Array();
+
+			this.draw();
+		}
+		else if (ev.key == "3") 
+		{
+			this.inputMode = "PASTE";
+			this.workingRectangle = null;
+			this.mousePressed = false;
+			this.selectionRectangle = null;
+			//this.selectedRectangles = Array();
+			this.draw();
+		}
+		else if (ev.key == "4") 
+		{
+			this.inputMode = "DELETE";
+			this.workingRectangle = null;
+			this.mousePressed = false;
+			this.selectionRectangle = null;
+			//this.selectedRectangles = Array();
+			this.draw();
+		}
+		else if (ev.key == "h") alert(controlText);
 		else if (ev.key == "x") 
 		{
 			let n = prompt("Input snap to grid amount:");
 			for (let i = 0; i &lt; this.instrument.length; i++) this.instrument[i].setSnapAmount(n);
 			for (let i = 0; i &lt; this.instrument.length; i++) this.instrument[i].draw();
 		}
-		else if (ev.key == "h") alert(controlText);
 		else if (ev.key == "q") this.scaleAll(this.scaleAmtX,1);
 		else if (ev.key == "e") this.scaleAll(1/this.scaleAmtX,1);
 		else if (ev.key == "z") this.scaleAll(1,this.scaleAmtY);
@@ -213,17 +305,16 @@ class CodedEventCanvas
 		else if (ev.key == "g") this.scaleAmountAll(this.scaleAmtX/(1+1/(2**4)),this.scaleAmtY);
 		else if (ev.key == "y") this.scaleAmountAll(this.scaleAmtX,this.scaleAmtY*(1+1/(2**4)));
 		else if (ev.key == "h") this.scaleAmountAll(this.scaleAmtX,this.scaleAmtY/(1+1/(2**4)));
-		else if (ev.key == "j") this.workingText = prompt("Please enter event text.");
 		else if (ev.key == "i") 
 		{
 			let n = prompt("Input new instrument name:");
 			for (let i = 0; i &lt; this.instrument.length; i++) this.instrument[i].setName(n);
 			for (let i = 0; i &lt; this.instrument.length; i++) this.instrument[i].draw();
 		}
+	
 		this.draw();	
 	}
 
-	
 	/**
 	* Snap input coordinates to grid and return the resulting coord
 	* @param {number} c - the coordinate to snap to the grid.
@@ -233,8 +324,11 @@ class CodedEventCanvas
 	{
 		let division = 1/this.snapAmount;
 		var out = {
-			x: division * this.cellWidth * Math.floor(c.x/(division * this.cellWidth)),
-   			y: 0
+			// For no snapping we can do the following
+			//x: this.cellWidth * Math.floor(c.x/this.cellWidth),
+			// Snapping X value to grid
+			x: division * this.cellWidth * Math.floor(c.x/(division*this.cellWidth)),
+   			y: this.cellHeight * Math.floor(c.y/this.cellHeight)
 		};
 		return out;
 	}
@@ -245,11 +339,50 @@ class CodedEventCanvas
 	leftClickDown()
 	{
 		if (!this.triggerMode) this.nonTriggerModeClick();
-		else if (this.controlPressed) this.controlLeftClickDown();
-		else
+		//else if (this.controlPressed) this.controlLeftClickDown();
+		if (this.inputMode == "DELETE") this.deleteModeLeftClick();
+		else if (this.inputMode == "SELECT") 
 		{
 			let val = this.screenToWorldCoords(this.coord);
-			this.leftClickStart = {x:this.snapToGrid(val).x, y:0};
+			this.selectedRectangles = Array();
+			this.selectionRectangle = [{x:val.x, y:val.y},{x:val.x, y:val.y}];
+			this.mousePressed = true;
+		}
+		else if (this.inputMode == "PASTE") 
+		{
+			let val = this.screenToWorldCoords(this.coord);
+			val  = this.snapToGrid(val);
+			// pastes are relative to the left most rectangle in the selection
+			let leftMost = 0
+			for (let i = 0; i &lt; this.selectedRectangles.length; i++)
+				if (this.selectedRectangles[i][0].x &lt; this.selectedRectangles[leftMost][0].x) leftMost = i;
+			let leftMostRect = this.selectedRectangles[leftMost];
+			// Add the shifted selection to the rectangle list
+			for (let i = 0; i &lt; this.selectedRectangles.length; i++)
+			{
+				let c1 = {
+					x: this.selectedRectangles[i][0].x + val.x - leftMostRect[0].x,
+					y: this.selectedRectangles[i][0].y + val.y - leftMostRect[1].y + this.cellHeight
+				};
+				let c2 = {
+					x: this.selectedRectangles[i][1].x + val.x - leftMostRect[0].x,
+					y: this.selectedRectangles[i][1].y + val.y - leftMostRect[1].y + this.cellHeight
+				};
+				this.rectangleList.push([c1,c2]);
+				// Update the non-triggering widgets
+				for (let i = 0; i &lt; this.instrument.length; i++)
+					if (this.instrument[i] != this)
+					{
+						this.instrument[i].addRectangle([c1,c2]); 
+						this.instrument[i].draw();
+					}
+			}
+		}
+		else if (this.inputMode == "REMOVE") return;
+		else // note mode case
+		{
+			let val = this.screenToWorldCoords(this.coord);
+			this.leftClickStart = this.snapToGrid(val);
 			this.workingRectangle = new Array(this.leftClickStart,this.leftClickStart);
 			this.mousePressed = true;
 		}
@@ -262,27 +395,31 @@ class CodedEventCanvas
 	{
 		let c = {x:this.coord.x, y:this.coord.y};
 		c = this.screenToWorldCoords(c);
+		c = this.snapToGrid(c);
 		for (let i = 0; i &lt; this.rectangleList.length; i++)
 			if (this.rectangleXAxisCollision(c,this.rectangleList[i])) // if cursor lies inside a rectangle
 			{
-				this.rectangleList[i][2] = prompt("Please enter event text.");
+				this.rectangleList[i][0].y = c.y; // then adjust the y axis coord of the collision rectangle
+				this.rectangleList[i][1].y = c.y+this.cellHeight;
 			}
 		this.draw(); // redraw
 	}
 
 	/**
-	* Handle when mouse left click is pressed down after control mode switch.
+	* Handle left clicks while in delete mode.
 	*/
-	controlLeftClickDown()
+	deleteModeLeftClick()
 	{
 		if (!this.triggerMode) return;
 		let c = {x:this.coord.x, y:this.coord.y};
-		c = {x:this.screenToWorldCoords(c).x, y:0};
+		c = this.screenToWorldCoords(c);
+		// Delete the selected note if any exists
+		// Iterating backwards ensures we delete the note at the front of the display
 		for (let i = this.rectangleList.length - 1; i >= 0; i--)
 			if (this.rectangleCollision(c,this.rectangleList[i])) // if cursor lies inside a rectangle
 			{
 				this.rectangleList.splice(i,1); // remove the rectangle
-				// Update the non-triggering widgets
+				// Update the non-triggering widgets too
 				for (let j = 0; j &lt; this.instrument.length; j++)
 					if (this.instrument[j] != this)
 					{
@@ -291,18 +428,28 @@ class CodedEventCanvas
 					}
 				break;
 			}
-
 		this.draw();
-	}
+	}	
 	/**
 	* Handle release of mouse left click.
 	*/
 	leftClickUp()
 	{
 		if (!this.triggerMode) return;
-		if (this.controlPressed) // if it was a control press
+		if (this.inputMode == "DELETE" || this.inputMode == "PASTE" || this.inputMode == "REMOVE")
 		{
-			this.controlPressed = false; // untoggle controlPressed var and return
+			this.draw();
+			return;
+		}
+		else if (this.inputMode == "SELECT")
+		{
+			// figure out which notes are in selection rectangle
+			// we also store the indices here too for ease of deletion
+			for (let i = 0; i &lt; this.rectangleList.length; i++)
+				if (this.inSelectionBounds(this.rectangleList[i]))
+					this.selectedRectangles.push([this.rectangleList[i][0],this.rectangleList[i][1],i]);
+											
+			this.selectionRectangle = null;
 			this.draw();
 			return;
 		}
@@ -311,18 +458,17 @@ class CodedEventCanvas
 
 		let c1 = { // top left coord of rectangle
 			x: Math.min(this.leftClickStart.x,this.leftClickEnd.x),
-   			y: 0
+   			y: Math.min(this.leftClickStart.y,this.leftClickEnd.y)
 		};
 		let c2 = { // bottom right coord of rectangle
 			x: Math.max(this.leftClickStart.x,this.leftClickEnd.x),
-   			y: 0
+   			y: c1.y+this.cellHeight
 		};
 
-		// Reset the mousePressed value and the working rectangle
 		this.mousePressed = false; // the mouse is no longer pressed
 		this.workingRectangle = null; // The working rectangle is null again
-	
-		this.rectangleList.push([c1,c2,this.workingText]);
+		this.rectangleList.push([c1,c2]);
+		//this.addRectangle([c1,c2]);
 
 		// Update the non-triggering widgets
 		for (let i = 0; i &lt; this.instrument.length; i++)
@@ -332,7 +478,6 @@ class CodedEventCanvas
 				this.instrument[i].draw();
 			}
 		this.draw();
-	
 	}
 
 	/**
@@ -347,13 +492,21 @@ class CodedEventCanvas
 		{
 			this.clickHelper();
 
-			let c1 = { // left coord of rectangle
+			// if necessary convert the point and store it in the selection rectangle
+			if (this.selectionRectangle != null) 
+			{
+				let val  = this.screenToWorldCoords(this.coord);
+				this.selectionRectangle[1] = {x:val.x, y:val.y};
+				this.draw();
+			}
+
+			let c1 = { // top left coord of rectangle
 				x: Math.min(this.leftClickStart.x,this.leftClickEnd.x),
-   				y: 0
+   				y: Math.min(this.leftClickStart.y,this.leftClickEnd.y)
 			};
-			let c2 = { // right coord of rectangle
+			let c2 = { // bottom right coord of rectangle
 				x: Math.max(this.leftClickStart.x,this.leftClickEnd.x),
-   				y: 0
+   				y: c1.y+this.cellHeight
 			};
 
 			// If the mouse is pressed and held there is stuff to draw
@@ -365,6 +518,7 @@ class CodedEventCanvas
 			}
 		}
 	}
+
 
 	/**
 	* Draw the current state of the widget to the screen.
@@ -385,24 +539,56 @@ class CodedEventCanvas
 
 		// Now we can actually start drawing
 
+		//draw horizontal divisions
+		for (var i = 0; i &lt; this.horizontalCells; i++)
+		{
+			// The first rectangle per octave is marked gray
+			if ((this.horizontalCells - i - 1)%12 == 0)
+			{
+				let y = i*this.localHeight/this.horizontalCells;
+				this.ctx.fillStyle = "gray";
+				this.ctx.lineWidth = this.lineWidth;
+				this.ctx.fillRect(0,y,this.localWidth,this.cellHeight);
+			}
+			this.ctx.strokeStyle = 'black';
+			this.ctx.lineWidth = this.lineWidth;
+			this.ctx.beginPath();
+			this.ctx.moveTo(0,i*(this.localHeight/this.horizontalCells));
+			this.ctx.lineTo(this.localWidth,i*(this.localHeight/this.horizontalCells));
+			this.ctx.stroke();
+		}
+
 		//draw vertical divisions
-		for (var i = 0; i &lt; this.cells; i++)
+		for (var i = 0; i &lt; this.verticalCells; i++)
 		{
 			this.ctx.strokeStyle = 'black';
 			this.ctx.lineWidth = this.lineWidth;
 			this.ctx.beginPath();
-			this.ctx.moveTo(i*(this.localWidth/this.cells),0);
-			this.ctx.lineTo(i*(this.localWidth/this.cells),this.localHeight);
+			this.ctx.moveTo(i*(this.localWidth/this.verticalCells),0);
+			this.ctx.lineTo(i*(this.localWidth/this.verticalCells),this.localHeight);
 			this.ctx.stroke();
 		}
 
-		// draw the rectangles
-		for (let i = 0; i &lt; this.rectangleList.length; i++) this.drawRectangle(this.rectangleList[i]);
-		if (this.workingRectangle != null) 
-			this.drawRectangle([this.workingRectangle[0],this.workingRectangle[1],"..."]);
+		// draw all the rectangles
+		if (this.workingRectangle!=null) 
+			this.drawRectangle(this.workingRectangle[0],this.workingRectangle[1],"rgb(0 255 0)");
+		for (let i = 0; i &lt; this.rectangleList.length; i++)
+		{
+			let c1 = this.rectangleList[i][0];
+			let c2 = this.rectangleList[i][1];
+			this.drawRectangle(c1,c2,"rgb(0 255 0)");
+		}
+		if (this.selectionRectangle != null) 
+			this.drawSelectionRectangle(this.selectionRectangle[0],this.selectionRectangle[1],this.selectionOutlineWidth);
+		for (let i = 0; i &lt; this.selectedRectangles.length; i++)
+		{
+			let c1 = this.selectedRectangles[i][0];
+			let c2 = this.selectedRectangles[i][1];
+			this.drawRectangle(c1,c2,"rgb(255 0 0)");
+		}	
 		
 		// Draw the outlines for the canvas too
-		this.drawRectangleOutline({x:0,y:0},{x:this.localWidth,y:this.localHeight});
+		this.drawRectangleOutline({x:0,y:0},{x:this.localWidth,y:this.localHeight},this.lineWidth);
 
 		// Now we want to draw the outlines for the helper text on top of the canvas
 		// Store the current transformation matrix
@@ -413,18 +599,41 @@ class CodedEventCanvas
 
 		// Draw outline and helper text to fixed positions in viewport
 		this.helperText();
-		this.drawRectangleOutline({x:0,y:0},{x:this.canvas.width,y:this.canvas.height});
+		this.drawRectangleOutline({x:0,y:0},{x:this.canvas.width,y:this.canvas.height},this.lineWidth);
 
 		// Restore the transform
 		this.ctx.restore();
 	}
 
 	/**
+	* Draw a rectangle with the given points and color.
+	* @param {object} c1 - Object denoting top left coord of rectangle.
+	* @param {object} c2 - Object denoting bottom right coord of rectangle.
+	* @param {string} color - String containing the color of the rectangle.
+	*/
+	drawRectangle(c1,c2,color)
+	{
+		// Now we can draw the rectangle 
+		//this.ctx.fillStyle = "rgb(0 255 0)";
+		this.ctx.fillStyle = color;
+		this.ctx.beginPath();
+		this.ctx.moveTo(c1.x,c1.y);
+		this.ctx.lineTo(c1.x,c2.y);
+		this.ctx.lineTo(c2.x,c2.y);
+		this.ctx.lineTo(c2.x,c1.y);
+		this.ctx.fill();
+
+		// Draw rectangle outlines
+		this.drawRectangleOutline(c1,c2,"black");
+	}
+
+	/**
 	* Draw a rectangle outline with the given points.
 	* @param {object} c1 - Object denoting top left coord of rectangle.
 	* @param {object} c2 - Object denoting bottom right coord of rectangle.
+	* @param {number} width - Number denoting the width of the rectangle outline.
 	*/
-	drawRectangleOutline(c1,c2)
+	drawRectangleOutline(c1,c2,width)
 	{
 		this.ctx.beginPath();
 		this.ctx.moveTo(c1.x,c1.y);
@@ -432,9 +641,79 @@ class CodedEventCanvas
 		this.ctx.lineTo(c2.x,c2.y);
 		this.ctx.lineTo(c2.x,c1.y);
 		this.ctx.lineTo(c1.x,c1.y);
-		this.ctx.lineWidth = this.lineWidth;
+		this.ctx.lineWidth = width;
 		this.ctx.strokeStyle = 'black';
 		this.ctx.stroke();
+	}
+
+	/**
+	* Draw a rectangle denoting selection of notes.
+	* @param {object} c1 - Object denoting top left coord of rectangle.
+	* @param {object} c2 - Object denoting bottom right coord of rectangle.
+	* @param {number} width - Number denoting the width of the rectangle outline.
+	*/
+	drawSelectionRectangle(c1,c2,width)
+	{
+		this.ctx.fillStyle = "rgb(0 0 0 / 30%)";
+		this.ctx.beginPath();
+		this.ctx.moveTo(c1.x,c1.y);
+		this.ctx.lineTo(c1.x,c2.y);
+		this.ctx.lineTo(c2.x,c2.y);
+		this.ctx.lineTo(c2.x,c1.y);
+		this.ctx.lineTo(c1.x,c1.y);
+		this.ctx.lineWidth = width;
+		this.ctx.strokeStyle = 'black';
+		this.ctx.stroke();
+		this.ctx.fill();
+	}
+	/**
+	* Checks if point pt lies inside rectangle rect.
+	* @param {object} pt - Point to test for inclusion.
+	* @param {object} rect - Rectangle (array containing topleft/bottom right coords) to test inclusion of pt against.
+	* @returns true or false depending on if pt lies in rect.
+	*/
+	rectangleCollision(pt,rect)
+	{
+		return (rect[0].x &lt;= pt.x &amp;&amp; pt.x &lt;= rect[1].x &amp;&amp; rect[0].y &lt;= pt.y &amp;&amp; pt.y &lt;= rect[1].y);
+	}
+
+	/**
+	* Checks if the given rectangle overlaps with the selection rectangle.
+	* @param {object} rect - Rectangle (array containing topleft/bottom right coords) to test intersection against.
+	* @returns true or false depending on if rect intersects with the selection rectangle.
+	*/
+	inSelectionBounds(rect)
+	{
+		let c1 = { // top left coord of rectangle
+			x: Math.min(this.selectionRectangle[0].x,this.selectionRectangle[1].x),
+   			y: Math.min(this.selectionRectangle[0].y,this.selectionRectangle[1].y)
+		};
+		let c2 = { // bottom right coord of rectangle
+			x: Math.max(this.selectionRectangle[0].x,this.selectionRectangle[1].x),
+			y: Math.max(this.selectionRectangle[0].y,this.selectionRectangle[1].y),
+		};
+		let d1 = { // top left coord of rectangle
+			x: Math.min(rect[0].x,rect[1].x),
+			y: Math.min(rect[0].y,rect[1].y),
+		};
+		let d2 = { // bottom right coord of rectangle
+			x: Math.max(rect[0].x,rect[1].x),
+			y: Math.max(rect[0].y,rect[1].y),
+		};
+		let rectA = [c1,c2];
+		let rectB = [d1,d2];
+		return (rectA[0].x &lt; rectB[1].x &amp;&amp; rectA[1].x > rectB[0].x &amp;&amp; rectA[0].y &lt; rectB[1].y &amp;&amp; rectA[1].y > rectB[0].y);
+	}
+
+	/**
+	* Checks if point pt's x coordinate lies inside rectangle rect's x axis bounds.
+	* @param {object} pt - Point to test with.
+	* @param {object} rect - Rectangle (array containing topleft/bottom right coords) to test against.
+	* @returns true or false depending on if the x coord of pt lies within the x axis bounds of rect.
+	*/
+	rectangleXAxisCollision(pt,rect)
+	{
+		return (rect[0].x &lt;= pt.x &amp;&amp; pt.x &lt;= rect[1].x);
 	}
 
 	/**
@@ -443,9 +722,15 @@ class CodedEventCanvas
 	helperText()
 	{
 		// Draw text showing the mode
-		let text = ""
-		if (this.controlPressed) text = "Delete mode. ";
-		else text = "Enter mode. ";
+		let text = "";
+		//if (this.controlPressed) text = "Delete mode. ";
+		//else text = "Note mode. ";
+		if (this.inputMode == "DELETE") text = "Delete mode. ";
+		else if (this.inputMode == "SELECT") text = "Select mode. ";
+		else if (this.inputMode == "PASTE") text = "Paste mode. ";
+		else if (this.inputMode == "REMOVE") text = "Remove mode. ";
+		else text = "Note mode.";
+		
 		text += "Press h for keybinds.";
 	
 		this.ctx.font = "bold 25px Arial";
@@ -453,20 +738,54 @@ class CodedEventCanvas
 		let textHeight = this.ctx.measureText('M').width; // The width of capital M approximates height
 		let textWidth = this.ctx.measureText(text).width;
 		this.ctx.fillText(text,this.canvas.width-textWidth,textHeight);
-		text = "translate amount: " +this.translateAmt + ", snap amount: "+this.snapAmount;
+		text = "translate amount: " +this.translateAmt +", snap amount: "+this.snapAmount;
 		textWidth = this.ctx.measureText(text).width;
 		this.ctx.fillText(text,this.canvas.width-textWidth,2*textHeight);
 		text = "x zoom amount: " + this.scaleAmtX.toFixed(2);
 		text += ", y zoom amount: " + this.scaleAmtY.toFixed(2);
 		textWidth = this.ctx.measureText(text).width;
 		this.ctx.fillText(text,this.canvas.width-textWidth,3*textHeight);
-		text = "input text: " + this.workingText;
-		textWidth = this.ctx.measureText(text).width;
-		this.ctx.fillText(text,this.canvas.width-textWidth,4*textHeight);
 		text = "instrument name: " + this.name;
 		textWidth = this.ctx.measureText(text).width;
-		this.ctx.fillText(text,this.canvas.width-textWidth,5*textHeight);
+		this.ctx.fillText(text,this.canvas.width-textWidth,4*textHeight);
 	}
+
+	/**
+	* Converts the coordinates of the input point in screen coordinates to local/world coordinates.
+	* @param {object} p - Point to convert.
+	* @returns A new point with transformed x and y coords.
+	*/
+	screenToWorldCoords(p)
+	{
+		// get and invert the canvas xform coords, then apply them to the input point
+		return this.ctx.getTransform().invertSelf().transformPoint(p);
+	}
+	/**
+	* Helper that sets up leftClickEnd and leftClickStarts coordinates.
+	*/
+	clickHelper()
+	{
+		// set up left click coords
+		this.leftClickEnd = this.screenToWorldCoords(this.coord);
+
+		let division = 1/this.snapAmount;
+
+		// Line the two x coords up to snap to the appropriate rectangle edges
+		if (this.leftClickStart.x &lt;= this.leftClickEnd.x) 
+			this.leftClickEnd.x += this.cellWidth * division;
+		else 
+			this.leftClickEnd.x = this.leftClickStart.x+this.cellWidth * division;
+
+		// Line the two y coords up to snap to the appropriate rectangle edges
+		if (this.leftClickStart.y &lt;= this.leftClickEnd.y)
+			this.leftClickEnd.y += this.cellHeight;
+		else
+			this.leftClickStart.y += this.cellHeight;
+
+		// snap to the grid
+		this.leftClickEnd = this.snapToGrid(this.leftClickEnd);
+	}
+
 	/**
 	* Stores the instrument array corresponding to this parameter widget.
 	* @param {object} inst - The instrument array.
@@ -482,7 +801,9 @@ class CodedEventCanvas
 	* @param {object} inst - The instrument array.
 	*/
 	setInstrument(inst)
-	{ this.instrument = inst; }
+	{
+		this.instrument = inst;
+	}
 	/**
 	* Get the name of the instrument associated with this parameter widget.
 	* @returns The above mentioned name.
@@ -490,7 +811,7 @@ class CodedEventCanvas
 	getName()
 	{
 		return this.name;
-	}	
+	}
 	/**
 	* Get the trackname associated to the instrument this parameter widget is assigned to.
 	* @returns The above mentioned name.
@@ -504,7 +825,10 @@ class CodedEventCanvas
 	* @param {string} name - The name to set.
 	*/
 	setName(name)
-	{ this.name = name; }
+	{
+		this.name = name;
+	}
+
 	/**
 	* Gets the trigger mode for this parameter widget.
 	* @returns The trigger mode of this parameter widget.
@@ -513,6 +837,7 @@ class CodedEventCanvas
 	{
 		return this.triggerMode;
 	}
+
 	/**
 	* Sets the trigger mode for this parameter widget.
 	* @param {boolean} t - True if this parameter widget is in trigger mode else false.
@@ -549,7 +874,7 @@ class CodedEventCanvas
 	* @param {number} x - Scale factor in x direction.
 	* @param {number} y - Scale factor in y direction.
 	*/
-	scaleAmountAll()
+	scaleAmountAll(x,y)
 	{
 		for (let i = 0; i &lt; this.instrument.length; i++)
 			this.instrument[i].setScaleAmount(x,y);
@@ -606,89 +931,6 @@ class CodedEventCanvas
 		this.translateAmount = x;	
 		this.draw();
 	}
-
-	/**
-	* Draw the given rectangle to the screen.
-	* @param {object} rect - The rectangle (as an array of coords) to draw.
-	*/
-	drawRectangle(rect)
-	{
-		let c1 = rect[0];
-		let c2 = rect[1];
-		let value = rect[2];
-
-		// Now we can draw the rectangle 
-		this.ctx.fillStyle = "rgb(0 255 0)";
-		this.ctx.beginPath();
-		this.ctx.moveTo(c1.x,0);
-		this.ctx.lineTo(c1.x,this.localHeight);
-		this.ctx.lineTo(c2.x,this.localHeight);
-		this.ctx.lineTo(c2.x,0);
-		this.ctx.lineTo(c1.x,0);
-		this.ctx.fill();
-
-		// Draw rectangle outlines
-		this.ctx.beginPath();
-		this.ctx.moveTo(c1.x,0);
-		this.ctx.lineTo(c1.x,this.localHeight);
-		this.ctx.lineTo(c2.x,this.localHeight);
-		this.ctx.lineTo(c2.x,0);
-		this.ctx.lineTo(c1.x,0);
-	
-		// draw the text
-		this.ctx.lineWidth = 2;
-		this.ctx.strokeStyle = 'black';
-		this.ctx.stroke();
-		this.ctx.font = "bold 50px Arial";
-		this.ctx.fillStyle = 'black';
-		this.ctx.fillText(value,c1.x,this.localHeight/2,Math.abs(c1.x-c2.x));
-	}
-
-	/**
-	* Converts the coordinates of the input point in screen coordinates to local/world coordinates.
-	* @param {object} p - Point to convert.
-	* @returns A new point with transformed x and y coords.
-	*/
-	screenToWorldCoords(p)
-	{
-		// get and invert the canvas xform coords, then apply them to the input point
-		return this.ctx.getTransform().invertSelf().transformPoint(p);
-	}
-	/**
-	* Helper that sets up leftClickEnd and leftClickStarts coordinates.
-	*/
-	clickHelper()
-	{
-		// set up left click coords
-		this.leftClickEnd = this.screenToWorldCoords(this.coord);
-
-		let division = 1/this.snapAmount;
-		// Line the two x coords up to snap to the appropriate rectangle edges
-		if (this.leftClickStart.x &lt;= this.leftClickEnd.x) 
-			this.leftClickEnd.x += this.cellWidth * division;
-		else 
-			this.leftClickEnd.x = this.leftClickStart.x+this.cellWidth * division;
-
-		// Line the two y coords up to snap to the appropriate rectangle edges
-		if (this.leftClickStart.y &lt;= this.leftClickEnd.y)
-			this.leftClickEnd.y += this.cellHeight;
-		else
-			this.leftClickStart.y += this.cellHeight;
-
-		// snap to the grid
-		this.leftClickEnd = this.snapToGrid(this.leftClickEnd);
-	}
-
-	/**
-	* Checks if point pt lies inside rectangle rect.
-	* @param {object} pt - Point to test for inclusion.
-	* @param {object} rect - Rectangle (array containing topleft/bottom right coords) to test inclusion of pt against.
-	* @returns true or false depending on if pt lies in rect.
-	*/
-	rectangleCollision(pt,rect)
-	{
-		return (rect[0].x &lt;= pt.x &amp;&amp; pt.x &lt;= rect[1].x &amp;&amp; rect[0].y &lt;= pt.y &amp;&amp; pt.y &lt;= rect[1].y);
-	}
 	/**
 	* Add rectangle to the rectangle list of this object.
 	* @param {object} rect - The rectangle to add to the list.
@@ -696,38 +938,8 @@ class CodedEventCanvas
 	addRectangle(rect)
 	{
 		let c1 = {x:rect[0].x,y:0};
-		let c2 = {x:rect[1].x,y:0};
-		this.rectangleList.push([c1,c2,this.workingText]);
-	}
-	/**
-	* Checks if point pt's x coordinate lies inside rectangle rect's x axis bounds.
-	* @param {object} pt - Point to test with.
-	* @param {object} rect - Rectangle (array containing topleft/bottom right coords) to test against.
-	* @returns true or false depending on if the x coord of pt lies within the x axis bounds of rect.
-	*/
-	rectangleXAxisCollision(pt,rect)
-	{
-		return (rect[0].x &lt;= pt.x &amp;&amp; pt.x &lt;= rect[1].x);
-	}
-	/**
-	* Setter for the fraction of a cell that snapping occurs to.
-	* @param {number} n - Fraction of a cell to snap to.
-	*/
-	setSnapAmount(n)
-	{
-		if (n>=1) this.snapAmount = Math.trunc(n);
-		else this.snapAmount = 1;
-		// sometimes our snap code skips drawing so force a draw
-		//this.draw();
-	}
-	/**
-	* Splice the rectangle list. See javascript array splice() method documentation.
-	* @param {number} i - The index to remove items from.
-	* @param {number} j - The number of items to be removed.
-	*/
-	splice(i,j)
-	{
-		this.rectangleList.splice(i,j);
+		let c2 = {x:rect[1].x,y:this.cellHeight};
+		this.rectangleList.push([c1,c2]);
 	}
 	/**
 	* Converts the input rectangle to a quadruple [start time, duration, note].
@@ -743,10 +955,14 @@ class CodedEventCanvas
 		// Get the note duration relative to the same cell scaling
 		let dur = (rect[1].x - rect[0].x)/this.cellWidth; 
 		dur = Math.round(dur * this.snapAmount) / this.snapAmount; // mult/div here preserves snapping
+		// Get the pitch with respect to the bottom left corner of the canvas scaled relative to the cell height
+		let pitch = (this.localHeight- rect[0].y)/this.cellHeight;
+		pitch = pitch - 1; // the very bottom note of the canvas is zero rather than 1
+		pitch = Math.round(pitch);
 		// Convert raw cell values to values in seconds
 		start = this.cellsToSeconds(start,bpm);
 		dur = this.cellsToSeconds(dur,bpm);
-		return [start,dur,rect[2]]; // rect[2] contains the text output of this rectangle
+		return [start,dur,this.noteToPitchClass(pitch)];
 	}
 	/**
 	* Creates array of note quadruples in [start, time, duration, note] format from rectangle list.
@@ -774,6 +990,41 @@ class CodedEventCanvas
 		let cellsPerSecond = bpm * (1/this.beatsPerCell) * (1/60);
 		return c/cellsPerSecond;
 	}
+
+	/**
+	* Setter for the fraction of a cell that snapping occurs to.
+	* @param {number} n - Fraction of a cell to snap to.
+	*/
+	setSnapAmount(n)
+	{
+		if (n>=1) this.snapAmount = Math.trunc(n);
+		else this.snapAmount = 1;
+		// sometimes our snap code skips drawing so force a draw
+		//this.draw();
+	}
+	/**
+	* Splice the rectangle list. See javascript array splice() method documentation.
+	* @param {number} i - The index to remove items from.
+	* @param {number} j - The number of items to be removed.
+	*/
+	splice(i,j)
+	{
+		this.rectangleList.splice(i,j);
+	}
+	// Converts a note to a pitch class value
+	/**
+	* Converts a note to a pitch class value.
+	* @param {number} n - The note number to convert.
+	* @returns String containing pitch class and octave information of the note n.
+	*/
+	noteToPitchClass(n)
+	{
+		let octave = Math.floor(n/12);
+		let remainder = n % 12;
+		remainder = ('00'+remainder).slice(-2); // forces remainder to be two digits with zero padding
+		return String(octave)+"."+String(remainder);
+	}
+
 	/**
 	* Getter for the number of beats per cell.
 	* @returns The number of beats per cell.
@@ -788,7 +1039,7 @@ class CodedEventCanvas
 	*/
 	getNotes()
 	{
-		return this.horizontalCells;
+		return this.verticalCells;
 	}
 	/**
 	* Set up the state of the widget based on the input argument.
@@ -797,33 +1048,27 @@ class CodedEventCanvas
 	reconfigure(state)
 	{
 		this.rectangleList = state.rectangleList;
-		this.workingText = state.workingText;
-
-		this.lineWidth = state.lineWidth;
-
-		this.translateAmt = state.translateAmt;
-		this.scaleAmtX = state.scaleAmtX;
-		this.scaleAmtY = state.scaleAmtY;
-
-		this.triggerMode = state.triggerMode;
-
 		this.instrument = null;
 		this.name = state.name;
 		this.trackName = state.trackName;
-
-		this.beatsPerCell = state.beatsPerCell;
-
 		this.snapAmount = state.snapAmount;
+
+		this.triggerMode = state.triggerMode;
 
 		this.localHeight = state.localHeight;
 		this.localWidth = state.localWidth;
-		this.cells = state.cells;
+		this.verticalCells = state.verticalCells;
+		this.horizontalCells = state.horizontalCells;
+
+		// The cell width is determined here
 		this.cellWidth = state.cellWidth;
+		this.cellHeight = state.cellHeight;
+
+		// For unit conversion later
+		this.beatsPerCell = state.beatsPerCell;
 		this.draw();
 	}
 }
-// Draw the divisions
-//let codedEventObject= new CodedEventCanvas(".codedEventCanvas",40);
 </code></pre>
         </article>
     </section>
@@ -840,7 +1085,7 @@ class CodedEventCanvas
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.3</a> on Sat Jul 13 2024 23:22:03 GMT-0700 (Pacific Daylight Time)
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.3</a> on Sat Jul 13 2024 23:49:11 GMT-0700 (Pacific Daylight Time)
 </footer>
 
 <script> prettyPrint(); </script>

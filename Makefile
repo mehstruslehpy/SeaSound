@@ -4,6 +4,7 @@ python: server.py
 # Build the documentation from source.
 docs:
 	jsdoc --debug ./static/js/ ./misc_docs/README.md
+	mv out docs
 # For now just deletes all the documentation.
 clean:
 	rm -rf ./out
