@@ -9,4 +9,4 @@ clean:
 	rm -rf ./out
 # Show any TODO: comments in the source code.
 todo:
-	grep -r "TODO:*" ./static/js/ ./templates/
+	grep -rn "TODO:*" ./static/js/ ./templates/

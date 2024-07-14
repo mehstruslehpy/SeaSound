@@ -57,7 +57,7 @@ class SliderCanvas
 	*/
 	workingSlider = null;
 	/**
-	* The array of in progress sliders.
+	* The array of created sliders.
 	*/
 	sliderList = new Array();
 
@@ -296,7 +296,7 @@ class SliderCanvas
 		this.draw(); // redraw
 	}
 	/**
-	* Handle when mouse left click is pressed down after mode switc.
+	* Handle when mouse left click is pressed down after control mode switch.
 	*/
 	controlLeftClickDown()
 	{

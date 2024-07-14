@@ -7,47 +7,113 @@ SeaSound is distributed in the hope that it will be useful, but WITHOUT ANY WARR
 
 You should have received a copy of the GNU General Public License along with SeaSound. If not, see <https://www.gnu.org/licenses/>.
 */
+/**
+* The coded event class stores state and methods for dealing with coded event canvas widgets.
+* Coded event canvas widgets are used to emit textual events with respect to time.
+* @class
+* @public
+*/
 class CodedEventCanvas
 {
-	widgetType = "CodedEventCanvas"; // On file save/load denotes the type of widget this widget is
-	coord = {x:0, y:0}; // the coords of the mouse
-	leftClickStart = {x:0, y:0}; // the coords of the mouse at the start of a click
-	leftClickEnd = {x:0, y:0}; // the coords of the mouse at the release of a click
-	rectangleList = Array(); // The list of rectangles created so far
-	workingRectangle = null; // The in progress rectangle
-	workingText = "..."; // the input text for the event
-	mousePressed = false; // Tracks whether the mouse is pressed
+	/**
+	* On file save/load denotes the type of widget that this widget is.
+	*/
+	widgetType = "CodedEventCanvas";
+	/**
+	* The coords of the mouse.
+	*/
+	coord = {x:0, y:0};
+	/**
+	* the coords of the mouse at the start of a click.
+	*/
+	leftClickStart = {x:0, y:0};
+	/**
+	* The coords of the mouse at the release of a click.
+	*/
+	leftClickEnd = {x:0, y:0};
+	/**
+	* The array of created events (as rectangles).
+	*/
+	rectangleList = Array();
+	/**
+	* The in progress event (as a rectangle).
+	*/
+	workingRectangle = null;
+	/**
+	* The input text for the next event.
+	*/
+	workingText = "...";
+	/**
+	* Indicates whether or not we are in the middle of a mouse click.
+	*/
+	mousePressed = false;
 
-	// width of lines for drawing
+	/**
+	* Width of lines for drawing.
+	*/
 	lineWidth = 1;
-
-	// values for changing the scale and translate amount
+	/**
+	* Amount translate changes by.
+	*/
 	translateAmt = 10;
+	/**
+	* Amount X scaling changes by.
+	*/
 	scaleAmtX = 1.15;
+	/**
+	* Amount Y scaling changes by.
+	*/
 	scaleAmtY = 1.15;
 
-	// Controls whether the widget triggers notes or controls parameters
+	/**
+	* Controls whether the widget triggers notes or controls parameters.
+	*/
 	triggerMode = false;
 
-	// The instrument this widget is a parameter for
+	/**
+	* The instrument this widget is a parameter for (as a list of widgets).
+	*/
 	instrument = null;
+	/**
+	* The name of the instrument this widget is a parameter for.
+	*/
 	name = "";
+	/**
+	* The name of the track this widget is assigned to.
+	*/
 	trackName = "";
 
-	// Tracks whether control has been pressed or not
+	/**
+	* Indicates whether we are in delete mode or not.
+	*/
 	controlPressed = false;
 
-	// For unit conversion
+	/**
+	* The number of beats per cell of our piano roll grid.
+	*/
 	beatsPerCell = 1;
 
-	// Snap amount
+	/**
+	* Configures the fraction of cell that snapping occurs on.
+	*/
 	snapAmount = 1;
 
-	// For note area dimensions in local coords
+	/**
+	* Width of a cell in local, i.e., not screen coords.
+	*/
 	localWidth = 0;
+	/**
+	* Height of a cell in local, i.e., not screen coords.
+	*/
 	localHeight = 0;
 
-	// Initial set up
+	/**
+	* Construct a coded event canvas widget instance and draw it to the screen.
+	* @param {string} query - String containing html id of the canvas we are constructing for.
+	* @param {string} trackName - String containing the track name that this widget corresponds to.
+	* @param {number} cells - The number of horizontal cells to draw.
+	* @param {number} beatsPerCell - The number of beats each cell containg.
+	*/
 	constructor(query,trackName,cells,beatsPerCell)
 	{
 		this.trackName = trackName;
@@ -78,7 +144,10 @@ class CodedEventCanvas
 		this.draw();
 	}
 
-	// Keyboard button handler
+	/**
+	* Handles button clicks from the user.
+	* @param {event} ev - The event containing the button click we are handling.
+	*/
 	buttonClick(ev)
 	{
 		let controlText = "";
@@ -127,7 +196,11 @@ class CodedEventCanvas
 	}
 
 	
-	// Snap input coordinates to grid and return the resulting coord
+	/**
+	* Snap input coordinates to grid and return the resulting coord
+	* @param {number} c - the coordinate to snap to the grid.
+	* @returns The coordinate resulting from snapping c to the grid.
+	*/
 	snapToGrid(c)
 	{
 		let division = 1/this.snapAmount;
@@ -138,7 +211,9 @@ class CodedEventCanvas
 		return out;
 	}
 
-	// Runs on pressing down left click of mouse
+	/**
+	* Handle when mouse left click is pressed down.
+	*/
 	leftClickDown()
 	{
 		if (!this.triggerMode) this.nonTriggerModeClick();
@@ -152,7 +227,9 @@ class CodedEventCanvas
 		}
 	}
 
-	// Handle clicks when not in trigger mode
+	/**
+	* Handle when mouse left click is pressed down while not in trigger mode.
+	*/
 	nonTriggerModeClick()
 	{
 		let c = {x:this.coord.x, y:this.coord.y};
@@ -165,7 +242,9 @@ class CodedEventCanvas
 		this.draw(); // redraw
 	}
 
-	// Runs on pressing control left click
+	/**
+	* Handle when mouse left click is pressed down after control mode switch.
+	*/
 	controlLeftClickDown()
 	{
 		if (!this.triggerMode) return;
@@ -187,7 +266,9 @@ class CodedEventCanvas
 
 		this.draw();
 	}
-	// Runs on release of left click of mouse
+	/**
+	* Handle release of mouse left click.
+	*/
 	leftClickUp()
 	{
 		if (!this.triggerMode) return;
@@ -226,7 +307,9 @@ class CodedEventCanvas
 	
 	}
 
-	// Update the current coordinates of the mouse
+	/**
+	* Update the current coordinates of the mouse.
+	*/
 	updateMouseCoordinates()
 	{
 		this.coord.x = event.clientX - this.canvas.offsetLeft; 
@@ -255,7 +338,9 @@ class CodedEventCanvas
 		}
 	}
 
-	// Compute+draw the cell divisions of the display
+	/**
+	* Draw the current state of the widget to the screen.
+	*/
 	draw()
 	{
 		// First we need to clear the old background 
@@ -306,7 +391,11 @@ class CodedEventCanvas
 		this.ctx.restore();
 	}
 
-	// draw the outline of a rectangle
+	/**
+	* Draw a rectangle outline with the given points.
+	* @param {object} c1 - Object denoting top left coord of rectangle.
+	* @param {object} c2 - Object denoting bottom right coord of rectangle.
+	*/
 	drawRectangleOutline(c1,c2)
 	{
 		this.ctx.beginPath();
@@ -320,7 +409,9 @@ class CodedEventCanvas
 		this.ctx.stroke();
 	}
 
-	// print the on screen helper text
+	/**
+	* Prints helper text to the top right corner of the widget.
+	*/
 	helperText()
 	{
 		// Draw text showing the mode
@@ -348,88 +439,150 @@ class CodedEventCanvas
 		textWidth = this.ctx.measureText(text).width;
 		this.ctx.fillText(text,this.canvas.width-textWidth,5*textHeight);
 	}
-
+	/**
+	* Stores the instrument array corresponding to this parameter widget.
+	* @param {object} inst - The instrument array.
+	* @param {string} name - The name of the instrument containing this parameter widget.
+	*/
 	registerInstrument(inst,name)
 	{
 		this.instrument = inst;
 		this.name = name;
 	}
+	/**
+	* Sets the instrument array corresponding to this parameter widget.
+	* @param {object} inst - The instrument array.
+	*/
 	setInstrument(inst)
 	{ this.instrument = inst; }
-
+	/**
+	* Get the name of the instrument associated with this parameter widget.
+	* @returns The above mentioned name.
+	*/
 	getName()
 	{
 		return this.name;
 	}	
+	/**
+	* Get the trackname associated to the instrument this parameter widget is assigned to.
+	* @returns The above mentioned name.
+	*/
 	getTrack()
 	{
 		return this.trackName;
 	}
+	/**
+	* Sets the name of the instrument associated with this parameter widget.
+	* @param {string} name - The name to set.
+	*/
 	setName(name)
 	{ this.name = name; }
+	/**
+	* Gets the trigger mode for this parameter widget.
+	* @returns The trigger mode of this parameter widget.
+	*/
 	getTriggerMode()
 	{
 		return this.triggerMode;
 	}
+	/**
+	* Sets the trigger mode for this parameter widget.
+	* @param {boolean} t - True if this parameter widget is in trigger mode else false.
+	*/
 	setTriggerMode(t)
 	{
 		this.triggerMode = t;
 	}
 
-	// Scale all params in the instrument array (including this one)
+	/**
+	* Scale all params in the instrument array (including this one).
+	* @param {number} x - Scale factor in x direction.
+	* @param {number} y - Scale factor in y direction.
+	*/
 	scaleAll(x,y)
 	{
 		for (let i = 0; i < this.instrument.length; i++)
 			this.instrument[i].applyScale(x,y);
 	}
 
-	// Translate all params in the instrument array (including this one)
+	/**
+	* Translate all params in the instrument array (including this one).
+	* @param {number} x - Translation amount in x direction.
+	* @param {number} y - Translation amount in y direction.
+	*/
 	translateAll(x,y)
 	{
 		for (let i = 0; i < this.instrument.length; i++)
 			this.instrument[i].applyTranslate(x,y);
 	}
 
-	// Set scale amount for all params in the instrument array (including this one)
+	/**
+	* Set scale amount for all params in the instrument array (including this one).
+	* @param {number} x - Scale factor in x direction.
+	* @param {number} y - Scale factor in y direction.
+	*/
 	scaleAmountAll()
 	{
 		for (let i = 0; i < this.instrument.length; i++)
 			this.instrument[i].setScaleAmount(x,y);
 	}
-	// Set translate amount for all params in the instrument array (including this one)
+	/**
+	* Set translate amount for all params in the instrument array (including this one).
+	* @param {number} x - Translate amount in x direction.
+	* @param {number} y - Translate amount in y direction.
+	*/
 	translateAmountAll(x,y)
 	{
 		for (let i = 0; i < this.instrument.length; i++)
 			this.instrument[i].setTranslateAmount(x,y);
 	}
 
-	// Apply a scaling to the current instrument
+	/**
+	* Apply a scaling to the current instrument.
+	* @param {number} x - Scale factor in x direction.
+	* @param {number} y - Scale factor in y direction.
+	*/
 	applyScale(x,y)
 	{
 		this.ctx.scale(x,y);
 		this.draw();
 	}
-	// Apply a translation to the current instrument
+	/**
+	* Apply a translation to the current instrument.
+	* @param {number} x - Translation amount in x direction.
+	* @param {number} y - Translation amount in y direction.
+	*/
 	applyTranslate(x,y)
 	{
 		this.ctx.translate(x,y);
 		this.draw();
 	}
-	// Set the scaling amount for the current instrument
+	/**
+	* Set the scaling amount for the current instrument.
+	* @param {number} x - Scale factor in x direction.
+	* @param {number} y - Scale factor in y direction.
+	*/
 	setScaleAmount(x,y)
 	{
 		this.scaleAmtX = x;
 		this.scaleAmtY = y;	
 		this.draw();
 	}
-	// Set the translation amount for the current instrument
+	/**
+	* Set the translation amount for the current instrument
+	* @param {number} x - Translation amount in x direction.
+	* @param {number} y - Translation amount in y direction.
+	*/
 	setTranslateAmount(x)
 	{
 		this.translateAmount = x;	
 		this.draw();
 	}
 
-	// Draw the input rectangle
+	/**
+	* Draw the given rectangle to the screen.
+	* @param {object} rect - The rectangle (as an array of coords) to draw.
+	*/
 	drawRectangle(rect)
 	{
 		let c1 = rect[0];
@@ -463,13 +616,19 @@ class CodedEventCanvas
 		this.ctx.fillText(value,c1.x,this.localHeight/2,Math.abs(c1.x-c2.x));
 	}
 
-	// Converts p a point on the screen (usually a mouse click) to a point in world coords
+	/**
+	* Converts the coordinates of the input point in screen coordinates to local/world coordinates.
+	* @param {object} p - Point to convert.
+	* @returns A new point with transformed x and y coords.
+	*/
 	screenToWorldCoords(p)
 	{
 		// get and invert the canvas xform coords, then apply them to the input point
 		return this.ctx.getTransform().invertSelf().transformPoint(p);
 	}
-
+	/**
+	* Helper that sets up leftClickEnd and leftClickStarts coordinates.
+	*/
 	clickHelper()
 	{
 		// set up left click coords
@@ -492,23 +651,40 @@ class CodedEventCanvas
 		this.leftClickEnd = this.snapToGrid(this.leftClickEnd);
 	}
 
-	// Check if pt lies inside the rectangle 
+	/**
+	* Checks if point pt lies inside rectangle rect.
+	* @param {object} pt - Point to test for inclusion.
+	* @param {object} rect - Rectangle (array containing topleft/bottom right coords) to test inclusion of pt against.
+	* @returns true or false depending on if pt lies in rect.
+	*/
 	rectangleCollision(pt,rect)
 	{
 		return (rect[0].x <= pt.x && pt.x <= rect[1].x && rect[0].y <= pt.y && pt.y <= rect[1].y);
 	}
+	/**
+	* Add rectangle to the rectangle list of this object.
+	* @param {object} rect - The rectangle to add to the list.
+	*/
 	addRectangle(rect)
 	{
 		let c1 = {x:rect[0].x,y:0};
 		let c2 = {x:rect[1].x,y:0};
 		this.rectangleList.push([c1,c2,this.workingText]);
 	}
-	// Check if pt lies between the rectangles x axis bounds
+	/**
+	* Checks if point pt's x coordinate lies inside rectangle rect's x axis bounds.
+	* @param {object} pt - Point to test with.
+	* @param {object} rect - Rectangle (array containing topleft/bottom right coords) to test against.
+	* @returns true or false depending on if the x coord of pt lies within the x axis bounds of rect.
+	*/
 	rectangleXAxisCollision(pt,rect)
 	{
 		return (rect[0].x <= pt.x && pt.x <= rect[1].x);
 	}
-	// Setter for the snap to grid amount
+	/**
+	* Setter for the fraction of a cell that snapping occurs to.
+	* @param {number} n - Fraction of a cell to snap to.
+	*/
 	setSnapAmount(n)
 	{
 		if (n>=1) this.snapAmount = Math.trunc(n);
@@ -516,11 +692,21 @@ class CodedEventCanvas
 		// sometimes our snap code skips drawing so force a draw
 		//this.draw();
 	}
+	/**
+	* Splice the rectangle list. See javascript array splice() method documentation.
+	* @param {number} i - The index to remove items from.
+	* @param {number} j - The number of items to be removed.
+	*/
 	splice(i,j)
 	{
 		this.rectangleList.splice(i,j);
 	}
-	// Convert the input rectangle to a triple [start time, duration, note]
+	/**
+	* Converts the input rectangle to a quadruple [start time, duration, note].
+	* @param {object} rect - The input rectangle to convert.
+	* @param {number} bpm - Beats per minute, required to do unit conversion of times.
+	* @returns Tuple containing tuple in form [start, time, duration, note] for input note with bpm.
+	*/
 	convertRectToNote(rect,bpm)
 	{
 		// Get the start time relative to the cell scaling of the left point
@@ -534,6 +720,11 @@ class CodedEventCanvas
 		dur = this.cellsToSeconds(dur,bpm);
 		return [start,dur,rect[2]]; // rect[2] contains the text output of this rectangle
 	}
+	/**
+	* Creates array of note quadruples in [start, time, duration, note] format from rectangle list.
+	* @param {number} bpm - Beats per minute, required to do unit conversion of times.
+	* @returns Array containing list of tuples in the above form.
+	*/
 	getNoteOutput(bpm)
 	{
 		let out = new Array();
@@ -544,20 +735,37 @@ class CodedEventCanvas
 		}
 		return out;
 	}
+	/**
+	* Convert a raw cell number to a value in seconds.
+	* @param {number} c - The cell number to convert.
+	* @param {number} bpm - Beats per minute, required to do unit conversion of times.
+	* @returns Converted value described above.
+	*/
 	cellsToSeconds(c,bpm)
 	{
 		let cellsPerSecond = bpm * (1/this.beatsPerCell) * (1/60);
 		return c/cellsPerSecond;
 	}
+	/**
+	* Getter for the number of beats per cell.
+	* @returns The number of beats per cell.
+	*/
 	getBeatsPerCell()
 	{
 		return this.beatsPerCell;
 	}
-	// Getter for the number of notes
+	/**
+	* Getter for the number of notes displayed vertically by this widget.
+	* @returns The number of cells per beat.
+	*/
 	getNotes()
 	{
 		return this.horizontalCells;
 	}
+	/**
+	* Set up the state of the widget based on the input argument.
+	* @param {object} state - The state used to configure the widget.
+	*/
 	reconfigure(state)
 	{
 		this.rectangleList = state.rectangleList;

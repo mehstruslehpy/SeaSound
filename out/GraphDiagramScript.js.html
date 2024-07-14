@@ -1,11 +1,39 @@
-/*
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: GraphDiagramScript.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: GraphDiagramScript.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/*
 This file is part of SeaSound.
 
 SeaSound is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 
 SeaSound is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License along with SeaSound. If not, see <https://www.gnu.org/licenses/>.
+You should have received a copy of the GNU General Public License along with SeaSound. If not, see &lt;https://www.gnu.org/licenses/>.
 */
 
 // TODO: Need to fix node deletion order to be like pianoroll
@@ -229,7 +257,7 @@ class GraphDiagramCanvas
 			{
 				this.workingEdge = new Edge();
 				let intersectNode = false;
-				for (let i = 0; i < this.nodeList.length; i++)
+				for (let i = 0; i &lt; this.nodeList.length; i++)
 				{
 					let intersectPoint = this.nodeList[i].collision(point);
 					if (intersectPoint != null)
@@ -256,13 +284,13 @@ class GraphDiagramCanvas
 
 			// on later clicks add segments to edge structure
 			let intersectNode = false; //TODO: Is this still needed here?
-			for (let i = 0; i < this.nodeList.length; i++)
+			for (let i = 0; i &lt; this.nodeList.length; i++)
 			{
 				let intersectPoint = this.nodeList[i].collision(point);
 				let intersectType = intersectPoint!=null ? this.nodeList[i].collisionType(intersectPoint) : null;
 
 				// If the node types at either end of the edge match we should exit immediately
-				if (intersectPoint != null && intersectType == this.startEdgeNodeType) return;
+				if (intersectPoint != null &amp;&amp; intersectType == this.startEdgeNodeType) return;
 				else if (intersectPoint != null)
 				{
 					intersectNode = true;
@@ -321,10 +349,10 @@ class GraphDiagramCanvas
 	nodeDelete()
 	{
 		let point = this.screenToWorldCoords(this.coord);
-		for (let i = 0; i < this.nodeList.length; i++)
+		for (let i = 0; i &lt; this.nodeList.length; i++)
 			if (this.nodeList[i].boundingCollision(point))
 			{
-				for (let j = 0; j < this.edgeList.length; j++) // delete any edges connected to this node
+				for (let j = 0; j &lt; this.edgeList.length; j++) // delete any edges connected to this node
 				{
 					let fromCollision = this.nodeList[i].boundingCollision(this.edgeList[j].getFrom());
 					let toCollision = this.nodeList[i].boundingCollision(this.edgeList[j].getTo());
@@ -362,7 +390,7 @@ class GraphDiagramCanvas
 	edgeDelete()
 	{
 		let point = this.screenToWorldCoords(this.coord);
-		for (let i = 0; i < this.edgeList.length; i++)
+		for (let i = 0; i &lt; this.edgeList.length; i++)
 			if (this.edgeList[i].collision(point)) // if point collides with edge delete the edge
 			{
 				// find and reset the inputs and outputs of the nodes on either side of the edge
@@ -370,7 +398,7 @@ class GraphDiagramCanvas
 				let toIndex = -1;	
 				let fromNode = null;
 				let toNode = null;
-				for (let j = 0; j < this.nodeList.length; j++)
+				for (let j = 0; j &lt; this.nodeList.length; j++)
 				{
 					fromIndex = this.nodeList[j].collisionOutputParam(this.edgeList[i].getFrom());
 					// found the from side of the edge so reset the output of the from node to null
@@ -401,7 +429,7 @@ class GraphDiagramCanvas
 	{
 		this.coord.x = event.clientX - this.canvas.offsetLeft; 
 		this.coord.y = event.clientY - this.canvas.offsetTop; 
-		if (this.inputMode != "NODE" && this.workingEdge != null) // draw the work in progress edge if needed
+		if (this.inputMode != "NODE" &amp;&amp; this.workingEdge != null) // draw the work in progress edge if needed
 		{
 			this.draw();
 			// drawing working edge
@@ -456,12 +484,12 @@ class GraphDiagramCanvas
 		// Now we can actually start drawing
 
 		// draw all the nodes
-		for (let i = 0; i < this.nodeList.length; i++) this.nodeList[i].draw(this.ctx);
+		for (let i = 0; i &lt; this.nodeList.length; i++) this.nodeList[i].draw(this.ctx);
 
 		// draw the working edge if it exists
 		if (this.workingEdge != null) this.workingEdge.draw(this.ctx);
 		// draw all the edges
-		for (let i = 0; i < this.edgeList.length; i++) this.edgeList[i].draw(this.ctx);
+		for (let i = 0; i &lt; this.edgeList.length; i++) this.edgeList[i].draw(this.ctx);
 
 		// Draw the outlines for the canvas too
 		//this.drawRectangleOutline({x:0,y:0},{x:this.localWidth,y:this.localHeight});
@@ -544,7 +572,7 @@ class GraphDiagramCanvas
 	{
 		// Get all of the nodes with no outputs first
 		let startNodes = Array();
-		for (let i = 0; i < this.nodeList.length; i++)
+		for (let i = 0; i &lt; this.nodeList.length; i++)
 			if (this.nodeList[i].outputNodeCount() == 0) 
 			{
 				startNodes.push(this.nodeList[i]);
@@ -565,7 +593,7 @@ class GraphDiagramCanvas
 		outString = "instr "+this.instrumentName+"\n";
 
 		// Print the instrument nodes
-		for (let i = 0; i < startNodes.length; i++) 
+		for (let i = 0; i &lt; startNodes.length; i++) 
 			if (!startNodes[i].getPrintFlag())
 				outString += startNodes[i].renderToText();
 
@@ -573,7 +601,7 @@ class GraphDiagramCanvas
 		outString += "endin\n";
 
 		// Reset all the printflags for later prints
-		for (let i = 0; i < this.nodeList.length; i++) this.nodeList[i].setPrintFlag(false);
+		for (let i = 0; i &lt; this.nodeList.length; i++) this.nodeList[i].setPrintFlag(false);
 
 		// Return the string containing our instrument code
 		return outString;
@@ -601,7 +629,7 @@ class GraphDiagramCanvas
 		out += "GraphDiagramCanvas\n"; // we need this to distinguish between text and graph widgets
 		let nodeIndexDict = {}; //dictionary used to assign each node an index
 		// build list of indices for our nodes as key value pairs
-		for (let i = 0; i < this.nodeList.length; i++)
+		for (let i = 0; i &lt; this.nodeList.length; i++)
 			nodeIndexDict[this.nodeList[i].getId()] = i;
 		// output the state of the graph class, skip the nodeList key to avoid circularity
 		out += JSON.stringify(this, (key,value) => {
@@ -616,13 +644,13 @@ class GraphDiagramCanvas
 		out += this.edgeList.length + "\n";
 		out += this.nodeList.length + "\n";
 		// output the edge list
-		for (let i = 0; i < this.edgeList.length; i++)
+		for (let i = 0; i &lt; this.edgeList.length; i++)
 		{
 			out += "#".repeat(64) + "\n"; // delimiter
 			out += this.edgeList[i].toText();
 		}
 		// output the individual nodes
-		for (let i = 0; i < this.nodeList.length; i++)
+		for (let i = 0; i &lt; this.nodeList.length; i++)
 		{
 			out += "#".repeat(64) + "\n"; // delimiter
 			out += this.nodeList[i].toText(nodeIndexDict);
@@ -643,9 +671,9 @@ class GraphDiagramCanvas
 
 		// build the node and edge lists
 		this.nodeList = new Array();
-		for (let i = 0; i < nodeListLength; i++) this.nodeList.push(null);
+		for (let i = 0; i &lt; nodeListLength; i++) this.nodeList.push(null);
 		this.edgeList = new Array();
-		for (let i = 0; i < edgeListLength; i++) this.edgeList.push(null);
+		for (let i = 0; i &lt; edgeListLength; i++) this.edgeList.push(null);
 
 		// Load the basic variables for this widget
 		let temp = JSON.parse(file[0][1]);
@@ -656,7 +684,7 @@ class GraphDiagramCanvas
 		this.nodeRadius = temp.nodeRadius;
 	
 		// Load the edge list
-		for (let i = 0; i < edgeListLength; i++)
+		for (let i = 0; i &lt; edgeListLength; i++)
 		{
 			// load edge i from file[i+1];
 			this.edgeList[i] = new Edge();
@@ -664,7 +692,7 @@ class GraphDiagramCanvas
 		}
 
 		// load the nodes
-		for (let i = 0; i < nodeListLength; i++)
+		for (let i = 0; i &lt; nodeListLength; i++)
 		{
 			// load node i from file[i+1+edgeListLength]
 			this.nodeList[i] = new	Node({x:0,y:0},"NO NAME",0,[],"EMPTY-STYLE",this.ctx);
@@ -672,15 +700,15 @@ class GraphDiagramCanvas
 		}
 
 		// set up the node input adjacency lists
-		for (let i = 0; i < this.nodeList.length; i++)
-			for (let j = 0; j < this.nodeList[i].inputNodes.length; j++)
+		for (let i = 0; i &lt; this.nodeList.length; i++)
+			for (let j = 0; j &lt; this.nodeList[i].inputNodes.length; j++)
 				if (typeof this.nodeList[this.nodeList[i].inputNodes[j][0]] != "undefined")
 					this.nodeList[i].inputNodes[j][0] = this.nodeList[this.nodeList[i].inputNodes[j][0]];
 				else this.nodeList[i].inputNodes[j][0] = null;
 
 		// set up the node output adjacency lists
-		for (let i = 0; i < this.nodeList.length; i++)
-			for (let j = 0; j < this.nodeList[i].outputNodes.length; j++)
+		for (let i = 0; i &lt; this.nodeList.length; i++)
+			for (let j = 0; j &lt; this.nodeList[i].outputNodes.length; j++)
 				if (typeof this.nodeList[this.nodeList[i].outputNodes[j][0]] != "undefined")
 					this.nodeList[i].outputNodes[j][0] = this.nodeList[this.nodeList[i].outputNodes[j][0]];
 				else this.nodeList[i].outputNodes[j][0] = null;
@@ -771,7 +799,7 @@ class Edge
 	*/
 	draw(ctx)
 	{	
-		for (let i = 1; i < this.polyLineList.length; i++)
+		for (let i = 1; i &lt; this.polyLineList.length; i++)
 		{
 			// drawing edge
 			let from = this.polyLineList[i-1];
@@ -831,7 +859,7 @@ class Edge
 	*/
 	collision(pt)
 	{
-		for (let i = 1; i < this.polyLineList.length; i++)
+		for (let i = 1; i &lt; this.polyLineList.length; i++)
 			if (this.intersectSegment(this.polyLineList[i-1],this.polyLineList[i],pt,this.collisionRadius))
 				return true
 					return false;
@@ -858,7 +886,7 @@ class Edge
 
 		// if the point is on the line segment get the distance squared
 		// from that point to the circle center
-		if(u >= 0 && u <= 1)
+		if(u >= 0 &amp;&amp; u &lt;= 1)
 		{
 			dist  = (A.x + v1x * u - C.x) ** 2 + (A.y + v1y * u - C.y) ** 2;
 		} 
@@ -867,11 +895,11 @@ class Edge
 			// if closest point not on the line segment
 			// use the unit distance to determine which end is closest
 			// and get dist square to circle
-			dist = u < 0 ?
+			dist = u &lt; 0 ?
 				(A.x - C.x) ** 2 + (A.y - C.y) ** 2 :
 				(B.x - C.x) ** 2 + (B.y - C.y) ** 2;
 		}
-		return dist < radius * radius;
+		return dist &lt; radius * radius;
 	}
 	/**
 	* Converts the given edge to a textual representation.
@@ -939,7 +967,7 @@ class Node
 		let rHeight = this.height/3; // Height of rectangle is divided into thirds based on inputs, name, outputs
 		let rinWidth = this.width/inputs;
 		let routWidth = this.width/outputs.length;
-		for (let i = 0; i < inputs; i++) // build the list of input rectangles
+		for (let i = 0; i &lt; inputs; i++) // build the list of input rectangles
 		{
 			let topLeft = {x:rinWidth*i, y:0};
 			let bottomRight = {x:rinWidth*(i+1), y:rHeight};
@@ -947,7 +975,7 @@ class Node
 			this.inputNodes.push(null);
 		}
 		this.outTypes = outputs;
-		for (let i = 0; i < outputs.length; i++) // build the list of output rectangles
+		for (let i = 0; i &lt; outputs.length; i++) // build the list of output rectangles
 		{
 			let topLeft = {x:routWidth*i, y:2*rHeight};
 			let bottomRight = {x:routWidth*(i+1), y:3*rHeight};
@@ -972,7 +1000,7 @@ class Node
 		pt.x -= this.pt.x;
 		pt.y -= this.pt.y;
 		// check for collisions
-		for (let i = 0; i < this.inputList.length; i++)
+		for (let i = 0; i &lt; this.inputList.length; i++)
 			if (this.pointInRectangle(pt,this.inputList[i]))
 			{
 				// Take midpoint of collision rectangle
@@ -983,7 +1011,7 @@ class Node
 				midy += this.pt.y;
 				return {x: midx, y: midy};
 			}
-		for (let i = 0; i < this.outputList.length; i++)
+		for (let i = 0; i &lt; this.outputList.length; i++)
 			if (this.pointInRectangle(pt,this.outputList[i]))
 			{
 				let midx = (this.outputList[i][0].x+this.outputList[i][1].x)/2;
@@ -1006,7 +1034,7 @@ class Node
 		pt.y -= this.pt.y;
 
 		// check for collisions
-		for (let i = 0; i < this.inputList.length; i++)
+		for (let i = 0; i &lt; this.inputList.length; i++)
 			if (this.pointInRectangle(pt,this.inputList[i]))
 			{
 				pt.x += this.pt.x; // convert input point back to global coords
@@ -1014,7 +1042,7 @@ class Node
 				return "INPUT";
 			}
 
-		for (let i = 0; i < this.outputList.length; i++)
+		for (let i = 0; i &lt; this.outputList.length; i++)
 			if (this.pointInRectangle(pt,this.outputList[i]))
 			{
 				pt.x += this.pt.x; // convert input point back to global coords
@@ -1035,7 +1063,7 @@ class Node
 		pt.y -= this.pt.y;
 
 		// check for collisions
-		for (let i = 0; i < this.inputList.length; i++)
+		for (let i = 0; i &lt; this.inputList.length; i++)
 			if (this.pointInRectangle(pt,this.inputList[i]))
 			{
 				pt.x += this.pt.x; // convert input point back to global coords
@@ -1055,7 +1083,7 @@ class Node
 		pt.x -= this.pt.x;
 		pt.y -= this.pt.y;
 
-		for (let i = 0; i < this.outputList.length; i++)
+		for (let i = 0; i &lt; this.outputList.length; i++)
 			if (this.pointInRectangle(pt,this.outputList[i]))
 			{
 				pt.x += this.pt.x; // convert input point back to global coords
@@ -1097,12 +1125,12 @@ class Node
 		let boundary = {x:this.width,y:this.height};
 		this.drawRectangle([origin,boundary],ctx,"black","white");
 
-		for (let i = 0; i < this.inputList.length; i++)
+		for (let i = 0; i &lt; this.inputList.length; i++)
 		{
 			this.drawRectangle(this.inputList[i],ctx,"black","blue");
 		}
 
-		for (let i = 0; i < this.outputList.length; i++)
+		for (let i = 0; i &lt; this.outputList.length; i++)
 		{
 			let outColor = this.outputColorMap.get(this.outTypes[i]);
 			this.drawRectangle(this.outputList[i],ctx,"black",outColor);
@@ -1143,9 +1171,9 @@ class Node
 	}
 	pointInRectangle(pt,rect)
 	{
-		let xBound = rect[0].x <= pt.x && pt.x <= rect[1].x;
-		let yBound = rect[0].y <= pt.y && pt.y <= rect[1].y;
-		return xBound && yBound;
+		let xBound = rect[0].x &lt;= pt.x &amp;&amp; pt.x &lt;= rect[1].x;
+		let yBound = rect[0].y &lt;= pt.y &amp;&amp; pt.y &lt;= rect[1].y;
+		return xBound &amp;&amp; yBound;
 	}
 
 	// Return the number of input nodes for this node
@@ -1189,8 +1217,8 @@ class Node
 		let outString = "";
 
 		// Print the inputs to this node if they have not already been printed
-		for (let i = 0; i < this.inputNodeCount(); i++) 
-			if (this.inputNodes[i]!=null && !this.inputNodes[i][0].getPrintFlag())
+		for (let i = 0; i &lt; this.inputNodeCount(); i++) 
+			if (this.inputNodes[i]!=null &amp;&amp; !this.inputNodes[i][0].getPrintFlag())
 				outString += this.inputNodes[i][0].renderToText();
 
 		// We can now print the current node
@@ -1198,7 +1226,7 @@ class Node
 
 		// Build the list of outputs
 		let outputs = "";
-		for (let i = 0; i < this.outputNodeCount(); i++)
+		for (let i = 0; i &lt; this.outputNodeCount(); i++)
 			if (i==this.outputNodeCount()-1) 
 				if (this.nodeType == "MACRO") // macro nodes do not include an equal sign on left of opcode by default
 					outputs += this.outTypes[i]+"_"+this.getId()+"_"+i+" ";
@@ -1215,13 +1243,13 @@ class Node
 		return outString;	
 	}
 
-	// Functional syntax is always of the form 'outputs = name(<parameter list>)'
-	// Here we build the 'name(<parameter list>)' part
+	// Functional syntax is always of the form 'outputs = name(&lt;parameter list>)'
+	// Here we build the 'name(&lt;parameter list>)' part
 	functionalSyntaxHelper()
 	{
 		// Build the list of input parameters to this opcode
 		let params = Array();
-		for (let i = 0; i < this.inputNodeCount(); i++)
+		for (let i = 0; i &lt; this.inputNodeCount(); i++)
 			if(this.inputNodes[i]!=null)
 			{
 				let str = this.inputNodes[i][0].getOutputType(this.inputNodes[i][1]);
@@ -1233,7 +1261,7 @@ class Node
 			}
 			else params.push("NULL");
 		let paramStr = "";
-		for (let i = 0; i < params.length; i++)
+		for (let i = 0; i &lt; params.length; i++)
 			if (i==params.length-1) paramStr += params[i]; // last param has no comma
 			else paramStr += params[i]+", ";	
 
@@ -1253,7 +1281,7 @@ class Node
 	{
 		// Build the list of input parameters to this opcode
 		let params = Array();
-		for (let i = 0; i < this.inputNodeCount(); i++)
+		for (let i = 0; i &lt; this.inputNodeCount(); i++)
 			if(this.inputNodes[i]!=null)
 			{
 				let str = this.inputNodes[i][0].getOutputType(this.inputNodes[i][1]);
@@ -1266,7 +1294,7 @@ class Node
 			else params.push("NULL");
 
 		let paramText = this.getName();
-		for (let i = 0; i < params.length; i++)
+		for (let i = 0; i &lt; params.length; i++)
 			paramText = paramText.replace(new RegExp("@"+String(i+1),"g"),params[i]);
 		
 		return paramText+"\n";
@@ -1319,3 +1347,26 @@ class Node
 		this.outTypes = temp.outTypes;
 	}
 }
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="CodedEventCanvas.html">CodedEventCanvas</a></li><li><a href="Edge.html">Edge</a></li><li><a href="GraphDiagramCanvas.html">GraphDiagramCanvas</a></li><li><a href="PianoRollCanvas.html">PianoRollCanvas</a></li><li><a href="SliderCanvas.html">SliderCanvas</a></li><li><a href="View.html">View</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.3</a> on Sat Jul 13 2024 21:07:53 GMT-0700 (Pacific Daylight Time)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

@@ -11,6 +11,7 @@ You should have received a copy of the GNU General Public License along with Sea
 <!-- TODO: Possibly add tools for automation clip style features, this might also be doable via globals -->
 <!-- TODO: I think adding to the front will solve the issue with delete modes deleting unexpected things under mouse cursor in canvases -->
 <!-- TODO: Add audio clip editing/arranging features -->
+<!-- TODO: I need to figure out how to get JSdoc to actually use this documentation. -->
 <!DOCTYPE html>
 <html lang="en-US">
   <head>
@@ -22,10 +23,15 @@ You should have received a copy of the GNU General Public License along with Sea
 	<script>
 		// csound.js is the Csound WASM module
 		const csoundjs = "../static/csound/csound.js";
-		// csound is the Csound engine object (null as we start)
+		/**
+		* csound is the Csound engine object (null as we start).
+		*/
 		let csound = null;
 
-		// Play the csd file in the string code
+		/**
+		* Play the csd file in the string code.
+		* @param {string} code - String containing a csd file to play.
+		*/
 		async function playCode(code) 
 		{
 			// if the Csound object is not initialised initialize it
@@ -46,12 +52,17 @@ You should have received a copy of the GNU General Public License along with Sea
 			await csound.start();
 		}
 
-		// Stop any sound playback
+		/**
+		* Stop any sound playback.
+		*/
 		async function stopCsound(code) 
 		{
 			// if the Csound object is initialized stop any playback
 			if(csound != null) await csound.stop();
 		}
+		/**
+		* Reinitialize the csound audio engine.
+		*/
 		async function reinitCsound() 
 		{
 			const { Csound } = await import(csoundjs);

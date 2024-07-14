@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>JSDoc: Source: SliderScript.js</title>
+    <title>JSDoc: Source: CodedEventScript.js</title>
 
     <script src="scripts/prettify/prettify.js"> </script>
     <script src="scripts/prettify/lang-css.js"> </script>
@@ -17,7 +17,7 @@
 
 <div id="main">
 
-    <h1 class="page-title">Source: SliderScript.js</h1>
+    <h1 class="page-title">Source: CodedEventScript.js</h1>
 
     
 
@@ -34,26 +34,19 @@ SeaSound is free software: you can redistribute it and/or modify it under the te
 SeaSound is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License along with SeaSound. If not, see &lt;https://www.gnu.org/licenses/>.
-
 */
-
-//TODO: Need to actually set up these parameters to take advantage of inheritance. Currently there is too much duplicate code.
-//TODO: Need to check that deletion works as expected with this one. It might be kind of weird
-//TODO: Scaling looks really weird on this one since it stretches the little lollipop circles
-//TODO: Make sure line widths are set up like in pianoroll
-
 /**
-* The slider class stores state and methods for dealing with slider canvas widgets.
-* Slider canvas widgets are used for storing data ("sliders") to do with discrete numerical values with respect to time.
+* The coded event class stores state and methods for dealing with coded event canvas widgets.
+* Coded event canvas widgets are used to emit textual events with respect to time.
 * @class
 * @public
 */
-class SliderCanvas 
+class CodedEventCanvas
 {
 	/**
 	* On file save/load denotes the type of widget that this widget is.
 	*/
-	widgetType = "SliderCanvas";
+	widgetType = "CodedEventCanvas";
 	/**
 	* The coords of the mouse.
 	*/
@@ -67,32 +60,26 @@ class SliderCanvas
 	*/
 	leftClickEnd = {x:0, y:0};
 	/**
-	* The possible display styles for this widget.
-	* Lollipop mode displays values as vertical bars with a circle drawn at the top.
-	* Solid mode displays amplitudes as rectangular blocks.
+	* The array of created events (as rectangles).
 	*/
-	styles = ["solid","lollipop"];
+	rectangleList = Array();
 	/**
-	* Indicates whether we are in delete mode or not.
+	* The in progress event (as a rectangle).
 	*/
-	controlPressed = false;
+	workingRectangle = null;
+	/**
+	* The input text for the next event.
+	*/
+	workingText = "...";
 	/**
 	* Indicates whether or not we are in the middle of a mouse click.
 	*/
 	mousePressed = false;
-	/**
-	* The in progress slider.
-	*/
-	workingSlider = null;
-	/**
-	* The array of created sliders.
-	*/
-	sliderList = new Array();
 
 	/**
-	* Controls whether the widget triggers notes or controls parameters.
+	* Width of lines for drawing.
 	*/
-	triggerMode = false;
+	lineWidth = 1;
 	/**
 	* Amount translate changes by.
 	*/
@@ -105,6 +92,11 @@ class SliderCanvas
 	* Amount Y scaling changes by.
 	*/
 	scaleAmtY = 1.15;
+
+	/**
+	* Controls whether the widget triggers notes or controls parameters.
+	*/
+	triggerMode = false;
 
 	/**
 	* The instrument this widget is a parameter for (as a list of widgets).
@@ -120,6 +112,11 @@ class SliderCanvas
 	trackName = "";
 
 	/**
+	* Indicates whether we are in delete mode or not.
+	*/
+	controlPressed = false;
+
+	/**
 	* The number of beats per cell of our piano roll grid.
 	*/
 	beatsPerCell = 1;
@@ -130,15 +127,6 @@ class SliderCanvas
 	snapAmount = 1;
 
 	/**
-	* The maximum value a slider can take.
-	*/
-	maxOut = 1;
-	/**
-	* The minimum value a slider can take.
-	*/
-	minOut = -1;
-
-	/**
 	* Width of a cell in local, i.e., not screen coords.
 	*/
 	localWidth = 0;
@@ -146,16 +134,15 @@ class SliderCanvas
 	* Height of a cell in local, i.e., not screen coords.
 	*/
 	localHeight = 0;
+
 	/**
-	* Construct a slider canvas widget instance and draw it to the screen.
+	* Construct a coded event canvas widget instance and draw it to the screen.
 	* @param {string} query - String containing html id of the canvas we are constructing for.
 	* @param {string} trackName - String containing the track name that this widget corresponds to.
-	* @param {number} horizontalCells - The number of horizontal cells to draw.
-	* @param {number} verticalCells - The number of vertical cells to draw.
+	* @param {number} cells - The number of horizontal cells to draw.
 	* @param {number} beatsPerCell - The number of beats each cell containg.
-	* @param {string} rectangleStyle - The style of slider canvas to construct.
 	*/
-	constructor(query,trackName,horizontalCells,verticalCells,beatsPerCell,rectangleStyle)
+	constructor(query,trackName,cells,beatsPerCell)
 	{
 		this.trackName = trackName;
 		// Set Up the canvas
@@ -166,24 +153,13 @@ class SliderCanvas
 		let tabsHeight = 2*document.getElementById('tab-container').offsetHeight;
 		tabsHeight += document.getElementById("track-controls").offsetHeight;
 
-		//this.width = (this.canvas.width = window.innerWidth);
-		//this.height = (this.canvas.height = window.innerHeight - tabsHeight);
 		this.canvas.width = window.innerWidth;
 		this.canvas.height = window.innerHeight - tabsHeight;
 		this.localWidth = 1000;
 		this.localHeight = 1000;
-		
-		this.verticalCells = verticalCells;
-		this.horizontalCells = horizontalCells;
-
-		// The cell width is determined here
-		this.cellWidth = this.localWidth/this.verticalCells;
-		this.cellHeight = this.localHeight/this.horizontalCells;
-
-		this.radius = this.cellWidth/6; // the radius for lollipop style
-
-		if (!this.styles.includes(rectangleStyle)) throw "Unknown draw style";
-		this.rectangleStyle = rectangleStyle;
+	
+		this.cells = cells;
+		this.cellWidth = this.localWidth/this.cells;
 
 		// For unit conversion later
 		this.beatsPerCell = beatsPerCell;
@@ -191,10 +167,11 @@ class SliderCanvas
 		var that = this;
 		this.canvas.addEventListener('mousedown', function(ev) { that.leftClickDown(); }); 
 		this.canvas.addEventListener('mouseup', function(ev) { that.leftClickUp(); }); 
-		this.canvas.addEventListener('keydown', function(ev) { that.buttonClick(ev); });
 		this.canvas.addEventListener('mousemove', function(ev) { that.updateMouseCoordinates(); }); 
+		this.canvas.addEventListener('keydown', function(ev) { that.buttonClick(ev); });
 		this.draw();
 	}
+
 	/**
 	* Handles button clicks from the user.
 	* @param {event} ev - The event containing the button click we are handling.
@@ -209,9 +186,9 @@ class SliderCanvas
 			controlText += "rf: change amount to translate by\n";
 			controlText += "tg: change X scaling amount\n";
 			controlText += "yh: change Y scaling amount\n";
+			controlText += "j: change input text\n";
 			controlText += "x: change snap to grid amount\n";
-			controlText += "nm: change output max/min values\n";
-			controlText += "ctrl: toggle enter/delete modes\n";
+			controlText += "ctrl: toggle note/delete modes\n";
 			controlText += "i: change instrument name\n";
 
 		if (ev.key == "Control" &amp;&amp; this.triggerMode) this.controlPressed = true;
@@ -236,8 +213,7 @@ class SliderCanvas
 		else if (ev.key == "g") this.scaleAmountAll(this.scaleAmtX/(1+1/(2**4)),this.scaleAmtY);
 		else if (ev.key == "y") this.scaleAmountAll(this.scaleAmtX,this.scaleAmtY*(1+1/(2**4)));
 		else if (ev.key == "h") this.scaleAmountAll(this.scaleAmtX,this.scaleAmtY/(1+1/(2**4)));
-		else if (ev.key == "m") this.setMax(prompt("Set maximum output value:"));
-		else if (ev.key == "n") this.setMin(prompt("Set minimum output value:"));
+		else if (ev.key == "j") this.workingText = prompt("Please enter event text.");
 		else if (ev.key == "i") 
 		{
 			let n = prompt("Input new instrument name:");
@@ -247,6 +223,7 @@ class SliderCanvas
 		this.draw();	
 	}
 
+	
 	/**
 	* Snap input coordinates to grid and return the resulting coord
 	* @param {number} c - the coordinate to snap to the grid.
@@ -257,25 +234,11 @@ class SliderCanvas
 		let division = 1/this.snapAmount;
 		var out = {
 			x: division * this.cellWidth * Math.floor(c.x/(division * this.cellWidth)),
-   			//y: this.cellHeight * Math.floor(c.y/this.cellHeight)
-   			y: c.y 
+   			y: 0
 		};
 		return out;
 	}
-	/**
-	* Draw a circle around the input coord.
-	* @param {number} c - Coordinate to draw a circle around.
-	*/
-	circleCoord(c)
-	{
-		this.ctx.beginPath();
-		this.ctx.arc(c.x, c.y, this.radius, 0, 2 * Math.PI, false);
-		this.ctx.fillStyle = 'green';
-		this.ctx.fill();
-		this.ctx.lineWidth = 2;
-		this.ctx.strokeStyle = 'black';
-		this.ctx.stroke();
-	}
+
 	/**
 	* Handle when mouse left click is pressed down.
 	*/
@@ -285,12 +248,13 @@ class SliderCanvas
 		else if (this.controlPressed) this.controlLeftClickDown();
 		else
 		{
-			this.leftClickStart = this.snapToGrid(this.screenToWorldCoords(this.coord));
-			this.workingSlider = Array(this.leftClickStart,this.leftClickStart);
+			let val = this.screenToWorldCoords(this.coord);
+			this.leftClickStart = {x:this.snapToGrid(val).x, y:0};
+			this.workingRectangle = new Array(this.leftClickStart,this.leftClickStart);
 			this.mousePressed = true;
 		}
-		this.draw();
 	}
+
 	/**
 	* Handle when mouse left click is pressed down while not in trigger mode.
 	*/
@@ -298,31 +262,14 @@ class SliderCanvas
 	{
 		let c = {x:this.coord.x, y:this.coord.y};
 		c = this.screenToWorldCoords(c);
-		for (let i = 0; i &lt; this.sliderList.length; i++)
-			switch (this.rectangleStyle)
+		for (let i = 0; i &lt; this.rectangleList.length; i++)
+			if (this.rectangleXAxisCollision(c,this.rectangleList[i])) // if cursor lies inside a rectangle
 			{
-				case "lollipop":
-				{
-					if (this.rectangleXAxisCollision1(c,this.sliderList[i])) // if cursor lies inside a rectangle
-					{
-						this.sliderList[i][0].y = c.y; // then adjust the y axis coord of the collision rectangle
-						this.sliderList[i][1].y = c.y + this.cellHeight;
-					}
-					break;
-				}
-				case "solid":
-				{
-					if (this.rectangleXAxisCollision2(c,this.sliderList[i])) // if cursor lies inside a rectangle
-					{
-						this.sliderList[i][0].y = c.y; // then adjust the y axis coord of the collision rectangle
-						this.sliderList[i][1].y = c.y + this.cellHeight;
-					}
-					break;
-				}
+				this.rectangleList[i][2] = prompt("Please enter event text.");
 			}
-	
 		this.draw(); // redraw
 	}
+
 	/**
 	* Handle when mouse left click is pressed down after control mode switch.
 	*/
@@ -330,74 +277,52 @@ class SliderCanvas
 	{
 		if (!this.triggerMode) return;
 		let c = {x:this.coord.x, y:this.coord.y};
-		c = this.screenToWorldCoords(c);
-		// Delete the selected note if any exists
-		// Iterating backwards ensures we delete the note at the front of the display
-		for (let i = this.sliderList.length - 1; i >= 0; i--)
-			switch (this.rectangleStyle)
+		c = {x:this.screenToWorldCoords(c).x, y:0};
+		for (let i = this.rectangleList.length - 1; i >= 0; i--)
+			if (this.rectangleCollision(c,this.rectangleList[i])) // if cursor lies inside a rectangle
 			{
-				case "lollipop":
-					if (this.lollipopCollision(c,this.sliderList[i]))
+				this.rectangleList.splice(i,1); // remove the rectangle
+				// Update the non-triggering widgets
+				for (let j = 0; j &lt; this.instrument.length; j++)
+					if (this.instrument[j] != this)
 					{
-						this.sliderList.splice(i,1);
-						// Update the non-triggering widgets
-						for (let j = 0; j &lt; this.instrument.length; j++)
-							if (this.instrument[j] != this)
-							{
-								this.instrument[j].splice(i,1);
-								this.instrument[j].draw();
-							}
-						break;
+						this.instrument[j].splice(i,1);
+						this.instrument[j].draw();
 					}
-				case "solid":
-					if (this.solidCollision(c,this.sliderList[i]))
-					{
-						this.sliderList.splice(i,1);
-						// Update the non-triggering widgets
-						for (let j = 0; j &lt; this.instrument.length; j++)
-							if (this.instrument[j] != this)
-							{
-								this.instrument[j].splice(i,1);
-								this.instrument[j].draw();
-							}
-						break;
-					}
+				break;
 			}
 
 		this.draw();
 	}
-
 	/**
 	* Handle release of mouse left click.
 	*/
 	leftClickUp()
 	{
 		if (!this.triggerMode) return;
-		if (this.controlPressed) // control clicks end here
+		if (this.controlPressed) // if it was a control press
 		{
-			this.controlPressed = false;
+			this.controlPressed = false; // untoggle controlPressed var and return
 			this.draw();
 			return;
 		}
-
-		// set up left click coords
-		this.leftClickEnd = this.screenToWorldCoords(this.coord);
 
 		this.clickHelper();
 
 		let c1 = { // top left coord of rectangle
 			x: Math.min(this.leftClickStart.x,this.leftClickEnd.x),
-   			y: Math.min(this.leftClickStart.y,this.leftClickEnd.y)
+   			y: 0
 		};
 		let c2 = { // bottom right coord of rectangle
 			x: Math.max(this.leftClickStart.x,this.leftClickEnd.x),
-   			// for a piano roll we force the height of the rectangles to be a single unit 
-   			y: c1.y+this.cellHeight
+   			y: 0
 		};
 
-		this.mousePressed = false; // mouse is no longer pressed
-		this.workingSlider = null;
-		this.sliderList.push([c1,c2]);
+		// Reset the mousePressed value and the working rectangle
+		this.mousePressed = false; // the mouse is no longer pressed
+		this.workingRectangle = null; // The working rectangle is null again
+	
+		this.rectangleList.push([c1,c2,this.workingText]);
 
 		// Update the non-triggering widgets
 		for (let i = 0; i &lt; this.instrument.length; i++)
@@ -406,8 +331,8 @@ class SliderCanvas
 				this.instrument[i].addRectangle([c1,c2]); 
 				this.instrument[i].draw();
 			}
-
 		this.draw();
+	
 	}
 
 	/**
@@ -420,79 +345,27 @@ class SliderCanvas
 
 		if (this.mousePressed)
 		{
-			// set up left click coords
-			this.leftClickEnd = this.screenToWorldCoords(this.coord);
-
 			this.clickHelper();
-	
-			let c1 = { // top left coord of rectangle
+
+			let c1 = { // left coord of rectangle
 				x: Math.min(this.leftClickStart.x,this.leftClickEnd.x),
-   				y: Math.min(this.leftClickStart.y,this.leftClickEnd.y)
+   				y: 0
 			};
-			let c2 = { // bottom right coord of rectangle
+			let c2 = { // right coord of rectangle
 				x: Math.max(this.leftClickStart.x,this.leftClickEnd.x),
-   				y: c1.y+this.cellHeight
+   				y: 0
 			};
-			// if mouse is pressed and held there is stuff to draw
-			if (this.mousePressed &amp;&amp; this.workingSlider != null)
+
+			// If the mouse is pressed and held there is stuff to draw
+			if (this.mousePressed &amp;&amp; this.workingRectangle != null)
 			{
-				this.workingSlider[0] = c1;
-				this.workingSlider[1] = c2;
+				this.workingRectangle[0] = c1;
+				this.workingRectangle[1] = c2;
 				this.draw();
 			}
 		}
-
 	}
 
-	/**
-	* Draws the lollipop specified by the points c1 and c2.
-	*/
-	lollipopStyle(c1,c2)
-	{
-		// Draw vertical lollipop line
-		this.ctx.beginPath();
-		this.ctx.moveTo(c1.x,c1.y);
-		this.ctx.lineTo(c1.x,this.localHeight);
-		this.ctx.lineWidth = 6;
-		this.ctx.strokeStyle = 'black';
-		this.ctx.stroke();
-
-		// Draw horizontal lollipop line
-		this.ctx.beginPath();
-		this.ctx.moveTo(c1.x,c1.y);
-		this.ctx.lineTo(c2.x,c1.y);
-		this.ctx.lineWidth = 6;
-		this.ctx.strokeStyle = 'green';
-		this.ctx.stroke();
-
-		// Draw lollipop circle
-		this.circleCoord(c1);
-	}
-	/**
-	* Draws the rectangle specified by the points c1 and c2.
-	*/
-	solidStyle(c1,c2)
-	{
-		// Now we can draw the rectangle 
-		this.ctx.fillStyle = "rgb(0 255 0)";
-		this.ctx.beginPath();
-		this.ctx.moveTo(c1.x,c1.y);
-		this.ctx.lineTo(c1.x,this.localHeight);
-		this.ctx.lineTo(c2.x,this.localHeight);
-		this.ctx.lineTo(c2.x,c1.y);
-		this.ctx.fill();
-
-		// Draw rectangle outlines
-		this.ctx.beginPath();
-		this.ctx.moveTo(c1.x,c1.y);
-		this.ctx.lineTo(c1.x,this.localHeight);
-		this.ctx.lineTo(c2.x,this.localHeight);
-		this.ctx.lineTo(c2.x,c1.y);
-		this.ctx.lineTo(c1.x,c1.y);
-		this.ctx.lineWidth = 2;
-		this.ctx.strokeStyle = 'black';
-		this.ctx.stroke();
-	}
 	/**
 	* Draw the current state of the widget to the screen.
 	*/
@@ -513,32 +386,21 @@ class SliderCanvas
 		// Now we can actually start drawing
 
 		//draw vertical divisions
-		this.ctx.strokeStyle = "black";
-		for (var i = 0; i &lt; this.verticalCells; i++)
+		for (var i = 0; i &lt; this.cells; i++)
 		{
-			this.ctx.strokeStyle = "black";
-			this.ctx.lineWidth = 1;
+			this.ctx.strokeStyle = 'black';
+			this.ctx.lineWidth = this.lineWidth;
 			this.ctx.beginPath();
-			this.ctx.moveTo(i*(this.localWidth/this.verticalCells),0);
-			this.ctx.lineTo(i*(this.localWidth/this.verticalCells),this.localHeight);
+			this.ctx.moveTo(i*(this.localWidth/this.cells),0);
+			this.ctx.lineTo(i*(this.localWidth/this.cells),this.localHeight);
 			this.ctx.stroke();
 		}
 
-		//draw horizontal divisions
-		for (var i = 0; i &lt; this.horizontalCells; i++)
-		{
-			this.ctx.strokeStyle = "black";
-			this.ctx.lineWidth = 1;
-			this.ctx.beginPath();
-			this.ctx.moveTo(0,i*(this.localHeight/this.horizontalCells));
-			this.ctx.lineTo(this.localWidth,i*(this.localHeight/this.horizontalCells));
-			this.ctx.stroke();
-		}
+		// draw the rectangles
+		for (let i = 0; i &lt; this.rectangleList.length; i++) this.drawRectangle(this.rectangleList[i]);
+		if (this.workingRectangle != null) 
+			this.drawRectangle([this.workingRectangle[0],this.workingRectangle[1],"..."]);
 		
-		// draw the sliders
-		for (let i = 0; i &lt; this.sliderList.length; i++) this.drawSlider(this.sliderList[i]);
-		if (this.workingSlider != null) this.drawSlider(this.workingSlider);
-	
 		// Draw the outlines for the canvas too
 		this.drawRectangleOutline({x:0,y:0},{x:this.localWidth,y:this.localHeight});
 
@@ -555,85 +417,6 @@ class SliderCanvas
 
 		// Restore the transform
 		this.ctx.restore();
-
-	}
-
-	/**
-	* Draw the input slider.
-	* @param {object} slider - The input slider to draw.
-	*/
-	drawSlider(slider)
-	{
-		let c1 = slider[0];
-		let c2 = slider[1];
-		if (this.rectangleStyle == "solid") this.solidStyle(c1,c2);
-		else if (this.rectangleStyle == "lollipop") this.lollipopStyle(c1,c2);
-		else throw("Unknown draw style");
-	}	
-	/**
-	* Checks for collision between the input point and the input slider in lollipop mode.
-	* @param {object} c - The point to check for collision against.
-	* @param {object} slider - The slider to check for collision against.
-	* @returns True if collision occured false otherwise.
-	*/
-	lollipopCollision(c,slider)
-	{
-		return this.distance(c,slider[0]) &lt; this.radius
-	}
-	/**
-	* Checks for collision between the input point and the input slider in solid mode.
-	* @param {object} c - The point to check for collision against.
-	* @param {object} slider - The slider to check for collision against.
-	* @returns True if collision occured false otherwise.
-	*/
-	solidCollision(c,slider)
-	{
-		let horiz = slider[0].x &lt;= c.x &amp;&amp; c.x &lt;= slider[1].x;
-		let vert = c.x >= slider[0].y;
-		return horiz &amp;&amp; vert;
-	}
-	/**
-	* Calculates the distance between the input points.
-	* @param {object} a - The first input point.
-	* @param {object} b - The second input point.
-	* @returns The distance between the two input points.
-	*/
-	distance(a,b)
-	{
-		return Math.sqrt((a.x-b.x)*(a.x-b.x)+(a.y-b.y)*(a.y-b.y));
-	}
-
-	/**
-	* Prints helper text to the top right corner of the widget.
-	*/
-	helperText()
-	{
-		// Draw text showing the mode
-		let text = ""
-		if (this.controlPressed) text = "Delete mode. ";
-		else text = "Enter mode. ";
-		text += "Press h for keybinds.";
-	
-		this.ctx.font = "bold 25px Arial";
-		this.ctx.fillStyle = 'black';
-		let textHeight = this.ctx.measureText('M').width; // The width of capital M approximates height
-		let textWidth = this.ctx.measureText(text).width;
-		this.ctx.fillText(text,this.canvas.width-textWidth,textHeight);
-		text = "translate amount: " +this.translateAmt +", snap amount: " + this.snapAmount;
-		textWidth = this.ctx.measureText(text).width;
-		this.ctx.fillText(text,this.canvas.width-textWidth,2*textHeight);
-		text = "x zoom amount: " + this.scaleAmtX.toFixed(2);
-		text += ", y zoom amount: " + this.scaleAmtY.toFixed(2);
-		textWidth = this.ctx.measureText(text).width;
-		this.ctx.fillText(text,this.canvas.width-textWidth,3*textHeight);
-		text = "max output: " + this.maxOut.toFixed(2);
-		text += ", min output: " + this.minOut.toFixed(2);
-		textWidth = this.ctx.measureText(text).width;
-		this.ctx.fillText(text,this.canvas.width-textWidth,4*textHeight);
-		text = "instrument name: " + this.name;
-		textWidth = this.ctx.measureText(text).width;
-		this.ctx.fillText(text,this.canvas.width-textWidth,5*textHeight);
-
 	}
 
 	/**
@@ -653,39 +436,36 @@ class SliderCanvas
 		this.ctx.strokeStyle = 'black';
 		this.ctx.stroke();
 	}
+
 	/**
-	* Helper that sets up leftClickEnd and leftClickStarts coordinates.
+	* Prints helper text to the top right corner of the widget.
 	*/
-	clickHelper()
+	helperText()
 	{
-		// snap to the grid
-		this.leftClickStart = this.snapToGrid(this.leftClickStart);
-
-		let division = 1/this.snapAmount;
-		// Line the two x coords up to snap to the appropriate rectangle edges
-		if (this.leftClickStart.x &lt;= this.leftClickEnd.x) 
-			this.leftClickEnd.x += this.cellWidth * division;
-		else 
-			this.leftClickEnd.x = this.leftClickStart.x+this.cellWidth * division;
-
-		// Line the two y coords up to snap to the appropriate rectangle edges
-		if (this.leftClickStart.y &lt;= this.leftClickEnd.y)
-			this.leftClickEnd.y += this.cellHeight;
-		else
-			this.leftClickStart.y += this.cellHeight;
-
-		// snap to the grid
-		this.leftClickEnd = this.snapToGrid(this.leftClickEnd);
-	}
-	/**
-	* Converts the coordinates of the input point in screen coordinates to local/world coordinates.
-	* @param {object} p - Point to convert.
-	* @returns A new point with transformed x and y coords.
-	*/
-	screenToWorldCoords(p)
-	{
-		// get and invert the canvas xform coords, then apply them to the input point
-		return this.ctx.getTransform().invertSelf().transformPoint(p);
+		// Draw text showing the mode
+		let text = ""
+		if (this.controlPressed) text = "Delete mode. ";
+		else text = "Enter mode. ";
+		text += "Press h for keybinds.";
+	
+		this.ctx.font = "bold 25px Arial";
+		this.ctx.fillStyle = 'black';
+		let textHeight = this.ctx.measureText('M').width; // The width of capital M approximates height
+		let textWidth = this.ctx.measureText(text).width;
+		this.ctx.fillText(text,this.canvas.width-textWidth,textHeight);
+		text = "translate amount: " +this.translateAmt + ", snap amount: "+this.snapAmount;
+		textWidth = this.ctx.measureText(text).width;
+		this.ctx.fillText(text,this.canvas.width-textWidth,2*textHeight);
+		text = "x zoom amount: " + this.scaleAmtX.toFixed(2);
+		text += ", y zoom amount: " + this.scaleAmtY.toFixed(2);
+		textWidth = this.ctx.measureText(text).width;
+		this.ctx.fillText(text,this.canvas.width-textWidth,3*textHeight);
+		text = "input text: " + this.workingText;
+		textWidth = this.ctx.measureText(text).width;
+		this.ctx.fillText(text,this.canvas.width-textWidth,4*textHeight);
+		text = "instrument name: " + this.name;
+		textWidth = this.ctx.measureText(text).width;
+		this.ctx.fillText(text,this.canvas.width-textWidth,5*textHeight);
 	}
 	/**
 	* Stores the instrument array corresponding to this parameter widget.
@@ -696,14 +476,13 @@ class SliderCanvas
 	{
 		this.instrument = inst;
 		this.name = name;
-	}	
+	}
 	/**
 	* Sets the instrument array corresponding to this parameter widget.
 	* @param {object} inst - The instrument array.
 	*/
 	setInstrument(inst)
 	{ this.instrument = inst; }
-
 	/**
 	* Get the name of the instrument associated with this parameter widget.
 	* @returns The above mentioned name.
@@ -711,7 +490,7 @@ class SliderCanvas
 	getName()
 	{
 		return this.name;
-	}
+	}	
 	/**
 	* Get the trackname associated to the instrument this parameter widget is assigned to.
 	* @returns The above mentioned name.
@@ -827,37 +606,106 @@ class SliderCanvas
 		this.translateAmount = x;	
 		this.draw();
 	}
+
+	/**
+	* Draw the given rectangle to the screen.
+	* @param {object} rect - The rectangle (as an array of coords) to draw.
+	*/
+	drawRectangle(rect)
+	{
+		let c1 = rect[0];
+		let c2 = rect[1];
+		let value = rect[2];
+
+		// Now we can draw the rectangle 
+		this.ctx.fillStyle = "rgb(0 255 0)";
+		this.ctx.beginPath();
+		this.ctx.moveTo(c1.x,0);
+		this.ctx.lineTo(c1.x,this.localHeight);
+		this.ctx.lineTo(c2.x,this.localHeight);
+		this.ctx.lineTo(c2.x,0);
+		this.ctx.lineTo(c1.x,0);
+		this.ctx.fill();
+
+		// Draw rectangle outlines
+		this.ctx.beginPath();
+		this.ctx.moveTo(c1.x,0);
+		this.ctx.lineTo(c1.x,this.localHeight);
+		this.ctx.lineTo(c2.x,this.localHeight);
+		this.ctx.lineTo(c2.x,0);
+		this.ctx.lineTo(c1.x,0);
+	
+		// draw the text
+		this.ctx.lineWidth = 2;
+		this.ctx.strokeStyle = 'black';
+		this.ctx.stroke();
+		this.ctx.font = "bold 50px Arial";
+		this.ctx.fillStyle = 'black';
+		this.ctx.fillText(value,c1.x,this.localHeight/2,Math.abs(c1.x-c2.x));
+	}
+
+	/**
+	* Converts the coordinates of the input point in screen coordinates to local/world coordinates.
+	* @param {object} p - Point to convert.
+	* @returns A new point with transformed x and y coords.
+	*/
+	screenToWorldCoords(p)
+	{
+		// get and invert the canvas xform coords, then apply them to the input point
+		return this.ctx.getTransform().invertSelf().transformPoint(p);
+	}
+	/**
+	* Helper that sets up leftClickEnd and leftClickStarts coordinates.
+	*/
+	clickHelper()
+	{
+		// set up left click coords
+		this.leftClickEnd = this.screenToWorldCoords(this.coord);
+
+		let division = 1/this.snapAmount;
+		// Line the two x coords up to snap to the appropriate rectangle edges
+		if (this.leftClickStart.x &lt;= this.leftClickEnd.x) 
+			this.leftClickEnd.x += this.cellWidth * division;
+		else 
+			this.leftClickEnd.x = this.leftClickStart.x+this.cellWidth * division;
+
+		// Line the two y coords up to snap to the appropriate rectangle edges
+		if (this.leftClickStart.y &lt;= this.leftClickEnd.y)
+			this.leftClickEnd.y += this.cellHeight;
+		else
+			this.leftClickStart.y += this.cellHeight;
+
+		// snap to the grid
+		this.leftClickEnd = this.snapToGrid(this.leftClickEnd);
+	}
+
+	/**
+	* Checks if point pt lies inside rectangle rect.
+	* @param {object} pt - Point to test for inclusion.
+	* @param {object} rect - Rectangle (array containing topleft/bottom right coords) to test inclusion of pt against.
+	* @returns true or false depending on if pt lies in rect.
+	*/
+	rectangleCollision(pt,rect)
+	{
+		return (rect[0].x &lt;= pt.x &amp;&amp; pt.x &lt;= rect[1].x &amp;&amp; rect[0].y &lt;= pt.y &amp;&amp; pt.y &lt;= rect[1].y);
+	}
 	/**
 	* Add rectangle to the rectangle list of this object.
 	* @param {object} rect - The rectangle to add to the list.
 	*/
 	addRectangle(rect)
 	{
-		//let c1 = {x:rect[0].x,y:rect[0].y};
-		//let c2 = {x:rect[1].x,y:rect[1].y};
-		let height = 0.25*this.localHeight// this is 75% of the canvas height since the origin is top left
-		let c1 = {x:rect[0].x,y:height};
-		let c2 = {x:rect[1].x,y:height};
-		this.sliderList.push([c1,c2]);
+		let c1 = {x:rect[0].x,y:0};
+		let c2 = {x:rect[1].x,y:0};
+		this.rectangleList.push([c1,c2,this.workingText]);
 	}
 	/**
-	* Check if input pt lies in division/snapAmount of left point of rectangle along x axis.
-	* @param {object} pt - The point to check collisions against.
-	* @param {object} rect- The rectangle to check collisions against.
-	* @returns True if pt collides with rectangle false otherwise.
+	* Checks if point pt's x coordinate lies inside rectangle rect's x axis bounds.
+	* @param {object} pt - Point to test with.
+	* @param {object} rect - Rectangle (array containing topleft/bottom right coords) to test against.
+	* @returns true or false depending on if the x coord of pt lies within the x axis bounds of rect.
 	*/
-	rectangleXAxisCollision1(pt,rect)
-	{
-		return (rect[0].x &lt;= pt.x &amp;&amp; pt.x &lt;= rect[0].x+this.cellWidth/this.snapAmount);
-	}
-	// Check if pt lies in x bounds of the given rectangle
-	/**
-	* Check if pt lies in x bounds of the given rectangle.
-	* @param {object} pt - The point to check collisions against.
-	* @param {object} rect- The rectangle to check collisions against.
-	* @returns True if pt collides with rectangle false otherwise.
-	*/
-	rectangleXAxisCollision2(pt,rect)
+	rectangleXAxisCollision(pt,rect)
 	{
 		return (rect[0].x &lt;= pt.x &amp;&amp; pt.x &lt;= rect[1].x);
 	}
@@ -879,23 +727,7 @@ class SliderCanvas
 	*/
 	splice(i,j)
 	{
-		this.sliderList.splice(i,j);
-	}
-	/**
-	* Setter for maxOut parameter.
-	* @param {number} n - The new value for maxOut.
-	*/
-	setMax(n)
-	{
-		this.maxOut = Number(n);
-	}
-	/**
-	* Setter for maxIn parameter.
-	* @param {number} n - The new value for maxIn.
-	*/
-	setMin(n)
-	{
-		this.minOut = Number(n);
+		this.rectangleList.splice(i,j);
 	}
 	/**
 	* Converts the input rectangle to a quadruple [start time, duration, note].
@@ -911,12 +743,10 @@ class SliderCanvas
 		// Get the note duration relative to the same cell scaling
 		let dur = (rect[1].x - rect[0].x)/this.cellWidth; 
 		dur = Math.round(dur * this.snapAmount) / this.snapAmount; // mult/div here preserves snapping
-		// Translate and scale the output value to the appropriate range
-		let val = (this.maxOut - this.minOut) * (this.localHeight - rect[0].y)/this.localHeight+ this.minOut;
 		// Convert raw cell values to values in seconds
 		start = this.cellsToSeconds(start,bpm);
 		dur = this.cellsToSeconds(dur,bpm);
-		return [start,dur,val];
+		return [start,dur,rect[2]]; // rect[2] contains the text output of this rectangle
 	}
 	/**
 	* Creates array of note quadruples in [start, time, duration, note] format from rectangle list.
@@ -926,9 +756,9 @@ class SliderCanvas
 	getNoteOutput(bpm)
 	{
 		let out = new Array();
-		for (let i = 0; i &lt; this.sliderList.length; i++)
+		for (let i = 0; i &lt; this.rectangleList.length; i++)
 		{
-			let note = this.convertRectToNote(this.sliderList[i],bpm);
+			let note = this.convertRectToNote(this.rectangleList[i],bpm);
 			out.push(note);	
 		}
 		return out;
@@ -941,12 +771,9 @@ class SliderCanvas
 	*/
 	cellsToSeconds(c,bpm)
 	{
-		// Conversion cell number * (beats / minute) * (cells / beat) * (minutes / second)
-		// = cells per second
 		let cellsPerSecond = bpm * (1/this.beatsPerCell) * (1/60);
 		return c/cellsPerSecond;
 	}
-
 	/**
 	* Getter for the number of beats per cell.
 	* @returns The number of beats per cell.
@@ -969,44 +796,34 @@ class SliderCanvas
 	*/
 	reconfigure(state)
 	{
-		this.sliderList = state.sliderList;
+		this.rectangleList = state.rectangleList;
+		this.workingText = state.workingText;
 
-		this.triggerMode = state.triggerMode;
+		this.lineWidth = state.lineWidth;
 
 		this.translateAmt = state.translateAmt;
 		this.scaleAmtX = state.scaleAmtX;
 		this.scaleAmtY = state.scaleAmtY;
 
+		this.triggerMode = state.triggerMode;
+
 		this.instrument = null;
 		this.name = state.name;
 		this.trackName = state.trackName;
 
-		this.beatsPerCell = state.beatsPerCell
+		this.beatsPerCell = state.beatsPerCell;
 
 		this.snapAmount = state.snapAmount;
 
-		this.maxOut = state.maxOut;
-		this.minOut = state.minOut;
-
-		this.verticalCells = state.verticalCells;
-		this.horizontalCells = state.horizontalCells;
-
 		this.localHeight = state.localHeight;
 		this.localWidth = state.localWidth;
-
-		// The cell width is determined here
+		this.cells = state.cells;
 		this.cellWidth = state.cellWidth;
-		this.cellHeight = state.cellHeight;
-
-		this.radius = state.radius;
-
-		this.rectangleStyle = state.rectangleStyle;
 		this.draw();
 	}
 }
-
-//let sliderObject = new SliderCanvas(".sliderCanvas",20,20,"lollipop");
-//let sliderObject = new SliderCanvas(".sliderCanvas",20,20,"solid");
+// Draw the divisions
+//let codedEventObject= new CodedEventCanvas(".codedEventCanvas",40);
 </code></pre>
         </article>
     </section>
