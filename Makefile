@@ -3,7 +3,7 @@ python: server.py
 	flask --app server run
 # Build the documentation from source.
 docs:
-	jsdoc --debug ./static/js/* ./templates/index.html
+	jsdoc --debug ./static/js/ ./misc_docs/README.md
 # For now just deletes all the documentation.
 clean:
 	rm -rf ./out
