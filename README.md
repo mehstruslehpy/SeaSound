@@ -23,7 +23,7 @@ Run `make` and navigate to the address in your browser that is specified by flas
 ... in progress ...
 
 ## Documentation
-... in progress ...
+For code documentation see [here](https://mehstruslehpy.github.io/SeaSound/).
 
 ## Contributing
 1. Fork the repository.
