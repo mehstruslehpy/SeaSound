@@ -11,6 +11,9 @@ docs:
 	cp ./tutorial_docs/*.html ./docs/
 	cp -rf ./tutorial_docs/01_IMAGES/ ./docs/01_IMAGES/
 	cp -rf ./tutorial_docs/02_IMAGES/ ./docs/02_IMAGES/
+	cp -rf ./tutorial_docs/03_IMAGES/ ./docs/03_IMAGES/
+	cp -rf ./tutorial_docs/04_IMAGES/ ./docs/04_IMAGES/
+	cp -rf ./tutorial_docs/05_IMAGES/ ./docs/05_IMAGES/
 # For now just deletes all the documentation.
 clean:
 	rm -rf ./docs
