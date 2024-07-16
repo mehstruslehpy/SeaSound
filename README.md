@@ -20,7 +20,7 @@ Run `make` and navigate to the address in your browser that is specified by flas
 ... in progress ...
 
 ## Tutorial
-Tutorials for using SeaSound can be found [here](https://mehstruslehpy.github.io/SeaSound/tutorial-tutorial_browser.html).
+Tutorials for using SeaSound can be found [here](https://mehstruslehpy.github.io/SeaSound/tutorial-Tutorial%20Browser.html).
 
 ## Documentation
 For code documentation see [here](https://mehstruslehpy.github.io/SeaSound/).
