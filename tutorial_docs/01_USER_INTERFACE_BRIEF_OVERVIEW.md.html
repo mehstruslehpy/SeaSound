@@ -1,0 +1,22 @@
+<h1 id="a-brief-user-interface-overview.">A Brief User Interface Overview.</h1>
+<h2 id="how-seasound-works.">How SeaSound Works.</h2>
+<p>SeaSound is an editor used to create and playback csound .csd files. The editor controls are used to describe csound code in a (hopefully) more user friendly manner than plain text editing a .csd file by hand. The controls can also be used to interact with csound’s webaudio backend for playing back the audio described by the above mentioned .csd file.</p>
+<h2 id="getting-started.">Getting Started.</h2>
+<p>On opening SeaSound you will be greeted with the following interface:</p>
+<p><img src="./01_STARTING_IMAGE.png" /></p>
+<p>The top row contains buttons for basic control of the csound backend. The bottom row contains buttons for selecting editor tabs for the basic editing features of SeaSound.</p>
+<p>These tabs are as follows:</p>
+<ol type="1">
+<li>The Playlist Editor: The playlist editor is where patterns created in the track editor can be arranged to create larger pieces of music.</li>
+<li>The Instrument Editor: The instrument editor is where csound instruments can be created to generate audio.</li>
+<li>The Track Editor: The track editor is where patterns/tracks can be created and played back. These tracks/patterns are made automatically available to the playlist editor for arrangement.</li>
+<li>The Config Tab: The config tab is used to save/load projects, load in samples to the csound backend and to write headers/footers for the score/orchestra portions of the generated csound code.</li>
+</ol>
+<p>The csound backend control buttons are as follows:</p>
+<ol type="1">
+<li>The Play Track Button: This generates and plays back the .csd file corresponding the project being worked on in the editor.</li>
+<li>The Play Pattern Button: This does the same thing as the play track button but for the currently selected pattern in the track editor tab. Note that this generates the entire orchestra, not just the orchestra corresponding to the current pattern.</li>
+<li>The Stop Button: This stops any playback.</li>
+<li>The Reinit Button: This reinitializes the csound backend.</li>
+</ol>
+<p>Note that by default the csound backend is not initialized until either the play track, play pattern or reinit buttons are selected.</p>
