@@ -7,7 +7,7 @@ SeaSound is an editor used to create and playback csound .csd files. The editor 
 
 On opening SeaSound you will be greeted with the following interface:
 
-![](./01_STARTING_IMAGE.png)
+![](./01_IMAGES/01_STARTING_IMAGE.png)
 
 The top row contains buttons for basic control of the csound backend. The bottom row contains buttons for selecting editor tabs for the basic editing features of SeaSound.
 
