@@ -4,7 +4,7 @@
 
 On clicking the instrument editor tab button at the top of the screen you are presented with the following user interface:
 
-![empty instrument editor interface](./02_OPENING_THE_INSTRUMENT_TAB.png)
+![](./02_IMAGES/02_OPENING_THE_INSTRUMENT_TAB.png)
 
 From left to right we describe the controls shown in this image:
 
@@ -23,7 +23,7 @@ From left to right we describe the controls shown in this image:
 
 To create a new instrument using the text mode interface, as described above, we can input a name such as "MyTextSynth" into the text field, select "Text" from the drop down and click the "Add" button. Doing this results in the following interface.
 
-![example text synth](./02_TEXT_SYNTH_EXAMPLE.png)
+![](./02_IMAGES/02_TEXT_SYNTH_EXAMPLE.png)
 
 From here you may input any valid csound orchestra code into the text box to create the "MyTextSynth" instrument.
 
@@ -31,7 +31,7 @@ From here you may input any valid csound orchestra code into the text box to cre
 
 To create a new instrument using the graph mode interface, as described above, we can input a name such as "MyGraphSynth" into the text field, select "Graph" from the drop down and click the "Add" button. Doing this results in the following interface.
 
-![example text synth](./02_GRAPH_SYNTH_EXAMPE_1.png)
+![](./02_IMAGES/02_GRAPH_SYNTH_EXAMPE_1.png)
 
 The canvas that has now been added to the page can be interacted with via keyboard and mouse. Importantly, take note of the text shown at the top right corner of the canvas. Information about the current mode of the canvas as well as a reminder of how to access canvas specific keybinds is shown here.
 
@@ -41,7 +41,7 @@ The basic idea of the graph canvas interface is that we can construct graph theo
 
 By pressing h with the instrument canvas in focus (i.e. clicked on) a quick reference menu showing the canvas keybinds is displayed.
 
-![the keybinds](./02_KEYBINDS.png)
+![](./02_IMAGES/02_KEYBINDS.png)
 
 #### The keybinds work as follows:
 1. The numbers 1, 2 and 3 are used to change the mode of the editor. There are three modes for the graph canvas: instrument, node and edge mode which we will describe below.
@@ -59,7 +59,7 @@ By pressing h with the instrument canvas in focus (i.e. clicked on) a quick refe
 
 A typical node looks like the following.
 
-![an example node](./02_EXAMPLE_NODE.png)
+![](./02_IMAGES/02_EXAMPLE_NODE.png)
 
 The blue rectangles at the top represent the inputs to the node. The multicolored rectangles at the bottom represent the outputs of the node. The different colors of the outputs represent the different output variable type that corresponds to that output. The text between the two rectangles represents the "name" of the node.
 
@@ -73,7 +73,7 @@ With macro nodes code is rendered in the following form `<node_outputs> <node_na
 
 In order to configure a node for the currently selected instrument you may press the "node config" described above. Doing so pops up the following dialog.
 
-![the node modal unfilled](./02_NODE_MODAL_UNFILLED)
+![](./02_IMAGES/02_NODE_MODAL_UNFILLED.png)
 
 The controls of this dialog are explained as follows:
 1. The node name field is where you can input a name for the node you wish to create.
@@ -99,11 +99,11 @@ As of right now, I do not know a good way to support certain more in depth featu
 
 So, although the graph canvas method is more visually appealing and user friendly the inputting csound instrument code by hand, this method is somewhat more limited in ability compared to the text method. For instances where deep instrument control is required it may be better to directly code your instrument in text using the methods described above.
 
-### An Exercise.
+#### An Exercise.
 
 As an exercise, attempt to construct the instrument shown below in the graph canvas interface.
 
-![an exercise synth](./02_EXERCISE.png)
+![](./02_IMAGES/02_EXERCISE.png)
 
 You may check your work by comparing it to the code shown below when the "Rendr Instr" button is pressed.
 
