@@ -1,0 +1,474 @@
+<!--
+This file is part of SeaSound.
+
+SeaSound is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+
+SeaSound is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along with SeaSound. If not, see <https://www.gnu.org/licenses/>.
+-->
+
+<!-- TODO: Possibly add tools for automation clip style features, this might also be doable via globals -->
+<!-- TODO: I think adding to the front will solve the issue with delete modes deleting unexpected things under mouse cursor in canvases -->
+<!-- TODO: Add audio clip editing/arranging features -->
+<!-- TODO: I need to figure out how to get JSdoc to actually use this documentation. -->
+<!DOCTYPE html>
+<html lang="en-US">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rectangle Drawing</title>
+	<link rel="shortcut icon" href="../static/images/favicon.png">
+	<!-- Load the csound code -->
+	<script>
+		// csound.js is the Csound WASM module
+		const csoundjs = "../static/csound/csound.js";
+		/**
+		* csound is the Csound engine object (null as we start).
+		*/
+		let csound = null;
+
+		/**
+		* Play the csd file in the string code.
+		* @param {string} code - String containing a csd file to play.
+		*/
+		async function playCode(code) 
+		{
+			// if the Csound object is not initialised initialize it
+			if(csound == null) 
+			{
+				// import the Csound method from csound.js
+				const { Csound } = await import(csoundjs);
+				// create a Csound engine object
+				csound = await Csound();
+				// set realtime audio (dac) output  
+				await csound.setOption("-odac");
+			}
+			// reset csound for next output
+			await csound.reset();
+			// compile csound code
+			await csound.compileCsdText(code);
+			// start the engine and play the code
+			await csound.start();
+		}
+
+		// TODO: I don't think I need the code variable here.
+		/**
+		* Stop any sound playback.
+		*/
+		async function stopCsound(code) 
+		{
+			// if the Csound object is initialized stop any playback
+			if(csound != null) await csound.stop();
+		}
+		/**
+		* Reinitialize the csound audio engine.
+		*/
+		async function reinitCsound() 
+		{
+			const { Csound } = await import(csoundjs);
+			// create a Csound engine object
+			csound = await Csound();
+			// set realtime audio (dac) output  
+			await csound.setOption("-odac");
+			// If necessary reload all the required audio files
+			let audioFiles = [];
+			if (typeof viewObj != 'undefined') audioFiles = viewObj.getAudioFiles();
+			for (let i = 0; i < audioFiles.length; i++)
+				csound.fs.writeFile(audioFiles[i][0], audioFiles[i][1]);
+		}
+		
+	</script>
+    <script src="../static/jszip/jszip.js" defer></script>
+    <script src="../static/filesaver/FileSaver.js" defer></script>
+	<!-- My scripts are loaded next -->
+	<!-- Library scripts are loaded  before the main script -->
+	<!-- This ensures View.js has access to all the libraries defined in the above scripts -->
+    <script src="../static/js/SliderScript.js" defer></script>
+    <script src="../static/js/CodedEventScript.js" defer></script>
+    <script src="../static/js/PointInterpScript.js" defer></script>
+    <script src="../static/js/GraphDiagramScript.js" defer></script>
+    <script src="../static/js/TextAreaInstrumentScript.js" defer></script>
+    <script src="../static/js/TrackLaneScript.js" defer></script>
+    <script src="../static/js/PianoRollScript.js" defer></script>
+	<!-- This is the main script -->
+    <script src="../static/js/View.js" defer></script>
+	<!-- CSS files are loaded next -->
+    <link href="../static/css/style.css" rel="stylesheet">
+  </head>
+  <body>
+
+	<!--tab fields -->
+	<div id="master-tab-container">
+		<div class="tab-container" id="tab-container">
+			<button class="tab-button" onclick="viewObj.playTrack();">
+				Play Track
+			</button>
+			<button class="tab-button" onclick="viewObj.playPattern();">
+				Play Pattern
+			</button>
+			<!-- <button class="tab-button">
+				Pause
+			</button> -->
+			<button class="tab-button" onclick="viewObj.stopPlayBack()">
+				Stop
+			</button>
+			<button class="tab-button" onclick="reinitCsound();">
+				Reinit
+			</button>
+	
+		</div>
+		<div class="tab-container" id="tab-container">
+			<button class="tab-button" 
+					id="playlist-editor-tab" 
+					onclick="viewObj.OpenTab('PlaylistEditor','playlist-editor-tab');">
+				Playlist Editor
+			</button>
+			<button class="tab-button" 
+					id="instrument-editor-tab" 
+					onclick="viewObj.OpenTab('InstrumentEditor','instrument-editor-tab');">
+				Instrument Editor
+			</button>
+			<button class="tab-button" 
+					id="track-editor-tab" 
+					onclick="viewObj.OpenTab('TrackEditor','track-editor-tab');">
+				Track Editor
+			</button>
+			<button class="tab-button" 
+					id="config-tab" 
+					onclick="viewObj.OpenTab('Configuration','config-tab');">
+				Config
+			</button>
+		</div>
+
+		<!-- Playlist editor tab -->
+		<div id="PlaylistEditor" class="tab" style="display:none">
+			<!-- Div for track tab controls -->
+			<div class="menu-control-container" id="playlist-controls">
+				<!-- Selector for choosing a pattern -->
+				<label class="lr-pad">Select Track:</label>
+				<select class="lr-pad" 
+						id="pattern-select"
+						onchange="viewObj.PatternSelect();">
+					<option value="NULL">NULL</option>
+				</select> 
+				<!-- For choosing the bpm and cells per beat values -->
+				<label class="lr-pad">BPM:</label>
+				<input type="number" id="playlist-bpm" placeholder="140"> </br>
+				<label class="lr-pad">Beats Per Block:</label>
+				<input type="number" id="playlist-bpb" placeholder="4"> </br>
+
+
+				<label class="lr-pad">Reset Playlist:</label>
+				<!-- Button for adding a track -->
+				<button class="lr-pad" onclick='document.getElementById("playlist-dialog").showModal();'>
+					Reset
+				</button>
+
+				<!-- Button for rendering the score-->
+				<button class="lr-pad" onclick='viewObj.renderScore(true);'>
+					Render Score
+				</button>
+				<!-- Button for rendering the whole thing to a csd file -->
+				<button class="lr-pad" onclick='viewObj.renderCSD(true);'>
+					Render CSD
+				</button>
+
+
+
+				<!-- Pop up dialog containing csound track -->
+				<dialog id="score-code-dialog">
+				<textarea readonly id="score-code-dialog-output" style="width:500px;height:150px;" spellcheck="false">
+				</textarea>
+				<form method="dialog">
+				<button id="cancel" type="reset" onclick='document.getElementById("score-code-dialog").close();'>Close</button>
+				</form>
+				</dialog>
+
+				<!-- Pop up dialog for a new canvas -->
+				<dialog id="playlist-dialog">
+				<form method="dialog" style="display:table;">
+				<div style="display:table-row;">
+					<label style="display:table-cell;">Vertical Cells:</label>
+					<input style="display:table-cell;"type="number" id="playlist-vertical-cells" placeholder="20"> </br>
+				</div>
+				<div style="display:table-row;">
+					<label style="display:table-cell;">Horizontal Cells:</label>
+					<input style="display:table-cell;" type="number" id="playlist-horizontal-cells" placeholder="20"> </br>
+				</div>
+				<button type="reset" onclick='document.getElementById("playlist-dialog").close();'>Cancel</button>
+				<button type="submit" onclick="viewObj.ResetPlaylist();">
+					Confirm
+				</button>
+				</form>
+				</dialog>
+
+			</div>
+			<!-- Canvas for displaying track/lanes -->
+			<canvas id="trackLaneCanvas" tabindex="1">
+				<p>A track/lane canvas.</p>
+			</canvas>
+		</div>
+
+		<!-- <div id="TrackEditor" class="tab" style="display:block"> -->
+		<div id="TrackEditor" class="tab" style="display:none">
+			<!-- Div for track tab controls -->
+			<div class="menu-control-container" id="track-controls">
+				<!-- Selector for choosing a pattern -->
+				<label class="lr-pad">Select Track:</label>
+				<select class="lr-pad" 
+						id="track-canvases-select" 
+						onchange="viewObj.SelectDropDown('track-canvases',this.value)">
+					<option value="NULL">NULL</option>
+				</select> 
+				<button class="lr-pad" 
+						onclick="viewObj.DeleteTrackSelection();">
+					Delete Track
+				</button>
+
+				<!-- Button for adding a track -->
+				<button class="lr-pad" onclick='document.getElementById("track-dialog").showModal();'>
+					Add Track
+				</button>
+				<label class="lr-pad">Switch Parameter:</label>
+				<!-- Button for showing next paramter -->
+				<button class="lr-pad" onclick='viewObj.NextParameter();'>
+					+
+				</button>
+				<!-- Button for showing prev parameter -->
+				<button class="lr-pad" onclick='viewObj.PrevParameter();'>
+					-
+				</button>
+				<!-- Display the currently parameter -->
+				<label class="lr-pad" id="param-num">Current Parameter: *** </label>
+				<!-- Button to kick off rendering the output of the track to text -->
+				<button class="lr-pad" onclick='viewObj.renderTrack(0,true);'>
+					Render Track
+				</button>
+				<!-- Buttons for saving/loading tracks -->
+				<button class="lr-pad" onclick='viewObj.saveTrack();'>
+					Save Track
+				</button>
+				<button class="lr-pad" onclick='viewObj.loadTrack();'>
+					Load Track
+				</button>
+	
+				<!-- Pop up dialog containing track parameters -->
+				<dialog id="track-dialog" onclose="viewObj.CheckDialogReopen();">
+				<form method="dialog" style="display:table;">
+				<div style="display:table-row;">
+					<label style="display:table-cell;">Track Name:</label>
+					<input style="display:table-cell;"type="text submit" id="track-name" name="track-name"> </br>
+				</div>
+				<div style="display:table-row;">
+					<label style="display:table-cell;">Instrument:</label>
+					<input list="instruments-datalist" id="instrument-for-track">
+					<datalist id="instruments-datalist">
+  						<option value="EMPTY-INSTRUMENT">
+					</datalist>
+				</div>
+				<div style="display:table-row;">
+					<label style="display:table-cell;">Parameter:</label>
+					<select style="display:table-cell;" class="lr-pad" id="parameter-type-select"> 
+						<option value="Pianoroll">Pianoroll</option>
+						<option value="Lollipop">Lollipop</option>
+						<option value="Event">Event</option>
+						<option value="Bars">Bars</option>
+					</select> 
+				</div>
+				<div style="display:table-row;">
+					<label style="display:table-cell;">Add/Remove:</label>
+					<button style="display:table-cell;" class="lr-pad" onclick='viewObj.AddParameter();'> + </button>
+					<button style="display:table-cell;" class="lr-pad" onclick='viewObj.RemoveParameter();'> - </button>
+				</div>
+				<div style="display:table-row;">
+					<p style="display:table-cell; color:grey;"> Note: Starred first instrument triggers notes. </p>
+				</div>
+				<table id="param-list" style="padding-left:2em;">
+					<!-- List of parameters is displayed in this table -->
+				</table>
+				<div style="display:table-row;">
+					<label style="display:table-cell;">Horizontal Cells:</label>
+					<input style="display:table-cell;" type="number" id="track-horizontal-cells" placeholder="16"> </br>
+				</div>
+				<div style="display:table-row;">
+					<label style="display:table-cell;">Beats Per Cell:</label>
+					<input style="display:table-cell;"type="number" id="track-beats-per-cell" placeholder="1"> </br>
+				</div>
+	
+				<button id="cancel" type="reset" onclick='document.getElementById("track-dialog").close();'>Cancel</button>
+				<button type="submit" 
+						onclick="viewObj.AddCanvas('track-canvases','track',document.getElementById('track-name').value)">
+					Confirm
+				</button>
+				</form>
+				</dialog>
+			</div>
+
+			<!-- Pop up dialog containing csound track -->
+			<dialog id="track-code-dialog">
+			<textarea readonly id="track-code-dialog-output" style="width:500px;height:150px;" spellcheck="false">
+			</textarea>
+			<form method="dialog">
+			<button id="cancel" type="reset" onclick='document.getElementById("track-code-dialog").close();'>Close</button>
+			</form>
+			</dialog>
+
+
+			<!-- Canvases for track lane diagrams-->
+			<!-- the tabindex value makes the canvas focusable for catching keystrokes -->
+			<div id="track-canvases"></div>
+		</div>
+
+		<div id="Configuration" class="tab" style="display:none">
+			<div class="menu-control-container" id="config-controls">
+				<label class="lr-pad">Project Controls:</label>
+				<button class="lr-pad" onclick='viewObj.saveProject();'>
+					Save Project
+				</button>
+				<button class="lr-pad" onclick='viewObj.loadProject();'>
+					Load Project
+				</button>
+				<button class="lr-pad" onclick='viewObj.loadAudioFile();'>
+					Load Sample
+				</button>
+				<button class="lr-pad" onclick='document.getElementById("sample-dialog").showModal();'>
+					View Samples
+				</button>
+			</div>
+
+			<!-- Pop up dialog containing list of loaded samples -->
+			<dialog id="sample-dialog">
+			<table id="sample-list" style="padding-left:2em;">
+				<!-- List of samples is displayed in this table -->
+			</table>
+			<form method="dialog">
+			<button id="cancel" type="reset" onclick='document.getElementById("sample-dialog").close();'>Close</button>
+			</form>
+			</dialog>
+
+			<label>Score Header:</label> </br>
+			<textarea cols="160" rows="5" id="score-header" spellcheck="false"></textarea> </br>
+			<label>Score Footer:</label> </br>
+			<textarea cols="160" rows="5" id="score-footer" spellcheck="false"></textarea> </br>
+			<label>Orchestra Header:</label> </br>
+			<textarea cols="160" rows="5" id="orchestra-header" spellcheck="false">
+sr = 44100 
+ksmps = 32 
+nchnls = 2 
+0dbfs  = 1
+			</textarea> </br>
+			<label>Orchestra Footer:</label> </br>
+			<textarea cols="160" rows="5" id="orchestra-footer" spellcheck="false"></textarea> </br>
+		</div>
+
+		<!-- GraphDiagram tab -->
+		<div id="InstrumentEditor" class="tab" style="display:none">
+			<!-- Div for instrument tab controls -->
+			<div class="menu-control-container" id="instrument-controls">
+				<!-- Selector for choosing an instrument to edit -->
+				<label class="lr-pad">Select Instrument:</label>
+				<!-- Options are added dynamically here -->
+				<select class="lr-pad" 
+						id="instrument-canvases-select" 
+						onchange="viewObj.SelectDropDown('instrument-canvases',this.value)">
+					<option value="NULL">NULL</option>
+				</select> 
+				<!-- Button for deleting current instrument -->
+				<button class="lr-pad" onclick="viewObj.DeleteInstrumentSelection()">
+					Delete
+				</button>
+				<!-- Button for adding an instrument -->
+ 				<div class="lr-pad">
+  					<label>New Instrument:</label>
+					<select class="lr-pad" id="new-instrument-input-type">
+						<option value="graph">Graph</option>
+						<option value="text">Text</option>
+					</select> 
+	
+
+  					<input type="text submit" 
+							id="instrument-name" 
+							name="instrument-name" 
+							onkeypress="viewObj.EnterHandler(event, 
+															'instrument-canvases', 
+															'instrument', 
+															document.getElementById('instrument-name').value)">
+				</div> 
+	
+				<button class="lr-pad" 
+						onclick="viewObj.AddCanvas('instrument-canvases',
+													'instrument',
+													document.getElementById('instrument-name').value)">
+					Add
+				</button>
+
+			
+				<!-- Button for opening node parameter dialog-->
+				<button class="lr-pad" onclick='document.getElementById("node-dialog").showModal();'>
+					Node Config
+				</button>
+				<!-- Button for outputting instrument code -->
+				<button class="lr-pad" onclick='viewObj.renderInstrument();'>
+					Render Instr
+				</button>
+				<!-- Button for outputting all instrument code -->
+				<button class="lr-pad" onclick='viewObj.renderOrchestra(true);'>
+					Render Orch
+				</button>
+				<button class="lr-pad" onclick='viewObj.saveInstrument()'>
+					Save Instr
+				</button>
+				<button class="lr-pad" onclick='viewObj.loadInstrument();'>
+					Load Instr
+				</button>
+	
+				<!-- Pop up dialog containing node parameters -->
+				<dialog id="node-dialog">
+				<form method="dialog" style="display:table;">
+				<div style="display:table-row;">
+					<label style="display:table-cell;">Node Name:</label>
+					<input style="display:table-cell;"type="text submit" id="node-name" name="node-name" placeholder="osc"></br>
+				</div>
+				<div style="display:table-row;">
+					<label style="display:table-cell;">Inputs:</label>
+					<input style="display:table-cell;" type="number" id="node-inputs" placeholder="3"></br>
+				</div>
+				<div style="display:table-row;">
+					<label style="display:table-cell;">Outputs Types:</label>
+					<input style="display:table-cell;" type="text" id="node-outputs" placeholder="a,k,i"></br>
+				</div>
+
+				<div style="display:table-row;">
+					<label style="display:table-cell;">Output Style:</label>
+					<select style="display:table-cell" id="node-output-type">
+						<option value="FUNCTIONAL">Functional</option>
+						<option value="MACRO">Macro</option>
+					</select> 
+				</div>
+
+				<button id="cancel" type="reset" onclick='document.getElementById("node-dialog").close();'>Cancel</button>
+				<button type="submit" 
+						onclick="viewObj.configureNode();">
+					Confirm
+				</button>
+				</form>
+				</dialog>
+
+				<!-- Pop up dialog containing node parameters -->
+				<dialog id="instr-code-dialog">
+				<textarea readonly id="instrument-code-dialog-output" style="width:500px;height:150px;" spellcheck="false">
+				</textarea>
+				<form method="dialog">
+				<button id="cancel" type="reset" onclick='document.getElementById("instr-code-dialog").close();'>Close</button>
+				</form>
+				</dialog>
+
+			</div>
+			<!-- Canvases for displaying graph diagrams -->
+			<!-- the tabindex value makes the canvas focusable for catching keystrokes -->
+			<div id="instrument-canvases"></div>
+		</div>
+	</div>
+  </body>
+</html>

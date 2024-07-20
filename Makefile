@@ -14,6 +14,9 @@ docs:
 	cp -rf ./tutorial_docs/03_IMAGES/ ./docs/03_IMAGES/
 	cp -rf ./tutorial_docs/04_IMAGES/ ./docs/04_IMAGES/
 	cp -rf ./tutorial_docs/05_IMAGES/ ./docs/05_IMAGES/
+	cp -rf ./static ./docs/static
+	rm -rf ./docs/static/node_modules
+	cp -rf ./templates ./docs/templates
 # For now just deletes all the documentation.
 clean:
 	rm -rf ./docs
