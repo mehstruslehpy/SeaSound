@@ -31,7 +31,7 @@ From here you may input any valid csound orchestra code into the text box to cre
 
 To create a new instrument using the graph mode interface, as described above, we can input a name such as "MyGraphSynth" into the text field, select "Graph" from the drop down and click the "Add" button. Doing this results in the following interface.
 
-![](./02_IMAGES/02_GRAPH_SYNTH_EXAMPE_1.png)
+![](./02_IMAGES/02_GRAPH_SYNTH_EXAMPLE_1.png)
 
 The canvas that has now been added to the page can be interacted with via keyboard and mouse. Importantly, take note of the text shown at the top right corner of the canvas. Information about the current mode of the canvas as well as a reminder of how to access canvas specific keybinds is shown here.
 
@@ -116,3 +116,5 @@ You may check your work by comparing it to the code shown below when the "Rendr 
     endin
 
 Hint: The variable name prefixes in the code above tell you the correct variable types to use in the node config dialog for each node.
+
+[return](./tutorial-Tutorial Browser.html)

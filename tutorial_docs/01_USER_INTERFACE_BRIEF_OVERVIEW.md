@@ -26,3 +26,5 @@ The csound backend control buttons are as follows:
 1. The Reinit Button: This reinitializes the csound backend.
 
 Note that by default the csound backend is not initialized until either the play track, play pattern or reinit buttons are selected.
+
+[return](./tutorial-Tutorial Browser.html)
