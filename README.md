@@ -17,7 +17,10 @@ As of right now to develop and use this program my machine runs: Firefox 114.0.2
 Run `make` and navigate to the address in your browser that is specified by flask at the terminal.
 
 ## Demo
-... in progress ...
+
+You can try SeaSound in your browser by clicking [here](https://mehstruslehpy.github.io/SeaSound/templates/index.html).
+
+Demo videos on how to use it are coming soon. For now see the tutorials and documentation shown below.
 
 ## Tutorial
 Tutorials for using SeaSound can be found [here](https://mehstruslehpy.github.io/SeaSound/tutorial-Tutorial%20Browser.html).
