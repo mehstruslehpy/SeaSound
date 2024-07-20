@@ -4,3 +4,11 @@
 
 [3. The Track Editor](./03_THE_TRACK_EDITOR.md.html)
 
+[4. The Config Editor](./04_THE_CONFIG_EDITOR.md.html)
+
+[5. The Playlist Editor](./05_THE_PLAYLIST_EDITOR.md.html)
+
+[6. Making A Simple Project](./06_MAKING_A_SIMPLE_PROJECT.md.html)
+
+[7. Saving And Loading Projects](./07_SAVING_AND_LOADING_PROJECTS.md.html)
+

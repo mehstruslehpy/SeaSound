@@ -11,7 +11,7 @@ SeaSound is an experimental browser based front-end to csound for simple music c
 - [Licensing](#licensing)
 
 ## Installation
-As of right now to develop and use this program my machine runs: Firefox 114.0.2, Python 3.8.10, Flask 2.2.2, Werkzeug 2.2.2 along with Bash. 
+As of right now to develop and use this program my machine runs: Firefox 114.0.2, Python 3.8.10, Flask 2.2.2, Werkzeug 2.2.2 along with Bash. To build the docs I am using pandoc 2.5 and jsdoc 4.0.3.
 
 ## Start-up
 Run `make` and navigate to the address in your browser that is specified by flask at the terminal.
