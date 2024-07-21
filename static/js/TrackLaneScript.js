@@ -21,6 +21,8 @@ class TrackLaneCanvas
 	blockSize = 1; // length of the rectangle to draw
 	blockName = "EMPTY";
 	rectangleFontSize = 1;
+	lineWidth = 0.5; // The line width for rectangles and cell divisions
+	seekLineWidth = 2; // The width of the seek line
 	
 	// values for changing the scale and translate amount
 	translateAmt = 10;
@@ -37,7 +39,6 @@ class TrackLaneCanvas
 	// For note area dimensions in local coords
 	localWidth = 0;
 	localHeight = 0;
-
 
 	// Initial set up
 	constructor(query,horizontalCells,verticalCells)
@@ -71,6 +72,7 @@ class TrackLaneCanvas
 			this.ctx.font = "bold "+this.rectangleFontSize+"px Arial";
 			this.rectangleFontSize++;
 		}
+		this.rectangleFontSize = 0.75*this.rectangleFontSize; // We scale by a padding factor of 75% for vertical fitting
 
 		var that = this;
 		this.canvas.addEventListener('mousedown', function(ev) { that.leftClickDown(); }); 
@@ -103,11 +105,7 @@ class TrackLaneCanvas
 		this.moveIndex = -1; // the index that the collision occurred at 
 		this.inputMode = "BLOCK";
 		this.blockSize = 1; // length of the rectangle to draw
-	
-		// values for changing the scale and translate amount
-		this.translateAmt = 10;
-		this.scaleAmtX = 1.15;
-		this.scaleAmtY = 1.15;
+		this.rectangleFontSize = 1;
 
 		// Set up cell sizes
 		this.verticalCells = verticalCells;
@@ -116,6 +114,15 @@ class TrackLaneCanvas
 		// Compute widths and heights of cells
 		this.cellWidth = this.localWidth/this.verticalCells; // the number of vertical cell divisions controls cell widths
 		this.cellHeight = this.localHeight/this.horizontalCells; // the number of horizontal cell divisions controls cell heights
+
+		// set up font height
+		this.ctx.font = "bold "+this.rectangleFontSize+"px Arial";
+		while (this.ctx.measureText('@').width < this.cellHeight) // The width of @ approximates height
+		{
+			this.ctx.font = "bold "+this.rectangleFontSize+"px Arial";
+			this.rectangleFontSize++;
+		}
+		this.rectangleFontSize = 0.75*this.rectangleFontSize; // We scale by a padding factor of 75% for vertical fitting
 
 		// do the first draw
 		this.draw();
@@ -358,7 +365,7 @@ class TrackLaneCanvas
 		for (var i = 0; i < this.verticalCells; i++)
 		{
 			this.ctx.strokeStyle = 'black';
-			this.ctx.lineWidth = 1;
+			this.ctx.lineWidth = this.lineWidth;
 			this.ctx.beginPath();
 			this.ctx.moveTo(i*(this.localWidth/this.verticalCells),0);
 			this.ctx.lineTo(i*(this.localWidth/this.verticalCells),this.localHeight);
@@ -369,7 +376,7 @@ class TrackLaneCanvas
 		for (var i = 0; i < this.horizontalCells; i++)
 		{
 			this.ctx.strokeStyle = 'black';
-			this.ctx.lineWidth = 1;
+			this.ctx.lineWidth = this.lineWidth;
 			this.ctx.beginPath();
 			this.ctx.moveTo(0,i*(this.localHeight/this.horizontalCells));
 			this.ctx.lineTo(this.localWidth,i*(this.localHeight/this.horizontalCells));
@@ -389,7 +396,7 @@ class TrackLaneCanvas
 
 		// draw seek line
 		this.ctx.strokeStyle = 'red';
-		this.ctx.lineWidth = 2;
+		this.ctx.lineWidth = this.seekLineWidth;
 		this.ctx.beginPath();
 		this.ctx.moveTo(this.seekPos.x,0);
 		this.ctx.lineTo(this.seekPos.x,this.localHeight);
@@ -431,12 +438,12 @@ class TrackLaneCanvas
 		this.ctx.lineTo(bottomRight.x,bottomRight.y);
 		this.ctx.lineTo(bottomRight.x,topLeft.y);
 		this.ctx.lineTo(topLeft.x,topLeft.y);
-		this.ctx.lineWidth = 2;
+		this.ctx.lineWidth = this.lineWidth;
 		this.ctx.strokeStyle = 'black';
 		this.ctx.stroke();
 
 		// draw the text
-		this.ctx.lineWidth = 2;
+		this.ctx.lineWidth = this.lineWidth;
 		this.ctx.strokeStyle = 'black';
 		this.ctx.stroke();
 
@@ -456,7 +463,7 @@ class TrackLaneCanvas
 		this.ctx.lineTo(c2.x,c2.y);
 		this.ctx.lineTo(c2.x,c1.y);
 		this.ctx.lineTo(c1.x,c1.y);
-		this.ctx.lineWidth = 2;
+		this.ctx.lineWidth = this.lineWidth;
 		this.ctx.strokeStyle = 'black';
 		this.ctx.stroke();
 	}
@@ -468,7 +475,7 @@ class TrackLaneCanvas
         this.ctx.arc(c.x, c.y, this.radius, 0, 2 * Math.PI, false);
         this.ctx.fillStyle = 'green';
         this.ctx.fill();
-        this.ctx.lineWidth = 2;
+        this.ctx.lineWidth = this.lineWidth;
         this.ctx.strokeStyle = 'black';
         this.ctx.stroke();
     }
@@ -654,6 +661,7 @@ class TrackLaneCanvas
 			this.ctx.font = "bold "+this.rectangleFontSize+"px Arial";
 			this.rectangleFontSize++;
 		}
+		this.rectangleFontSize = 0.75*this.rectangleFontSize; // We scale by a padding factor of 75% for vertical fitting
 		this.draw();
 	}
 }
