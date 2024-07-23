@@ -23,8 +23,8 @@ You can try SeaSound in your browser by clicking [here](https://mehstruslehpy.gi
 
 As a quick demo you may load a sample project by executing the following steps.
 
-1. Open SeaSound in a new tab using the link above.
-2. In the sample_projects directory of the SeaSound source code download the "DrumAndBassArp.zip" project file to your computer.
+1. In the sample_projects directory of the SeaSound source code download the "DrumAndBassArp.zip" project file to your computer.
+2. Open SeaSound in a new tab using the link above.
 3. Press the "Config" button at the top right corner of the display to open the config editor.
 4. Press the "Reinit" button at the top right corner of the display to start the csound backend.
 5. Press the "Load Project" button in the config editor to load the sample project you downloaded in the previous steps from wherever you browser downloaded it to on your computer. Note that if the csound backend has not finished loading yet you will get a pop up warning saying "Csound subsystem must be initialized to load project files." if this occurs wait several seconds for the csound backend to load and then try to pressing the "Load Project" button again. If necessary you may need to press the "Reinit" button to try and reload the csound backend as well.
