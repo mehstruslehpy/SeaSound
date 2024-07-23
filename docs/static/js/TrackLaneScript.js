@@ -7,40 +7,116 @@ SeaSound is distributed in the hope that it will be useful, but WITHOUT ANY WARR
 
 You should have received a copy of the GNU General Public License along with SeaSound. If not, see <https://www.gnu.org/licenses/>.
 */
+
 // TODO: Fix draw error on empty project. Empty project throws an error while doing first draw on project loading.
+/**
+* The track lane class is used to create and edit arrangements of tracks created by the track editor.
+* This allows the construction of larger scale pieces of music with tracks in the track editor as building blocks.
+* @class
+* @public
+*/
 class TrackLaneCanvas
 {
-	coord = {x:0, y:0}; // the coords of the mouse
-	leftClickStart = {x:0, y:0}; // the coords of the mouse at the start of a click
-	leftClickEnd = {x:0, y:0}; // the coords of the mouse at the release of a click
-	mousePressed = false; //record whether the mouse has been pressed
-	trackList = new Array(); // tracks are arrays of rectangles specified by their top left and bottom right coords
-	workingRectangle = null; // A rectangle not yet saved in the tracklist
-	existingCollision = false; // flag tracking whether the user has clicked an existing rectangle
-	moveIndex = -1; // the index that the collision occurred at 
-	blockSize = 1; // length of the rectangle to draw
+	/**
+	* The coords of the mouse.
+	*/
+	coord = {x:0, y:0};
+	/**
+	* the coords of the mouse at the start of a click.
+	*/
+	leftClickStart = {x:0, y:0};
+	/**
+	* The coords of the mouse at the release of a click.
+	*/
+	leftClickEnd = {x:0, y:0};
+	/**
+	* Tracks if mouse has been pressed or not.
+	*/
+	mousePressed = false;
+	/**
+	* The list of tracks created so far.
+	* Tracks are stored as a triple containing their top left and bottom right coords as well as the name of the track.
+	*/
+	trackList = new Array();
+	/**
+	* The rectangle (track) being created this mouse click.
+	*/
+	workingRectangle = null;
+	/**
+	* Flag tracking whether the user has clicked an existing rectangle.
+	*/
+	existingCollision = false;
+	/**
+	* The index the collision occured at.
+	*/
+	moveIndex = -1;
+	/**
+	* The length of the rectangle/track to draw.
+	*/
+	blockSize = 1;
+	/**
+	* The name of the rectangle to draw.
+	*/
 	blockName = "EMPTY";
+	/**
+	* Stores the size of the rectangle font. This is initialized here but computed at reset() and on running the constructor.
+	*/
 	rectangleFontSize = 1;
-	lineWidth = 0.5; // The line width for rectangles and cell divisions
-	seekLineWidth = 2; // The width of the seek line
+	/**
+	* The line width for rectangles and cell divisions.
+	*/
+	lineWidth = 0.5;
+	/**
+	* The width of the seek line.
+	*/
+	seekLineWidth = 2;
 	
-	// values for changing the scale and translate amount
+	/**
+	* Amount translate changes by.
+	*/
 	translateAmt = 10;
+	/**
+	* Amount X scaling changes by.
+	*/
 	scaleAmtX = 1.15;
+	/**
+	* Amount Y scaling changes by.
+	*/
 	scaleAmtY = 1.15;
 
-	// The position of the seek line
+	/**
+	* The position of the seek line.
+	*/
 	seekPos = {x:0, y:0}; 
 
-	// Input modes and the current input mode
+	/**
+	* The various modes a tracklane widget can be in.
+	* Seek mode is used for changing the position of the seek line on mouse click.
+	* Block mode is used for entering blocks to the widget via mouse click.
+	* Delete mode is used for deleting blocks from the widget via mouse click.
+	*/
 	inputModes = ["SEEK","BLOCK","DELETE"];
+	/**
+	* The mode that the widget is currently in.
+	*/
 	inputMode = "BLOCK";
 
-	// For note area dimensions in local coords
+	/**
+	* Width of a cell in local, i.e., not screen coords.
+	*/
 	localWidth = 0;
+	/**
+	* Height of a cell in local, i.e., not screen coords.
+	*/
 	localHeight = 0;
 
-	// Initial set up
+	// TODO: We should factor common code from this into reset and just call reset here instead.
+	/**
+	* Construct a tracklane canvas widget instance and draw it to the screen.
+	* @param {string} query - String containing html id of the canvas we are constructing for.
+	* @param {number} horizontalCells - The number of horizontal cells to draw.
+	* @param {number} verticalCells - The number of vertical cells to draw.
+	*/
 	constructor(query,horizontalCells,verticalCells)
 	{
 		// Set Up the canvas
@@ -92,7 +168,12 @@ class TrackLaneCanvas
 		this.draw();
 	}
 
-	// Reset all the variables of the canvas
+	/**
+	* Resets the state of the canvas.
+	* Most often this function is used to change the number of horizontal and vertical cells.
+	* @param {number} horizontalCells - The number of horizontal cells to draw.
+	* @param {number} verticalCells - The number of vertical cells to draw.
+	*/
 	reset(horizontalCells,verticalCells)
 	{
 		this.coord = {x:0, y:0}; // the coords of the mouse
@@ -128,7 +209,10 @@ class TrackLaneCanvas
 		this.draw();
 	}
 
-	// Keyboard button handler
+	/**
+	* Handles button clicks from the user.
+	* @param {event} ev - The event containing the button click we are handling.
+	*/
 	buttonClick(ev)
 	{
 		let controlText = "";
@@ -185,7 +269,11 @@ class TrackLaneCanvas
 		this.draw();
 	}
 
-	// Snap input coordinates to grid and return the resulting coord
+	/**
+	* Snap input coordinates to grid and return the resulting coord
+	* @param {number} c - the coordinate to snap to the grid.
+	* @returns The coordinate resulting from snapping c to the grid.
+	*/
 	snapToGrid(c)
 	{
 		var out = {
@@ -195,7 +283,9 @@ class TrackLaneCanvas
 		return out;
 	}
 
-	// Runs on pressing down left click of mouse
+	/**
+	* Handle when mouse left click is pressed down.
+	*/
 	leftClickDown()
 	{
 		this.mousePressed = true;
@@ -240,7 +330,9 @@ class TrackLaneCanvas
 		this.workingRectangle = new Array(this.leftClickStart,this.leftClickEnd);
 		this.draw();
 	}
-
+	/**
+	* Handle left click presses while in delete mode.
+	*/
 	deleteModeLeftClickDown()
 	{
 		this.mousePressed = false;
@@ -254,7 +346,9 @@ class TrackLaneCanvas
 		this.draw();
 	}
 
-	// Runs on release of left click of mouse
+	/**
+	* Handle release of mouse left click.
+	*/
 	leftClickUp()
 	{
 		this.mousePressed = false;
@@ -298,13 +392,20 @@ class TrackLaneCanvas
 		this.draw();
 	}
 	
-	// Check if pt lies inside the rectangle given by track
+	/**
+	* Checks if point pt lies inside rectangle rect.
+	* @param {object} pt - Point to test for inclusion.
+	* @param {object} track - Rectangle/track (array containing topleft/bottom right coords) to test inclusion of pt against.
+	* @returns true or false depending on if pt lies in rect.
+	*/
 	rectangleCollision(pt,track)
 	{
 		return (track[0].x <= pt.x && pt.x <= track[1].x && track[0].y <= pt.y && pt.y <= track[1].y);
 	}
 
-	// Update the current coordinates of the mouse
+	/**
+	* Update the current coordinates of the mouse.
+	*/
 	updateMouseCoordinates()
 	{
 		this.coord.x = event.clientX - this.canvas.offsetLeft; 
@@ -344,7 +445,10 @@ class TrackLaneCanvas
 			}
 		}
 	}	
-	// Compute+draw the cell divisions of the display
+
+	/**
+	* Draw the current state of the widget to the screen.
+	*/
 	draw()
 	{
 		// First we need to clear the old background 
@@ -420,6 +524,12 @@ class TrackLaneCanvas
 		this.ctx.restore();
 
 	}
+	/**
+	* Draw a rectangle with the given points and color.
+	* @param {object} c1 - Object denoting top left coord of rectangle.
+	* @param {object} c2 - Object denoting bottom right coord of rectangle.
+	* @param {string} name - String containing the name of the rectangle.
+	*/
 	drawRectangle(topLeft,bottomRight,name)
 	{
 		// Now we can draw the rectangle 
@@ -454,7 +564,11 @@ class TrackLaneCanvas
 		this.ctx.fillText(name,topLeft.x,topLeft.y+this.cellHeight,Math.abs(topLeft.x-bottomRight.x)*0.90);
 		this.ctx.textBaseline = "alphabetic";
 	}
-
+	/**
+	* Draw a rectangle outline with the given points.
+	* @param {object} c1 - Object denoting top left coord of rectangle.
+	* @param {object} c2 - Object denoting bottom right coord of rectangle.
+	*/
 	drawRectangleOutline(c1,c2)
 	{
 		this.ctx.beginPath();
@@ -468,19 +582,10 @@ class TrackLaneCanvas
 		this.ctx.stroke();
 	}
 
-    // Draw a circle around the input coord
-    circleCoord(c)
-    {
-        this.ctx.beginPath();
-        this.ctx.arc(c.x, c.y, this.radius, 0, 2 * Math.PI, false);
-        this.ctx.fillStyle = 'green';
-        this.ctx.fill();
-        this.ctx.lineWidth = this.lineWidth;
-        this.ctx.strokeStyle = 'black';
-        this.ctx.stroke();
-    }
-
-	// Set up left click start and end coords to be at rectangle boundary points
+	// TODO: This should probably be renamed to match the other widgets.
+	/**
+	* Helper that sets up leftClickEnd and leftClickStarts coordinates.
+	*/
 	rectangleHelper()
 	{
 		// set up left click coords
@@ -503,17 +608,31 @@ class TrackLaneCanvas
 		this.leftClickEnd = this.snapToGrid(this.leftClickEnd);
 	}
 
+	/**
+	* Used for incrementing blocksize variable.
+	*/
 	incrementBlockSize()
 	{
 		this.blockSize++;
 		this.draw();
 	}
+	/**
+	* Used for incrementing blocksize variable.
+	*/
 	decrementBlockSize()
 	{
 		if (this.blockSize > 1) this.blockSize--;
 		this.draw();
 	}
 
+	/**
+	* This function is used to check if the rectangle specified by [left,right]
+	* collides with (i.e. intersects) any other rectangles in our list of rectangles.
+	* This function returns true if so and false otherwise.
+	* @param {object} left - The left endpoint of the rectangle.
+	* @param {object} right - The right endpoint of the rectangle.
+	* @returns True or false depending on if the input rectangle intersects any of the rectangles in our track list so far.
+	*/
 	rectCollisionCheck(left,right)
 	{
 		// the return value
@@ -545,14 +664,22 @@ class TrackLaneCanvas
 		return collision;
 	}
 
-	// Converts p a point on the screen (usually a mouse click) to a point in world coords
+
+	/**
+	* Converts the coordinates of the input point in screen coordinates to local/world coordinates.
+	* @param {object} p - Point to convert.
+	* @returns A new point with transformed x and y coords.
+	*/
 	screenToWorldCoords(p)
 	{
 		// get and invert the canvas xform coords, then apply them to the input point
 		return this.ctx.getTransform().invertSelf().transformPoint(p);
 	}
 
-	// print the on screen helper text
+
+	/**
+	* Prints helper text to the top right corner of the widget.
+	*/
 	helperText()
 	{
 		// Draw text showing the mode
@@ -579,17 +706,33 @@ class TrackLaneCanvas
 		textWidth = this.ctx.measureText(text).width;
 		this.ctx.fillText(text,this.canvas.width-textWidth,4*textHeight);
 	}
+	/**
+	* Used for setting the block size variable.
+	* @param {number} sz - The new block size.
+	*/
 	setBlockSize(sz)
 	{
 		this.blockSize = sz;
 		this.draw();
 	}
+	/**
+	* Used for setting the block name variable.
+	* @param {number} sz - The new block name.
+	*/
 	setBlockName(name)
 	{
 		this.blockName = name;
 		this.draw();
 	}
-	// Outputs an array of offset times and names for the tracks in the playlist
+
+	// TODO: I think the paramList can be deleted here.
+	/**
+	* Creates an array containing the name of each block and its start offset in seconds.
+	* @param {number} bpm - The beats per minute value to use for time conversion.
+	* @param {number} bpb - The beats per block value to use for time conversion.
+	* @param {number} paramList - This parameter is deprecated and will be removed in later versions
+	* @returns An array of tuples containing each track name and its start offset time in seconds.
+	*/
 	getOffsetsAndNames(bpm,bpb,paramList)
 	{
 		// The array we will output to
@@ -605,12 +748,22 @@ class TrackLaneCanvas
 
 		return outArr;
 	}
-	// Round an x coordinate to its cell value
+	/**
+	* Round an x coord to its cell value.
+	* @param {number} n - x coord to round.
+	* @returns the corresponding cell value of n.
+	*/
 	coordToCell(n)
 	{
 		return Math.round(n/this.cellWidth);
 	}
-	// convert a cell value to a time in seconds
+	/**
+	* Convert a raw cell number to a value in seconds.
+	* @param {number} c - The cell number to convert.
+	* @param {number} bpm - Beats per minute, required to do unit conversion of times.
+	* @param {number} bpb - Beats per block, required to do unit conversion of times.
+	* @returns Converted value described above.
+	*/
 	cellsToSeconds(c,bpm,bpb)
 	{
 		// the start time in seconds
@@ -618,13 +771,22 @@ class TrackLaneCanvas
 		return bpb * c / cellsPerSecond;
 	}
 	// Get the horizontal position of the seek bar in seconds
+	/**
+	* Get the horizontal position of the seek bar in seconds
+	* @param {number} bpm - Beats per minute, required to do unit conversion of times.
+	* @param {number} bpb - Beats per block, required to do unit conversion of times.
+	* @returns The position of the seekbar in seconds.
+	*/
 	seekToSeconds(bpm,bpb)
 	{
 		//return this.cellsToSeconds(this.seekPos.x,bpm,bpb);
 		let val = this.coordToCell(this.seekPos.x);
 		return this.cellsToSeconds(val,bpm,bpb);
 	}
-	// reconfigure the current track lane object from state read in from a file
+	/**
+	* Set up the state of the widget based on the input argument.
+	* @param {object} state - The state used to configure the widget.
+	*/
 	reconfigure(state)
 	{
 		//coord = {x:0, y:0}; // the coords of the mouse

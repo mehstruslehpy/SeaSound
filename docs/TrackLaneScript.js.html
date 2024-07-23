@@ -1,11 +1,39 @@
-/*
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: TrackLaneScript.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: TrackLaneScript.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/*
 This file is part of SeaSound.
 
 SeaSound is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 
 SeaSound is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License along with SeaSound. If not, see <https://www.gnu.org/licenses/>.
+You should have received a copy of the GNU General Public License along with SeaSound. If not, see &lt;https://www.gnu.org/licenses/>.
 */
 
 // TODO: Fix draw error on empty project. Empty project throws an error while doing first draw on project loading.
@@ -143,7 +171,7 @@ class TrackLaneCanvas
 
 		// set up font height
 		this.ctx.font = "bold "+this.rectangleFontSize+"px Arial";
-		while (this.ctx.measureText('@').width < this.cellHeight) // The width of @ approximates height
+		while (this.ctx.measureText('@').width &lt; this.cellHeight) // The width of @ approximates height
 		{
 			this.ctx.font = "bold "+this.rectangleFontSize+"px Arial";
 			this.rectangleFontSize++;
@@ -198,7 +226,7 @@ class TrackLaneCanvas
 
 		// set up font height
 		this.ctx.font = "bold "+this.rectangleFontSize+"px Arial";
-		while (this.ctx.measureText('@').width < this.cellHeight) // The width of @ approximates height
+		while (this.ctx.measureText('@').width &lt; this.cellHeight) // The width of @ approximates height
 		{
 			this.ctx.font = "bold "+this.rectangleFontSize+"px Arial";
 			this.rectangleFontSize++;
@@ -309,7 +337,7 @@ class TrackLaneCanvas
 		// check if a collision has occurred
 		let c = {x:this.leftClickStart.x+this.cellWidth/2, 
 					y:this.leftClickStart.y+this.cellHeight/2};
-		for (let i = 0; i < this.trackList.length; i++)
+		for (let i = 0; i &lt; this.trackList.length; i++)
 		{
 			// The test point needs to be partially inside the cell to avoid edge case problems
 			let c = {x:this.leftClickStart.x+this.cellWidth/2, 
@@ -337,7 +365,7 @@ class TrackLaneCanvas
 	{
 		this.mousePressed = false;
 		let c = this.screenToWorldCoords(this.coord);
-		for (let i = 0; i < this.trackList.length; i++)
+		for (let i = 0; i &lt; this.trackList.length; i++)
     		if (this.rectangleCollision(c,this.trackList[i])) // if cursor lies inside a rectangle
     		{
         		this.trackList.splice(i,1); // remove the rectangle
@@ -400,7 +428,7 @@ class TrackLaneCanvas
 	*/
 	rectangleCollision(pt,track)
 	{
-		return (track[0].x <= pt.x && pt.x <= track[1].x && track[0].y <= pt.y && pt.y <= track[1].y);
+		return (track[0].x &lt;= pt.x &amp;&amp; pt.x &lt;= track[1].x &amp;&amp; track[0].y &lt;= pt.y &amp;&amp; pt.y &lt;= track[1].y);
 	}
 
 	/**
@@ -437,7 +465,7 @@ class TrackLaneCanvas
 			this.leftClickEnd.y = this.leftClickStart.y + this.cellHeight;
 
 			// If the mouse is pressed and held there is stuff to draw
-			if (this.mousePressed && this.workingRectangle != null) 
+			if (this.mousePressed &amp;&amp; this.workingRectangle != null) 
 			{
 				this.workingRectangle[0] = this.leftClickStart;
 				this.workingRectangle[1] = this.leftClickEnd;
@@ -466,7 +494,7 @@ class TrackLaneCanvas
 		// Now we can actually start drawing
 
 		//draw vertical divisions
-		for (var i = 0; i < this.verticalCells; i++)
+		for (var i = 0; i &lt; this.verticalCells; i++)
 		{
 			this.ctx.strokeStyle = 'black';
 			this.ctx.lineWidth = this.lineWidth;
@@ -477,7 +505,7 @@ class TrackLaneCanvas
 		}
 
 		//draw horizontal divisions
-		for (var i = 0; i < this.horizontalCells; i++)
+		for (var i = 0; i &lt; this.horizontalCells; i++)
 		{
 			this.ctx.strokeStyle = 'black';
 			this.ctx.lineWidth = this.lineWidth;
@@ -488,7 +516,7 @@ class TrackLaneCanvas
 		}
 
 		// draw rectangles
-		for (let i = 0; i < this.trackList.length; i++)
+		for (let i = 0; i &lt; this.trackList.length; i++)
 		{
 			let c1 = this.trackList[i][0];
 			let c2 = this.trackList[i][1];
@@ -593,13 +621,13 @@ class TrackLaneCanvas
 
 		// snap to the grid
 		// Line the two x coords up to snap to the appropriate rectangle edges
-		if (this.leftClickStart.x <= this.leftClickEnd.x) 
+		if (this.leftClickStart.x &lt;= this.leftClickEnd.x) 
 			this.leftClickEnd.x += this.cellWidth;
 		else 
 			this.leftClickEnd.x = this.leftClickStart.x+this.cellWidth;
 		
 		// Line the two y coords up to snap to the appropriate rectangle edges
-		if (this.leftClickStart.y <= this.leftClickEnd.y)
+		if (this.leftClickStart.y &lt;= this.leftClickEnd.y)
 			this.leftClickEnd.y += this.cellHeight;
 		else
 			this.leftClickStart.y += this.cellHeight;
@@ -639,7 +667,7 @@ class TrackLaneCanvas
 		let collision = false;
 
 		// check left endpoint collisions
-		for (let i = 0; i < this.trackList.length; i++)
+		for (let i = 0; i &lt; this.trackList.length; i++)
 		{
 			// The test point needs to be partially inside the cell to avoid edge case problems
 			let c = {x:left.x+this.cellWidth/2, y:left.y+this.cellHeight/2};
@@ -649,7 +677,7 @@ class TrackLaneCanvas
 		// Check the following types of collisions at the right end point:
 		// 1: Right end point of working rectangle in previous rectangle
 		// 2: Left end point of previous rectangle in working rectangle
-		for (let i = 0; i < this.trackList.length; i++)
+		for (let i = 0; i &lt; this.trackList.length; i++)
 		{
 			// The test point needs to be partially inside the cell to avoid edge case problems
 			let cTest = {x:right.x-this.cellwidth/2, y:right.y-this.cellHeight/2};
@@ -738,7 +766,7 @@ class TrackLaneCanvas
 		// The array we will output to
 		let outArr = new Array();
 		// Convert start time to offset cell time
-		for (let i = 0; i < this.trackList.length; i++)
+		for (let i = 0; i &lt; this.trackList.length; i++)
 		{
 			let offsetCell = this.coordToCell(this.trackList[i][0].x);
 			let offsetTime = this.cellsToSeconds(offsetCell,bpm,bpb);
@@ -818,7 +846,7 @@ class TrackLaneCanvas
 
 		// set up font height
 		this.ctx.font = "bold "+this.rectangleFontSize+"px Arial";
-		while (this.ctx.measureText('@').width < this.cellHeight) // The width of @ approximates height
+		while (this.ctx.measureText('@').width &lt; this.cellHeight) // The width of @ approximates height
 		{
 			this.ctx.font = "bold "+this.rectangleFontSize+"px Arial";
 			this.rectangleFontSize++;
@@ -827,3 +855,26 @@ class TrackLaneCanvas
 		this.draw();
 	}
 }
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="CodedEventCanvas.html">CodedEventCanvas</a></li><li><a href="Edge.html">Edge</a></li><li><a href="GraphDiagramCanvas.html">GraphDiagramCanvas</a></li><li><a href="Node.html">Node</a></li><li><a href="PianoRollCanvas.html">PianoRollCanvas</a></li><li><a href="SliderCanvas.html">SliderCanvas</a></li><li><a href="TextAreaInstrumentCanvas.html">TextAreaInstrumentCanvas</a></li><li><a href="TrackLaneCanvas.html">TrackLaneCanvas</a></li><li><a href="View.html">View</a></li></ul><h3>Tutorials</h3><ul><li><a href="tutorial-Tutorial Browser.html">Tutorial Browser</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.3</a> on Mon Jul 22 2024 19:39:39 GMT-0700 (Pacific Daylight Time)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>
