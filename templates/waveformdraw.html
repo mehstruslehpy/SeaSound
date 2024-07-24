@@ -1,0 +1,191 @@
+<html lang="en-US">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<script>
+
+		/*
+		const audioContext = new AudioContext();
+		const audioCtx = new AudioContext();
+		const audio = new Audio("freejazz.wav");
+		const source = audioCtx.createMediaElementSource(audio);
+		source.connect(audioCtx.destination);
+		audio.play();
+		*/
+		let audioFile = null;
+		let source = null;
+		const audioCtx = new AudioContext();
+		const analyser = audioCtx.createAnalyser();
+
+		function loadAudioFile()
+		{
+			// Set Up the canvas
+			let canvas = document.getElementById("waveform");
+			let ctx = canvas.getContext("2d");
+
+			let controlsHeight = document.getElementById('controls').offsetHeight;
+			canvas.width = window.innerWidth;
+			canvas.height = window.innerHeight - controlsHeight;
+
+			ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+			// This is mostly from SO
+
+			// Open a file picker
+			let input = document.createElement('input');
+			input.type = 'file';
+
+			// the value to return
+			input.onchange = e => { 
+				// getting a hold of the file reference
+				let file = e.target.files[0]; 
+
+				// setting up the reader
+				let reader = new FileReader();
+				reader.readAsArrayBuffer(file);
+
+				// When the reader is done reading we can load/setup the instrument
+				reader.onload = readerEvent => {
+					let src = readerEvent.target.result;
+    				var dst = new ArrayBuffer(src.byteLength);
+    				new Uint8Array(dst).set(new Uint8Array(src));
+    				audioFile = dst;
+				}
+			}
+			input.click();
+		}
+		async function graphAndPlay()
+		{
+  			try {
+    			// Decode the audio file
+    			let buffer = await audioCtx.decodeAudioData(audioFile);
+				let arr = buffer.getChannelData(0);
+
+				// Set Up the canvas
+				let canvas = document.getElementById("waveform");
+				let ctx = canvas.getContext("2d");
+
+				canvas.width = window.innerWidth;
+				canvas.height = window.innerHeight;
+
+				ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+				console.log("draw buffer");
+				// draw the buffer
+				let rect = getRect(canvas)
+				console.log(rect);
+				drawRectangleOutline(ctx,rect);
+				drawAudioBufferToRectangle(ctx,rect,arr);
+
+				// play the audio
+				source = audioCtx.createBufferSource();
+				source.buffer = buffer;
+				source.connect(audioCtx.destination);
+				source.start();
+  			} catch (err) 
+			{
+    			console.error(`Unable to fetch the audio file. Error: ${err.message}`);
+  			}
+		}
+		function drawAudioBufferToRectangle(ctx,rect,arr)
+		{
+			let rectWidth = rect[1].x - rect[0].x;
+			let rectHeight = rect[1].y - rect[0].y;
+			ctx.lineWidth = 1;
+    		ctx.strokeStyle = 'black';
+			let incr = rectWidth / arr.length; // amount to increase x values by each iteration
+			for (let i = 1; i < arr.length; i++)
+			{
+				// Find the y coords of the next line segment to draw
+				// Since our array buffers are between -1 and 1 we shift these by 1
+				// to align them within a rectangle with y bounds of 0 and 2.
+				// Then we scale them by 1/2 to align them within y bounds 1 and 2.
+    			let from_y = 0.5*(arr[i-1]+1);
+    			let to_y = 0.5*(arr[i]+1);
+				// Flip the audio file so that it is right side up
+				from_y = 1-from_y;
+				to_y = 1-to_y;
+				// Find the x coords of the next line segment to draw
+				let from_x = incr;
+				incr += rectWidth / arr.length;
+				let to_x = incr;
+			
+				// Draw a segment from (from_x,from_y) to (to_x,to_y)
+    			ctx.beginPath();
+    			ctx.moveTo(from_x+rect[0].x,rect[0].y+from_y*rectHeight);
+    			ctx.lineTo(to_x+rect[0].x,rect[0].y+to_y*rectHeight);
+    			ctx.stroke();
+			}
+		}
+		function getRect(canvas)
+		{
+			let x1 = document.getElementById("x1-coord").value;
+			let y1 = document.getElementById("y1-coord").value;
+			let x2 = document.getElementById("x2-coord").value;
+			let y2 = document.getElementById("y2-coord").value;
+
+			// Handle defaults
+			if (x1 == "") x1 = 0;
+			else x1 = Number(x1);
+			if (y1 == "") y1 = 0;
+			else y1 = Number(y1);
+			if (x2 == "") x2 = canvas.width;
+			else x2 = Number(x2);
+			if (y2 == "") y2 = canvas.height;
+			else y2 = Number(y2);
+
+			let bottomLeft = {x:Math.min(x1,x2),y:Math.min(y1,y2)};
+			let topRight = {x:Math.max(x1,x2),y:Math.max(y1,y2)};
+			return [bottomLeft,topRight];
+		}
+		function drawRectangleOutline(ctx,rect)
+		{
+    		ctx.beginPath();
+    		ctx.moveTo(rect[0].x,rect[0].y);
+    		ctx.lineTo(rect[0].x,rect[1].y);
+    		ctx.lineTo(rect[1].x,rect[1].y);
+    		ctx.lineTo(rect[1].x,rect[0].y);
+    		ctx.lineTo(rect[0].x,rect[0].y);
+    		ctx.lineWidth = 2;
+    		ctx.strokeStyle = 'black';
+    		ctx.stroke();
+		}
+		function stopAudio()
+		{
+			source.stop();
+		}
+		function Help()
+		{
+			let str = "";
+			str += "Use the load sample button to load a sample.\n";
+			str += "Use the graph and play button after loading to graph and playback the loaded sample.\n";
+			str += "Each playback/graphing of subsequent samples must be preceded by loading via the load button.\n";
+			str += "The \"Rectangle Point n:\" fields are used to specify a rectangle to draw the sample to inside the canvas.\n";
+			str += "If these fields are left blank by default the whole canvas is used.\n";
+			alert(str);
+		}
+
+	</script>
+    <script src="../static/filesaver/FileSaver.js" defer></script>
+  </head>
+  <body>
+	<div id="controls">
+		<button class="lr-pad" onclick="loadAudioFile();">Load Sample</button>
+		<button class="lr-pad" onclick="graphAndPlay();">Graph And Play</button>
+		<button class="lr-pad" onclick="stopAudio();">Stop Playback</button>
+		<label>Rectangle Point 1:</label>
+		<input id="x1-coord" placeholder="x1-coord" style="width:100;"> </input>
+		<input id="y1-coord" placeholder="y1-coord" style="width:100;"> </input> 
+		<label>Rectangle Point 2:</label>
+		<input id="x2-coord" placeholder="x2-coord" style="width:100;"> </input>
+		<input id="y2-coord" placeholder="y2-coord" style="width:100;"> </input>
+		<button class="lr-pad" onclick="Help();">Help</button>
+		<p> Display: </p>
+	</div>
+	<!-- Canvas for displaying displaying audio file waveform -->
+	<canvas id="waveform">
+		<p>A track/lane canvas.</p>
+	</canvas>
+
+  </body>
+</html>
