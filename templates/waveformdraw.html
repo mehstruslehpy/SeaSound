@@ -1,17 +1,11 @@
+<!-- This should work with wav, flac and mp3 files. I haven't tested it for any other files. -->
+<!DOCTYPE html>
 <html lang="en-US">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<script>
 
-		/*
-		const audioContext = new AudioContext();
-		const audioCtx = new AudioContext();
-		const audio = new Audio("freejazz.wav");
-		const source = audioCtx.createMediaElementSource(audio);
-		source.connect(audioCtx.destination);
-		audio.play();
-		*/
 		let audioFile = null;
 		let source = null;
 		const audioCtx = new AudioContext();

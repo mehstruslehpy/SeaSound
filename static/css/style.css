@@ -12,6 +12,14 @@ body
 	height: 60px;
 	font-size: medium;
 }
+.tab-button-small
+{
+	background-color: #000000;
+	color: #FFFFFF;
+	width: 100px;
+	height: 40px;
+	font-size: small;
+}
 
 .tab-container 
 {

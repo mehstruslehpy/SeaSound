@@ -61,6 +61,11 @@ class View
 	audioFiles = new Array();
 
 	/**
+	* Audio context to use to decode audio files.
+	*/
+	//audioCtx = new AudioContext();
+
+	/**
 	* Opens the corresponding tab.
 	* @param {string} tabName - The name of the tab to be opened.
 	* @param {string} btnID - The button clicked to open the tab.
@@ -85,6 +90,22 @@ class View
 		this.ResetParameter();
 	}
 
+	ChangeTrackEditorModalTab(tab,button)
+	{
+		let modalTabs = ["track-audio-canvas-tab", "track-instrument-canvas-tab"]
+		let modalButtons = ["track-audio-canvas-button", "track-instrument-canvas-button"]
+		// Hide all the tabs
+		for (let i=0; i < modalTabs.length; i++)
+			document.getElementById(modalTabs[i]).style.display = "none";
+		// Color all the buttons
+		for (let i=0; i < modalTabs.length; i++)
+			document.getElementById(modalButtons[i]).style.background = "black";
+		// Display the selected tab
+		document.getElementById(tab).style.display = "block";
+		// Color the selected button
+		document.getElementById(button).style.background = "green";
+
+	}
 	/**
 	* Updates display when drop down is changed.
 	* This is mainly used for switching tracks/instruments in the track and instrument
@@ -165,7 +186,8 @@ class View
 				this.InstrumentCanvasHelper(canvasDiv,name);
 				break;
 			case "track-canvases": 
-				this.TrackCanvasHelper(canvasDiv,name);
+				if (prefix == "track") this.TrackCanvasHelper(canvasDiv,name);
+				else if (prefix == "audio-clip-track") this.AudioClipTrackCanvasHelper(canvasDiv,name);
 				break;
 			default:
 				break;
@@ -439,6 +461,74 @@ class View
 
 		// Clear out old instrument name
 		document.getElementById("instrument-name").value = "";
+	}
+
+	AudioClipTrackCanvasHelper(canvasDiv,name)
+	{
+		console.log("AudioClipTrackCanvasHelper("+canvasDiv+","+name+")");
+
+		// Read in input arguments 
+		let hCells = document.getElementById("audio-track-horizontal-cells").value;
+		if (hCells == "") hCells = Number(document.getElementById("audio-track-horizontal-cells").placeholder);
+		else hCells = Number(hCells);
+		let vCells = document.getElementById("audio-track-vertical-cells").value;
+		if (vCells == "") vCells = Number(document.getElementById("audio-track-vertical-cells").placeholder);
+		else vCells = Number(vCells);
+		let beatsPerCell = document.getElementById("audio-track-beats-per-cell").value;
+		if (beatsPerCell == "") beatsPerCell = Number(document.getElementById("audio-track-beats-per-cell").placeholder);
+		else beatsPerCell = Number(beatsPerCell);
+		console.log("hCells="+hCells+",vCells="+vCells+",beatsPerCell="+beatsPerCell);
+		console.log("hCells type="+typeof hCells+",vCells type="+typeof vCells+",beatsPerCell type="+typeof beatsPerCell);
+
+		// add a div to contain all our parameter canvases
+		let ele = document.getElementById(canvasDiv);
+		let instDiv  = document.createElement("div");
+		instDiv.setAttribute("id","instrument-"+name);
+		ele.appendChild(instDiv);
+
+		// add the associated select entry
+		let selectEle = document.getElementById(canvasDiv+"-select");
+		let newOption = document.createElement("option");
+		newOption.value = "instrument-"+name;
+		newOption.innerText = name;
+		selectEle.append(newOption);
+
+		// Display the currently selected parameter number
+		document.getElementById("param-num").innerText = "Current Parameter: 0";
+
+		// Collect the canvas objects in a list
+		let tempCanv = Array();
+
+		// create the canvas
+		let newCanvas = document.createElement("canvas");
+		newCanvas.setAttribute("tabindex","1");
+		newCanvas.setAttribute("id","track-p0-"+name);
+		newCanvas.style.display = "inline";
+		instDiv.appendChild(newCanvas);
+		tempCanv.push(new AudioClipCanvas("track-p0-"+name,name,hCells,vCells,beatsPerCell,this.audioFiles));
+
+		// Add the new track to our map of all tracks
+		this.trackMap.set(this.CleanName(name),tempCanv);
+
+		// Register the instruments with each other
+		let instname = document.getElementById("instrument-for-track").value
+			if (instname == "") instname = "EMPTY-INSTRUMENT";
+		tempCanv[0].registerInstrument(tempCanv,instname);
+
+		// Set up the canvas trigger modes
+		tempCanv[0].setTriggerMode(true);
+
+		// Playlist editor needs an associated pattern entry too
+		let newPat = document.getElementById("pattern-select");
+		let newOpt = document.createElement("option");
+		newOpt.innerText = name;
+		newOpt.setAttribute("value","instrument-"+name);
+		newPat.append(newOpt);
+
+		// Reset the input boxes
+		document.getElementById("audio-track-name").value = "";
+		document.getElementById("audio-track-horizontal-cells").value = "";
+		document.getElementById("audio-track-vertical-cells").value = "";
 	}
 
 	/**
@@ -1283,7 +1373,8 @@ class View
 							newRow.appendChild(val);
 							pListTag.appendChild(newRow);
 							// Append file contents to our list of audio files
-							that.audioFiles.push([filename,content]);
+							//let buffer = await this.audioCtx.decodeAudioData(content);
+							audioFileHelper(filename,content,that.audioFiles);
 						});
 					}
 				});
@@ -1321,6 +1412,7 @@ class View
 			// When the reader is done reading we can load/setup the instrument
 			reader.onload = readerEvent => {
 				let dat = readerEvent.target.result;
+				console.log(dat);
 				csound.fs.writeFile(file.name, new Uint8Array(dat));
 
 				//get the tag to add parameters to
@@ -1336,9 +1428,10 @@ class View
 				//build the new element
 				newRow.appendChild(content);
 				pListTag.appendChild(newRow);
-
 				// Append file contents to our list of audio files
-				this.audioFiles.push([file.name,new Uint8Array(dat)]);
+				audioFileHelper(file.name,dat,this.audioFiles);
+
+
 			}
 		}
 		input.click();
@@ -1350,6 +1443,21 @@ class View
 	{
 		return this.audioFiles;
 	}
+}
+/**
+* audio context to help decode audio files
+*/
+const audioCtx = new AudioContext();
+
+async function audioFileHelper(name,dat,file_list)
+{
+	// Set up the buffer and file data
+	let fileDat = new Uint8Array(dat);
+	var dst = new ArrayBuffer(dat.byteLength);
+	new Uint8Array(dst).set(new Uint8Array(dat));
+	let buffer = await audioCtx.decodeAudioData(dst);
+	// Save the canvas for later draws
+	file_list.push([name,fileDat,buffer]);
 }
 
 let viewObj = new View();

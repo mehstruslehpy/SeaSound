@@ -91,6 +91,7 @@ You should have received a copy of the GNU General Public License along with Sea
     <script src="../static/js/TextAreaInstrumentScript.js" defer></script>
     <script src="../static/js/TrackLaneScript.js" defer></script>
     <script src="../static/js/PianoRollScript.js" defer></script>
+    <script src="../static/js/AudioClipCanvasScript.js" defer></script>
 	<!-- This is the main script -->
     <script src="../static/js/View.js" defer></script>
 	<!-- CSS files are loaded next -->
@@ -255,53 +256,98 @@ You should have received a copy of the GNU General Public License along with Sea
 	
 				<!-- Pop up dialog containing track parameters -->
 				<dialog id="track-dialog" onclose="viewObj.CheckDialogReopen();">
-				<form method="dialog" style="display:table;">
-				<div style="display:table-row;">
-					<label style="display:table-cell;">Track Name:</label>
-					<input style="display:table-cell;"type="text submit" id="track-name" name="track-name"> </br>
-				</div>
-				<div style="display:table-row;">
-					<label style="display:table-cell;">Instrument:</label>
-					<input list="instruments-datalist" id="instrument-for-track">
-					<datalist id="instruments-datalist">
-  						<option value="EMPTY-INSTRUMENT">
-					</datalist>
-				</div>
-				<div style="display:table-row;">
-					<label style="display:table-cell;">Parameter:</label>
-					<select style="display:table-cell;" class="lr-pad" id="parameter-type-select"> 
-						<option value="Pianoroll">Pianoroll</option>
-						<option value="Lollipop">Lollipop</option>
-						<option value="Event">Event</option>
-						<option value="Bars">Bars</option>
-					</select> 
-				</div>
-				<div style="display:table-row;">
-					<label style="display:table-cell;">Add/Remove:</label>
-					<button style="display:table-cell;" class="lr-pad" onclick='viewObj.AddParameter();'> + </button>
-					<button style="display:table-cell;" class="lr-pad" onclick='viewObj.RemoveParameter();'> - </button>
-				</div>
-				<div style="display:table-row;">
-					<p style="display:table-cell; color:grey;"> Note: Starred first instrument triggers notes. </p>
-				</div>
-				<table id="param-list" style="padding-left:2em;">
-					<!-- List of parameters is displayed in this table -->
-				</table>
-				<div style="display:table-row;">
-					<label style="display:table-cell;">Horizontal Cells:</label>
-					<input style="display:table-cell;" type="number" id="track-horizontal-cells" placeholder="16"> </br>
-				</div>
-				<div style="display:table-row;">
-					<label style="display:table-cell;">Beats Per Cell:</label>
-					<input style="display:table-cell;"type="number" id="track-beats-per-cell" placeholder="1"> </br>
-				</div>
-	
-				<button id="cancel" type="reset" onclick='document.getElementById("track-dialog").close();'>Cancel</button>
-				<button type="submit" 
-						onclick="viewObj.AddCanvas('track-canvases','track',document.getElementById('track-name').value)">
-					Confirm
+				<button 
+					id="track-instrument-canvas-button"
+					class="tab-button-small" 
+					onclick="viewObj.ChangeTrackEditorModalTab('track-instrument-canvas-tab','track-instrument-canvas-button');">
+ 					Instrument Canvas 
 				</button>
-				</form>
+				<button 
+					id="track-audio-canvas-button"
+					class="tab-button-small" 
+					onclick="viewObj.ChangeTrackEditorModalTab('track-audio-canvas-tab','track-audio-canvas-button');">
+ 					Audio Clip Canvas
+				</button>
+				</br>
+				</br>
+				<div id="track-audio-canvas-tab" style="display:none;">
+					<form method="dialog" style="display:table;">
+					<div style="display:table-row;">
+						<label style="display:table-cell;">Track Name:</label>
+						<input style="display:table-cell;"type="text submit" id="audio-track-name" name="track-name"> </br>
+					</div>
+					<div style="display:table-row;">
+						<label style="display:table-cell;">Horizontal Cells:</label>
+						<input style="display:table-cell;" type="number" id="audio-track-horizontal-cells" placeholder="16"> </br>
+					</div>
+					<div style="display:table-row;">
+						<label style="display:table-cell;">Vertical Cells:</label>
+						<input style="display:table-cell;" type="number" id="audio-track-vertical-cells" placeholder="16"> </br>
+					</div>
+					<div style="display:table-row;">
+						<label style="display:table-cell;">Beats Per Cell:</label>
+						<input style="display:table-cell;"type="number" id="audio-track-beats-per-cell" placeholder="1"> </br>
+					</div>
+					<button id="cancel" type="reset" onclick='document.getElementById("track-dialog").close();'>Cancel</button>
+					<button type="submit" 
+							onclick="viewObj.AddCanvas(
+								'track-canvases',
+								'audio-clip-track',
+								document.getElementById('audio-track-name').value)">
+						Confirm
+					</button>
+					</form>
+	
+				</div>
+				<div id="track-instrument-canvas-tab" style="display:block;">
+					<form method="dialog" style="display:table;">
+					<div style="display:table-row;">
+						<label style="display:table-cell;">Track Name:</label>
+						<input style="display:table-cell;"type="text submit" id="track-name" name="track-name"> </br>
+					</div>
+					<div style="display:table-row;">
+						<label style="display:table-cell;">Instrument:</label>
+						<input list="instruments-datalist" id="instrument-for-track">
+						<datalist id="instruments-datalist">
+  							<option value="EMPTY-INSTRUMENT">
+						</datalist>
+					</div>
+					<div style="display:table-row;">
+						<label style="display:table-cell;">Parameter:</label>
+						<select style="display:table-cell;" class="lr-pad" id="parameter-type-select"> 
+							<option value="Pianoroll">Pianoroll</option>
+							<option value="Lollipop">Lollipop</option>
+							<option value="Event">Event</option>
+							<option value="Bars">Bars</option>
+						</select> 
+					</div>
+					<div style="display:table-row;">
+						<label style="display:table-cell;">Add/Remove:</label>
+						<button style="display:table-cell;" class="lr-pad" onclick='viewObj.AddParameter();'> + </button>
+						<button style="display:table-cell;" class="lr-pad" onclick='viewObj.RemoveParameter();'> - </button>
+					</div>
+					<div style="display:table-row;">
+						<p style="display:table-cell; color:grey;"> Note: Starred first instrument triggers notes. </p>
+					</div>
+					<table id="param-list" style="padding-left:2em;">
+						<!-- List of parameters is displayed in this table -->
+					</table>
+					<div style="display:table-row;">
+						<label style="display:table-cell;">Horizontal Cells:</label>
+						<input style="display:table-cell;" type="number" id="track-horizontal-cells" placeholder="16"> </br>
+					</div>
+					<div style="display:table-row;">
+						<label style="display:table-cell;">Beats Per Cell:</label>
+						<input style="display:table-cell;"type="number" id="track-beats-per-cell" placeholder="1"> </br>
+					</div>
+	
+					<button id="cancel" type="reset" onclick='document.getElementById("track-dialog").close();'>Cancel</button>
+					<button type="submit" 
+							onclick="viewObj.AddCanvas('track-canvases','track',document.getElementById('track-name').value)">
+						Confirm
+					</button>
+					</form>
+				</div>
 				</dialog>
 			</div>
 
@@ -470,5 +516,6 @@ nchnls = 2
 			<div id="instrument-canvases"></div>
 		</div>
 	</div>
+
   </body>
 </html>
