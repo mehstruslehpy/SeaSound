@@ -72,6 +72,10 @@ class AudioClipCanvas
 	*/
 	name = "";
 
+	// These values are used to select the next audio clip to use for drawing
+	clipName = "EMPTY-CLIP";
+	clipIndex = -1;
+
 	audioFiles = null;
 
 	/**
@@ -174,7 +178,7 @@ class AudioClipCanvas
 			controlText += "yh: change Y scaling amount\n";
 			controlText += "x: change snap to grid amount\n";
 			controlText += "1/2/3/4/5: switch between select/note/paste/delete/remove mode\n";
-			controlText += "i: change instrument name\n";
+			controlText += "i: change clip name\n";
 
 		//if (ev.key == "Control" && this.triggerMode) this.controlPressed = true;
 		if (ev.key == "1") 
@@ -203,7 +207,7 @@ class AudioClipCanvas
 			// get the list of indices to remove and sort in descending order
 			let indices = Array();
 			for (let i = 0; i < this.selectedRectangles.length; i++)
-				indices.push(this.selectedRectangles[i][2]);
+				indices.push(this.selectedRectangles[i][3]);
 			indices.sort((a,b) => a < b);
 			// delete all the corresponding notes from this and all other widgets
 			for (let i = 0; i < indices.length; i++)
@@ -263,9 +267,11 @@ class AudioClipCanvas
 		else if (ev.key == "h") this.scaleAmountAll(this.scaleAmtX,this.scaleAmtY/(1+1/(2**4)));
 		else if (ev.key == "i") 
 		{
-			let n = prompt("Input new instrument name:");
-			for (let i = 0; i < this.instrument.length; i++) this.instrument[i].setName(n);
-			for (let i = 0; i < this.instrument.length; i++) this.instrument[i].draw();
+			let n = prompt("Input new clip name:");
+			this.clipName = n;
+			this.clipIndex = -1;
+			for (let i = 0; i < this.audioFiles.length; i++)
+				if (this.audioFiles[i][0] == this.clipName) this.clipIndex = i;
 		}
 	
 		this.draw();	
@@ -324,7 +330,9 @@ class AudioClipCanvas
 					x: this.selectedRectangles[i][1].x + val.x - leftMostRect[0].x,
 					y: this.selectedRectangles[i][1].y + val.y - leftMostRect[1].y + this.cellHeight
 				};
-				this.rectangleList.push([c1,c2]);
+				let index = this.selectedRectangles[i][2];
+				this.rectangleList.push([c1,c2,index]);
+				/*
 				// Update the non-triggering widgets
 				for (let i = 0; i < this.instrument.length; i++)
 					if (this.instrument[i] != this)
@@ -332,6 +340,7 @@ class AudioClipCanvas
 						this.instrument[i].addRectangle([c1,c2]); 
 						this.instrument[i].draw();
 					}
+				*/
 			}
 		}
 		else if (this.inputMode == "REMOVE") return;
@@ -403,7 +412,10 @@ class AudioClipCanvas
 			// we also store the indices here too for ease of deletion
 			for (let i = 0; i < this.rectangleList.length; i++)
 				if (this.inSelectionBounds(this.rectangleList[i]))
-					this.selectedRectangles.push([this.rectangleList[i][0],this.rectangleList[i][1],i]);
+					this.selectedRectangles.push(
+						[ this.rectangleList[i][0],
+							this.rectangleList[i][1],
+							this.rectangleList[i][2],i]);
 											
 			this.selectionRectangle = null;
 			this.draw();
@@ -423,7 +435,7 @@ class AudioClipCanvas
 
 		this.mousePressed = false; // the mouse is no longer pressed
 		this.workingRectangle = null; // The working rectangle is null again
-		this.rectangleList.push([c1,c2]);
+		this.rectangleList.push([c1,c2,this.clipIndex]);
 		//this.addRectangle([c1,c2]);
 
 		// Update the non-triggering widgets
@@ -527,12 +539,13 @@ class AudioClipCanvas
 
 		// draw all the rectangles
 		if (this.workingRectangle!=null) 
-			this.drawRectangle(this.workingRectangle[0],this.workingRectangle[1],"rgb(0 255 0)");
+			this.drawNoteRectangle(this.workingRectangle[0],this.workingRectangle[1],this.clipIndex,"rgb(0 255 0)");
 		for (let i = 0; i < this.rectangleList.length; i++)
 		{
 			let c1 = this.rectangleList[i][0];
 			let c2 = this.rectangleList[i][1];
-			this.drawRectangle(c1,c2,"rgb(0 255 0)");
+			let index = this.rectangleList[i][2];
+			this.drawNoteRectangle(c1,c2,index,"rgb(0 255 0)");
 		}
 		if (this.selectionRectangle != null) 
 			this.drawSelectionRectangle(this.selectionRectangle[0],this.selectionRectangle[1],this.selectionOutlineWidth);
@@ -540,7 +553,8 @@ class AudioClipCanvas
 		{
 			let c1 = this.selectedRectangles[i][0];
 			let c2 = this.selectedRectangles[i][1];
-			this.drawRectangle(c1,c2,"rgb(255 0 0)");
+			let index = this.selectedRectangles[i][2];
+			this.drawNoteRectangle(c1,c2,index,"rgb(255 0 0)");
 		}	
 		
 		// Draw the outlines for the canvas too
@@ -562,12 +576,9 @@ class AudioClipCanvas
 	}
 
 	/**
-	* Draw a rectangle with the given points and color.
-	* @param {object} c1 - Object denoting top left coord of rectangle.
-	* @param {object} c2 - Object denoting bottom right coord of rectangle.
-	* @param {string} color - String containing the color of the rectangle.
+	* Draw a rectangle 
 	*/
-	drawRectangle(c1,c2,color)
+	drawNoteRectangle(c1,c2,bufIndex,color)
 	{
 		// Now we can draw the rectangle 
 		//this.ctx.fillStyle = "rgb(0 255 0)";
@@ -591,8 +602,10 @@ class AudioClipCanvas
 			y: Math.max(c1.y,c2.y),
 		};
 		let rect = [d1,d2];
-		// draw buffer to rectangle
-		this.drawAudioBufferToRectangle(rect,this.audioFiles[0][2].getChannelData(0));
+		// draw buffer to rectangle provided that we have a valid index
+		//this.drawAudioBufferToRectangle(rect,this.audioFiles[0][2].getChannelData(0));
+		if (bufIndex < this.audioFiles.length && bufIndex >= 0)
+			this.drawAudioBufferToRectangle(rect,this.audioFiles[bufIndex][2].getChannelData(0));
 	}
 
 	drawAudioBufferToRectangle(rect,arr)
@@ -739,9 +752,13 @@ class AudioClipCanvas
 		text += ", y zoom amount: " + this.scaleAmtY.toFixed(2);
 		textWidth = this.ctx.measureText(text).width;
 		this.ctx.fillText(text,this.canvas.width-textWidth,3*textHeight);
-		text = "instrument name: " + this.name;
+		text = "clip name: " + this.clipName;
 		textWidth = this.ctx.measureText(text).width;
 		this.ctx.fillText(text,this.canvas.width-textWidth,4*textHeight);
+		text = "instrument name: " + this.name;
+		textWidth = this.ctx.measureText(text).width;
+		this.ctx.fillText(text,this.canvas.width-textWidth,5*textHeight);
+	
 	}
 
 	/**
@@ -933,7 +950,7 @@ class AudioClipCanvas
 	{
 		let c1 = {x:rect[0].x,y:0};
 		let c2 = {x:rect[1].x,y:this.cellHeight};
-		this.rectangleList.push([c1,c2]);
+		this.rectangleList.push([c1,c2,rect[2]]);
 	}
 	/**
 	* Converts the input rectangle to a quadruple [start time, duration, note].
@@ -983,6 +1000,10 @@ class AudioClipCanvas
 	{
 		let cellsPerSecond = bpm * (1/this.beatsPerCell) * (1/60);
 		return c/cellsPerSecond;
+	}
+
+	xCoordToSeconds(x,bpm)
+	{
 	}
 
 	/**
