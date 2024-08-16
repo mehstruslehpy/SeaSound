@@ -8,6 +8,16 @@ SeaSound is distributed in the hope that it will be useful, but WITHOUT ANY WARR
 You should have received a copy of the GNU General Public License along with SeaSound. If not, see <https://www.gnu.org/licenses/>.
 */
 
+
+// INFO: Rectangles are off the form: [a,b,c,d] such that 
+//		a is the top left corner coord of the rectangle
+//		b is the bottom right corner coord of the rectangle
+//		c is the index of the corresponding audio clip of the rectangle
+//		d is the start index in samples that the clip is read from
+// TODO: Need to remove code where we are iterating across instruments array when there is only the AudioClipCanvas.
+// TODO: Need to completely redo all documentation comments for this widget.
+// TODO: Need to add slicing mode to chop up clips.
+// TODO: Need to figure out how we want to emit code.
 class AudioClipCanvas
 {
 	/**
@@ -331,7 +341,8 @@ class AudioClipCanvas
 					y: this.selectedRectangles[i][1].y + val.y - leftMostRect[1].y + this.cellHeight
 				};
 				let index = this.selectedRectangles[i][2];
-				this.rectangleList.push([c1,c2,index]);
+				let startSample = this.selectedRectangles[i][3];
+				this.rectangleList.push([c1,c2,index,startSample]);
 				/*
 				// Update the non-triggering widgets
 				for (let i = 0; i < this.instrument.length; i++)
@@ -415,7 +426,8 @@ class AudioClipCanvas
 					this.selectedRectangles.push(
 						[ this.rectangleList[i][0],
 							this.rectangleList[i][1],
-							this.rectangleList[i][2],i]);
+							this.rectangleList[i][2],
+							this.rectangleList[i][3],i]);
 											
 			this.selectionRectangle = null;
 			this.draw();
@@ -435,7 +447,7 @@ class AudioClipCanvas
 
 		this.mousePressed = false; // the mouse is no longer pressed
 		this.workingRectangle = null; // The working rectangle is null again
-		this.rectangleList.push([c1,c2,this.clipIndex]);
+		this.rectangleList.push([c1,c2,this.clipIndex,0]);
 		//this.addRectangle([c1,c2]);
 
 		// Update the non-triggering widgets
@@ -539,13 +551,14 @@ class AudioClipCanvas
 
 		// draw all the rectangles
 		if (this.workingRectangle!=null) 
-			this.drawNoteRectangle(this.workingRectangle[0],this.workingRectangle[1],this.clipIndex,"rgb(0 255 0)");
+			this.drawNoteRectangle(this.workingRectangle[0],this.workingRectangle[1],this.clipIndex,0,"rgb(0 255 0)");
 		for (let i = 0; i < this.rectangleList.length; i++)
 		{
 			let c1 = this.rectangleList[i][0];
 			let c2 = this.rectangleList[i][1];
 			let index = this.rectangleList[i][2];
-			this.drawNoteRectangle(c1,c2,index,"rgb(0 255 0)");
+			let startSample  = this.rectangleList[i][3];
+			this.drawNoteRectangle(c1,c2,index,startSample,"rgb(0 255 0)");
 		}
 		if (this.selectionRectangle != null) 
 			this.drawSelectionRectangle(this.selectionRectangle[0],this.selectionRectangle[1],this.selectionOutlineWidth);
@@ -554,7 +567,8 @@ class AudioClipCanvas
 			let c1 = this.selectedRectangles[i][0];
 			let c2 = this.selectedRectangles[i][1];
 			let index = this.selectedRectangles[i][2];
-			this.drawNoteRectangle(c1,c2,index,"rgb(255 0 0)");
+			let startSample = this.selectedRectangles[i][3];
+			this.drawNoteRectangle(c1,c2,index,startSample,"rgb(255 0 0)");
 		}	
 		
 		// Draw the outlines for the canvas too
@@ -578,7 +592,7 @@ class AudioClipCanvas
 	/**
 	* Draw a rectangle 
 	*/
-	drawNoteRectangle(c1,c2,bufIndex,color)
+	drawNoteRectangle(c1,c2,bufIndex,startSample,color)
 	{
 		// Now we can draw the rectangle 
 		//this.ctx.fillStyle = "rgb(0 255 0)";
@@ -601,21 +615,54 @@ class AudioClipCanvas
 			x: Math.max(c1.x,c2.x),
 			y: Math.max(c1.y,c2.y),
 		};
-		let rect = [d1,d2];
+		let rect = [d1,d2,bufIndex,startSample];
 		// draw buffer to rectangle provided that we have a valid index
 		//this.drawAudioBufferToRectangle(rect,this.audioFiles[0][2].getChannelData(0));
+		// Note:
+		//		One way to do this:
+		//			 1. Get the start offset of the rectangle (the start coord of the waveform we want to draw from).
+		//			 2. Get the width of the rectangle (the length of the waveform we want to draw).
+		//			 3. Convert these values to times, then convert the times to individual samples.
+		//			 4. Iterate from the start sample across the width in samples to draw our samples.
+		// TODO: Experiment with downsampling and blitting from an external canvas to improve performance.
+
 		if (bufIndex < this.audioFiles.length && bufIndex >= 0)
-			this.drawAudioBufferToRectangle(rect,this.audioFiles[bufIndex][2].getChannelData(0));
+		{
+			// Get the bpm
+			// TODO: There is probably a cleaner way to do this without accessing the dom directly
+			//		perhaps thru the view class
+			let bpm = document.getElementById('playlist-bpm').value; // get the select tag
+			if (bpm == "") bpm = document.getElementById('playlist-bpm').placeholder;
+			bpm =  Number(bpm);
+
+			// Get the sample rate
+			let sampleRate = this.audioFiles[bufIndex][2].sampleRate;
+
+			// Draw the actual rectangle
+			this.drawAudioBufferToRectangle(rect,this.audioFiles[bufIndex][2].getChannelData(0),bpm,sampleRate);
+		}
 	}
 
-	drawAudioBufferToRectangle(rect,arr)
+	drawAudioBufferToRectangle(rect,arr,bpm,sr)
 	{
-		let rectWidth = rect[1].x - rect[0].x;
-		let rectHeight = rect[1].y - rect[0].y;
+		let startSample = rect[3]; // the sample to start iterating from
+		let rectWidth = rect[1].x - rect[0].x; // the width of the rectangle to draw
+		let rectHeight = rect[1].y - rect[0].y; // the height of the rectangle to draw
+
+		let dur = rectWidth/this.cellWidth; // the duration of the rectangle to draw in cells
+		dur = Math.round(dur * this.snapAmount) / this.snapAmount; // mult/div here preserves snapping
+		dur = this.cellsToSeconds(dur,bpm); // convert the duration to seconds
+		dur = dur * sr; // convert the duration to samples
+		let numberOfSamples = dur; // the number of samples we want to display
+
+		// Some line settings
 		this.ctx.lineWidth = 0.5;
    		this.ctx.strokeStyle = 'black';
    		this.ctx.beginPath();
-		let incr = rectWidth / arr.length; // amount to increase x values by each iteration
+
+		// we need the length in cells each sample corresponds to i.e. we need
+		let incr = this.secondsToCells(1/sr,bpm)*this.cellWidth;
+
 		let from_x = 0; // x value starts at x=0 location within rect
 		let from_y = 0.5*(arr[0]+1); // scale y value to [0,1] range
 		from_y = 1-from_y; // flip y value so that it is right side up
@@ -624,13 +671,20 @@ class AudioClipCanvas
 		let to_y = 0;
 		let rect_x = rect[0].x; // we declare these here to avoid indexing in the loop for efficiency
 		let rect_y = rect[0].y;
-		for (let i = 1; i < arr.length; i++)
+
+		// Draw polyline showing audio waveform
+		for (let i = 0; i < numberOfSamples; i++)
 		{
-   			to_y = 0.5*(arr[i]+1); // scale y value to [0,1] range
-			to_y = 1-to_y; // flip y value so that it is right side up
+			if (i + startSample > arr.length) to_y = 0.5;
+			else
+			{
+   				to_y = 0.5*(arr[i+startSample]+1); // scale y value to [0,1] range
+				to_y = 1-to_y; // flip y value so that it is right side up
+			}
 			to_x += incr; // increment the x coord to the next point
    			this.ctx.lineTo(to_x+rect_x,rect_y+to_y*rectHeight); // draw next segment of our path
 		}
+
    		this.ctx.stroke();
 	}
 
@@ -950,7 +1004,7 @@ class AudioClipCanvas
 	{
 		let c1 = {x:rect[0].x,y:0};
 		let c2 = {x:rect[1].x,y:this.cellHeight};
-		this.rectangleList.push([c1,c2,rect[2]]);
+		this.rectangleList.push([c1,c2,rect[2],rect[3]]);
 	}
 	/**
 	* Converts the input rectangle to a quadruple [start time, duration, note].
@@ -1002,8 +1056,17 @@ class AudioClipCanvas
 		return c/cellsPerSecond;
 	}
 
+	// Convert a number in seconds to a value in cells
+	secondsToCells(s,bpm)
+	{
+		let cellsPerSecond = bpm * (1/this.beatsPerCell) * (1/60);
+		return s * cellsPerSecond;
+	}
+
 	xCoordToSeconds(x,bpm)
 	{
+		let start = x/this.cellWidth; 
+		return this.cellsToSeconds(start,bpm);
 	}
 
 	/**
