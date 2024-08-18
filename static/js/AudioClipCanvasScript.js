@@ -118,7 +118,7 @@ class AudioClipCanvas
 	* them. Paste mode copies notes currently selected from using the select mode to the current cursor position.
 	* Remove mode deletes collections of notes which were selected via the select mode.
 	*/
-	inputModes = ["SELECT","NOTE","DELETE","PASTE","REMOVE"];
+	inputModes = ["SELECT","NOTE","DELETE","PASTE","REMOVE","SNIP"];
 	/**
 	* The current input mode.
 	*/
@@ -254,6 +254,16 @@ class AudioClipCanvas
 			//this.selectedRectangles = Array();
 			this.draw();
 		}
+		else if (ev.key == "6") 
+		{
+			this.inputMode = "SNIP";
+			this.workingRectangle = null;
+			this.mousePressed = false;
+			this.selectionRectangle = null;
+			//this.selectedRectangles = Array();
+			this.draw();
+		
+		}
 		else if (ev.key == "h") alert(controlText);
 		else if (ev.key == "x") 
 		{
@@ -355,8 +365,67 @@ class AudioClipCanvas
 			}
 		}
 		else if (this.inputMode == "REMOVE") return;
+		else if (this.inputMode == "SNIP")
+		{
+			console.log("CLICK");
+			// Get the mouse coords
+			let val = this.screenToWorldCoords(this.coord);
+			val = this.snapToGrid(val);
+
+			// Track indices we want to later remove in this array
+			let indicesToRemove = Array();
+			let rectsToAdd = Array();
+
+			// Split any rectangles that collide with the cursor
+			for (let i = 0; i < this.rectangleList.length; i++)
+				if (this.rectangleCollision(val,this.rectangleList[i]))
+				{
+					console.log("Snip click!");
+					let sr = this.audioFiles[this.rectangleList[i][2]][2].sampleRate;
+					let dur = (val.x - this.rectangleList[i][0].x)/this.cellWidth;
+					dur = Math.round(dur * this.snapAmount) / this.snapAmount; // mult/div here preserves snapping
+					dur = this.cellsToSeconds(dur,this.getBpm()); // convert the duration to seconds
+					dur = dur * sr; // convert the duration to samples
+					let numberOfSamples = Math.round(dur); // the number of samples we want to offset by
+					if (val.x - this.rectangleList[i][0].x > 0)
+					{
+						// The left rectangle has the same start coord and sample offset, but a different end coord
+						let leftRect = [ this.rectangleList[i][0],
+											{x:val.x,y:this.rectangleList[i][1].y}, 
+											this.rectangleList[i][2], 
+											this.rectangleList[i][3]];
+						// The right rectangle has the same end coord but a different start coord and sample offset
+						let rightRect = [ {x:val.x,y:this.rectangleList[i][0].y}, 
+											this.rectangleList[i][1], 
+											this.rectangleList[i][2], 
+											numberOfSamples+this.rectangleList[i][3]];
+						console.log("old rect:"+ JSON.stringify(this.rectangleList[i]));
+						console.log("left rect:"+ JSON.stringify(leftRect));
+						console.log("right rect:"+ JSON.stringify(rightRect));
+						rectsToAdd.push(leftRect);
+						// Check that the right rectangle has a valid width before adding it to the list
+						if (rightRect[1].x - rightRect[0].x > 0) rectsToAdd.push(rightRect);
+						indicesToRemove.push(i);
+					}
+				}
+
+			// Add the new rectangles to the rectangle list
+			for(let i = 0; i < rectsToAdd.length; i++) this.rectangleList.push(rectsToAdd[i]);
+
+			// Remove the leftover split rectangles from the rectangle list
+			for(let i = indicesToRemove.length-1; i >= 0; i--) this.rectangleList.splice(indicesToRemove[i], 1);
+			console.log("rectangle list length: "+this.rectangleList.length);
+			console.log("\n");
+			this.draw();	
+		}
 		else // note mode case
 		{
+			// TODO: Should this be moved to the start of this function?
+			if (this.clipName == "EMPTY-CLIP")
+			{
+				alert("Please select an audio clip by name with the i key");
+				return;
+			}
 			let val = this.screenToWorldCoords(this.coord);
 			this.leftClickStart = this.snapToGrid(val);
 			this.workingRectangle = new Array(this.leftClickStart,this.leftClickStart);
@@ -411,8 +480,9 @@ class AudioClipCanvas
 	*/
 	leftClickUp()
 	{
+		if (this.clipName == "EMPTY-CLIP") return;
 		if (!this.triggerMode) return;
-		if (this.inputMode == "DELETE" || this.inputMode == "PASTE" || this.inputMode == "REMOVE")
+		if (this.inputMode == "DELETE" || this.inputMode == "PASTE" || this.inputMode == "REMOVE" || this.inputMode == "SNIP")
 		{
 			this.draw();
 			return;
@@ -628,20 +698,23 @@ class AudioClipCanvas
 
 		if (bufIndex < this.audioFiles.length && bufIndex >= 0)
 		{
-			// Get the bpm
-			// TODO: There is probably a cleaner way to do this without accessing the dom directly
-			//		perhaps thru the view class
-			let bpm = document.getElementById('playlist-bpm').value; // get the select tag
-			if (bpm == "") bpm = document.getElementById('playlist-bpm').placeholder;
-			bpm =  Number(bpm);
-
 			// Get the sample rate
 			let sampleRate = this.audioFiles[bufIndex][2].sampleRate;
 
 			// Draw the actual rectangle
-			this.drawAudioBufferToRectangle(rect,this.audioFiles[bufIndex][2].getChannelData(0),bpm,sampleRate);
+			this.drawAudioBufferToRectangle(rect,this.audioFiles[bufIndex][2].getChannelData(0),this.getBpm(),sampleRate);
 		}
 	}
+
+	// TODO: There is probably a cleaner way to do this without accessing the dom directly
+	getBpm()
+	{
+		let bpm = document.getElementById('playlist-bpm').value; // get the select tag
+		if (bpm == "") bpm = document.getElementById('playlist-bpm').placeholder;
+		bpm =  Number(bpm);
+		return bpm;
+	}
+
 
 	drawAudioBufferToRectangle(rect,arr,bpm,sr)
 	{
@@ -790,6 +863,7 @@ class AudioClipCanvas
 		else if (this.inputMode == "SELECT") text = "Select mode. ";
 		else if (this.inputMode == "PASTE") text = "Paste mode. ";
 		else if (this.inputMode == "REMOVE") text = "Remove mode. ";
+		else if (this.inputMode == "SNIP") text = "Snip mode. ";
 		else text = "Note mode.";
 		
 		text += "Press h for keybinds.";
