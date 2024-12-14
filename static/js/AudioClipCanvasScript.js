@@ -723,7 +723,7 @@ class AudioClipCanvas
 		let rectHeight = rect[1].y - rect[0].y; // the height of the rectangle to draw
 
 		let dur = rectWidth/this.cellWidth; // the duration of the rectangle to draw in cells
-		dur = Math.round(dur * this.snapAmount) / this.snapAmount; // mult/div here preserves snapping
+		//dur = Math.round(dur * this.snapAmount) / this.snapAmount; // mult/div here preserves snapping
 		dur = this.cellsToSeconds(dur,bpm); // convert the duration to seconds
 		dur = dur * sr; // convert the duration to samples
 		let numberOfSamples = dur; // the number of samples we want to display

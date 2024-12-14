@@ -509,6 +509,7 @@ class View
 
 		// Add the new track to our map of all tracks
 		this.trackMap.set(this.CleanName(name),tempCanv);
+		//this.trackMap.set(this.CleanName(name),[tempCanv]);
 
 		// Register the instruments with each other. There is only one in this case.
 		tempCanv[0].registerInstrument(tempCanv,"track-"+name+"-instrument");
