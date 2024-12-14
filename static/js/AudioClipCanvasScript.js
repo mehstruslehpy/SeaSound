@@ -18,6 +18,8 @@ You should have received a copy of the GNU General Public License along with Sea
 // TODO: Need to completely redo all documentation comments for this widget.
 // TODO: Need to add slicing mode to chop up clips.
 // TODO: Need to figure out how we want to emit code.
+// TODO: There is a bug where trying to delete after selection causes the wrong rectangle to be deleted
+// TODO: Need to add a translate mode that allows rectangles to be clicked and dragged around
 class AudioClipCanvas
 {
 	/**
@@ -217,12 +219,13 @@ class AudioClipCanvas
 			// get the list of indices to remove and sort in descending order
 			let indices = Array();
 			for (let i = 0; i < this.selectedRectangles.length; i++)
-				indices.push(this.selectedRectangles[i][3]);
+				indices.push(this.selectedRectangles[i][4]);
 			indices.sort((a,b) => a < b);
 			// delete all the corresponding notes from this and all other widgets
 			for (let i = 0; i < indices.length; i++)
 			{
 				this.splice(indices[i],1);
+				/*
 				// Update the non-triggering widgets too
 				for (let j = 0; j < this.instrument.length; j++)
 					if (this.instrument[j] != this)
@@ -230,6 +233,7 @@ class AudioClipCanvas
 						this.instrument[j].splice(indices[i],1);
 						this.instrument[j].draw();
 					}
+				*/
 			}
 			this.inputMode = "NOTE";
 			this.selectedRectangles = Array();
@@ -367,7 +371,6 @@ class AudioClipCanvas
 		else if (this.inputMode == "REMOVE") return;
 		else if (this.inputMode == "SNIP")
 		{
-			console.log("CLICK");
 			// Get the mouse coords
 			let val = this.screenToWorldCoords(this.coord);
 			val = this.snapToGrid(val);
@@ -380,7 +383,6 @@ class AudioClipCanvas
 			for (let i = 0; i < this.rectangleList.length; i++)
 				if (this.rectangleCollision(val,this.rectangleList[i]))
 				{
-					console.log("Snip click!");
 					let sr = this.audioFiles[this.rectangleList[i][2]][2].sampleRate;
 					let dur = (val.x - this.rectangleList[i][0].x)/this.cellWidth;
 					dur = Math.round(dur * this.snapAmount) / this.snapAmount; // mult/div here preserves snapping
@@ -399,9 +401,6 @@ class AudioClipCanvas
 											this.rectangleList[i][1], 
 											this.rectangleList[i][2], 
 											numberOfSamples+this.rectangleList[i][3]];
-						console.log("old rect:"+ JSON.stringify(this.rectangleList[i]));
-						console.log("left rect:"+ JSON.stringify(leftRect));
-						console.log("right rect:"+ JSON.stringify(rightRect));
 						rectsToAdd.push(leftRect);
 						// Check that the right rectangle has a valid width before adding it to the list
 						if (rightRect[1].x - rightRect[0].x > 0) rectsToAdd.push(rightRect);
@@ -414,8 +413,6 @@ class AudioClipCanvas
 
 			// Remove the leftover split rectangles from the rectangle list
 			for(let i = indicesToRemove.length-1; i >= 0; i--) this.rectangleList.splice(indicesToRemove[i], 1);
-			console.log("rectangle list length: "+this.rectangleList.length);
-			console.log("\n");
 			this.draw();	
 		}
 		else // note mode case
@@ -497,7 +494,8 @@ class AudioClipCanvas
 						[ this.rectangleList[i][0],
 							this.rectangleList[i][1],
 							this.rectangleList[i][2],
-							this.rectangleList[i][3],i]);
+							this.rectangleList[i][3],
+							i]);
 											
 			this.selectionRectangle = null;
 			this.draw();
