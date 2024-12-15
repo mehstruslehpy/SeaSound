@@ -16,9 +16,7 @@ You should have received a copy of the GNU General Public License along with Sea
 //		d is the start index in samples that the clip is read from
 // TODO: Need to remove code where we are iterating across instruments array when there is only the AudioClipCanvas.
 // TODO: Need to completely redo all documentation comments for this widget.
-// TODO: Need to add slicing mode to chop up clips.
 // TODO: Need to figure out how we want to emit code.
-// TODO: There is a bug where trying to delete after selection causes the wrong rectangle to be deleted
 // TODO: Need to add a translate mode that allows rectangles to be clicked and dragged around
 class AudioClipCanvas
 {
@@ -374,6 +372,8 @@ class AudioClipCanvas
 			// Get the mouse coords
 			let val = this.screenToWorldCoords(this.coord);
 			val = this.snapToGrid(val);
+			// Offset mouse coords to interior of height of rectangle for collision purposes
+			let collisionPt = {x:val.x, y:val.y+0.5*this.cellHeight};
 
 			// Track indices we want to later remove in this array
 			let indicesToRemove = Array();
@@ -381,8 +381,9 @@ class AudioClipCanvas
 
 			// Split any rectangles that collide with the cursor
 			for (let i = 0; i < this.rectangleList.length; i++)
-				if (this.rectangleCollision(val,this.rectangleList[i]))
+				if (this.rectangleCollision(collisionPt,this.rectangleList[i]))
 				{
+					console.log("Collision! "+i);
 					let sr = this.audioFiles[this.rectangleList[i][2]][2].sampleRate;
 					let dur = (val.x - this.rectangleList[i][0].x)/this.cellWidth;
 					dur = Math.round(dur * this.snapAmount) / this.snapAmount; // mult/div here preserves snapping
