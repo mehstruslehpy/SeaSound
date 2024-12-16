@@ -435,13 +435,11 @@ class AudioClipCanvas
 			this.mousePressed = true;
 			this.dragIndex = -1;
 			// check if a collision has occurred
-			this.leftClickStart = this.snapToGrid(this.screenToWorldCoords(this.coord));
-			let c = {x:this.leftClickStart.x+this.cellWidth/2, y:this.leftClickStart.y+this.cellHeight/2};
+			this.leftClickStart = this.screenToWorldCoords(this.coord);
 			for (let i = 0; i < this.rectangleList.length; i++)
 			{
     			// The test point needs to be partially inside the cell to avoid edge case problems
-    			let c = {x:this.leftClickStart.x+this.cellWidth/2, y:this.leftClickStart.y+this.cellHeight/2};
-    			if (this.rectangleCollision(c,this.rectangleList[i]))
+    			if (this.rectangleCollision(this.leftClickStart,this.rectangleList[i]))
     			{
         			this.dragIndex = i;
     			}
