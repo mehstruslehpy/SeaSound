@@ -17,7 +17,8 @@ You should have received a copy of the GNU General Public License along with Sea
 // TODO: Need to remove code where we are iterating across instruments array when there is only the AudioClipCanvas.
 // TODO: Need to completely redo all documentation comments for this widget.
 // TODO: Need to figure out how we want to emit code.
-// TODO: Need to add a translate mode that allows rectangles to be clicked and dragged around
+// TODO: Need to set up save and load code for projects with audio clip canvas objects
+// TODO: Need to allow snipping to snap to grid
 class AudioClipCanvas
 {
 	/**
@@ -118,7 +119,7 @@ class AudioClipCanvas
 	* them. Paste mode copies notes currently selected from using the select mode to the current cursor position.
 	* Remove mode deletes collections of notes which were selected via the select mode.
 	*/
-	inputModes = ["SELECT","NOTE","DELETE","PASTE","REMOVE","SNIP"];
+	inputModes = ["SELECT","NOTE","DELETE","PASTE","REMOVE","SNIP","DRAG"];
 	/**
 	* The current input mode.
 	*/
@@ -136,6 +137,10 @@ class AudioClipCanvas
 	* The collection of rectangles (notes) selected while in select mode.
 	*/
 	selectedRectangles = Array();
+	/**
+	* An index into the array of rectangles used in drag mode to indicate which rectangle is being dragged.
+	*/
+	dragIndex = -1
 
 	constructor(query,trackName,horizontalCells,verticalCells,beatsPerCell,audioFiles)
 	{
@@ -187,7 +192,7 @@ class AudioClipCanvas
 			controlText += "tg: change X scaling amount\n";
 			controlText += "yh: change Y scaling amount\n";
 			controlText += "x: change snap to grid amount\n";
-			controlText += "1/2/3/4/5: switch between select/note/paste/delete/remove mode\n";
+			controlText += "1/2/3/4/5/6/7: switch between select/note/paste/delete/remove/snip/drag modes\n";
 			controlText += "i: change clip name\n";
 
 		//if (ev.key == "Control" && this.triggerMode) this.controlPressed = true;
@@ -259,6 +264,16 @@ class AudioClipCanvas
 		else if (ev.key == "6") 
 		{
 			this.inputMode = "SNIP";
+			this.workingRectangle = null;
+			this.mousePressed = false;
+			this.selectionRectangle = null;
+			//this.selectedRectangles = Array();
+			this.draw();
+		
+		}
+		else if (ev.key == "7") 
+		{
+			this.inputMode = "DRAG";
 			this.workingRectangle = null;
 			this.mousePressed = false;
 			this.selectionRectangle = null;
@@ -383,10 +398,9 @@ class AudioClipCanvas
 			for (let i = 0; i < this.rectangleList.length; i++)
 				if (this.rectangleCollision(collisionPt,this.rectangleList[i]))
 				{
-					console.log("Collision! "+i);
 					let sr = this.audioFiles[this.rectangleList[i][2]][2].sampleRate;
 					let dur = (val.x - this.rectangleList[i][0].x)/this.cellWidth;
-					dur = Math.round(dur * this.snapAmount) / this.snapAmount; // mult/div here preserves snapping
+					//dur = Math.round(dur * this.snapAmount) / this.snapAmount; // mult/div here preserves snapping
 					dur = this.cellsToSeconds(dur,this.getBpm()); // convert the duration to seconds
 					dur = dur * sr; // convert the duration to samples
 					let numberOfSamples = Math.round(dur); // the number of samples we want to offset by
@@ -415,6 +429,24 @@ class AudioClipCanvas
 			// Remove the leftover split rectangles from the rectangle list
 			for(let i = indicesToRemove.length-1; i >= 0; i--) this.rectangleList.splice(indicesToRemove[i], 1);
 			this.draw();	
+		}
+		else if (this.inputMode == "DRAG")
+		{
+			this.mousePressed = true;
+			this.dragIndex = -1;
+			// check if a collision has occurred
+			this.leftClickStart = this.snapToGrid(this.screenToWorldCoords(this.coord));
+			let c = {x:this.leftClickStart.x+this.cellWidth/2, y:this.leftClickStart.y+this.cellHeight/2};
+			for (let i = 0; i < this.rectangleList.length; i++)
+			{
+    			// The test point needs to be partially inside the cell to avoid edge case problems
+    			let c = {x:this.leftClickStart.x+this.cellWidth/2, y:this.leftClickStart.y+this.cellHeight/2};
+    			if (this.rectangleCollision(c,this.rectangleList[i]))
+    			{
+        			this.dragIndex = i;
+    			}
+			}
+			this.draw();
 		}
 		else // note mode case
 		{
@@ -478,10 +510,18 @@ class AudioClipCanvas
 	*/
 	leftClickUp()
 	{
+
 		if (this.clipName == "EMPTY-CLIP") return;
 		if (!this.triggerMode) return;
 		if (this.inputMode == "DELETE" || this.inputMode == "PASTE" || this.inputMode == "REMOVE" || this.inputMode == "SNIP")
 		{
+			this.draw();
+			return;
+		}
+		else if (this.inputMode == "DRAG")
+		{
+			this.dragIndex = -1;
+			this.mousePressed = false;
 			this.draw();
 			return;
 		}
@@ -557,6 +597,21 @@ class AudioClipCanvas
 				x: Math.max(this.leftClickStart.x,this.leftClickEnd.x),
    				y: c1.y+this.cellHeight
 			};
+
+		
+			// If the drag index is not negative we are trying to move a block
+			if (this.dragIndex != -1)
+			{
+				let val  = this.screenToWorldCoords(this.coord);
+				let snapped = this.snapToGrid(val);
+				let width = this.rectangleList[this.dragIndex][1].x - this.rectangleList[this.dragIndex][0].x;
+				this.rectangleList[this.dragIndex][0].x = val.x;
+				this.rectangleList[this.dragIndex][1].x = val.x+width;
+				this.rectangleList[this.dragIndex][0].y = snapped.y;
+				this.rectangleList[this.dragIndex][1].y = snapped.y+this.cellHeight;
+			
+				this.draw();
+			}
 
 			// If the mouse is pressed and held there is stuff to draw
 			if (this.mousePressed && this.workingRectangle != null)
@@ -863,6 +918,7 @@ class AudioClipCanvas
 		else if (this.inputMode == "PASTE") text = "Paste mode. ";
 		else if (this.inputMode == "REMOVE") text = "Remove mode. ";
 		else if (this.inputMode == "SNIP") text = "Snip mode. ";
+		else if (this.inputMode == "DRAG") text = "Drag mode. ";
 		else text = "Note mode.";
 		
 		text += "Press h for keybinds.";
