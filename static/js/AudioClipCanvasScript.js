@@ -16,9 +16,8 @@ You should have received a copy of the GNU General Public License along with Sea
 //		d is the start index in samples that the clip is read from
 // TODO: Need to remove code where we are iterating across instruments array when there is only the AudioClipCanvas.
 // TODO: Need to completely redo all documentation comments for this widget.
-// TODO: Need to figure out how we want to emit code.
 // TODO: Need to set up save and load code for projects with audio clip canvas objects
-// TODO: Need to allow snipping to snap to grid
+// TODO: Need to allow dragging to snap to grid
 class AudioClipCanvas
 {
 	/**
@@ -1134,7 +1133,7 @@ class AudioClipCanvas
 		this.rectangleList.push([c1,c2,rect[2],rect[3]]);
 	}
 	/**
-	* Converts the input rectangle to a quadruple [start time, duration, note].
+	* Converts the input rectangle to a quadruple [start time, duration, note, amplitude].
 	* @param {object} rect - The input rectangle to convert.
 	* @param {number} bpm - Beats per minute, required to do unit conversion of times.
 	* @returns Tuple containing tuple in form [start, time, duration, note] for input note with bpm.
@@ -1154,7 +1153,8 @@ class AudioClipCanvas
 		// Convert raw cell values to values in seconds
 		start = this.cellsToSeconds(start,bpm);
 		dur = this.cellsToSeconds(dur,bpm);
-		return [start,dur,this.noteToPitchClass(pitch)];
+		//return [start,dur,this.noteToPitchClass(pitch)];
+		return [start,dur,rect[2],1];
 	}
 	/**
 	* Creates array of note quadruples in [start, time, duration, note] format from rectangle list.
@@ -1166,6 +1166,7 @@ class AudioClipCanvas
 		let out = new Array();
 		for (let i = 0; i < this.rectangleList.length; i++)
 		{
+			console.log(this.rectangleList[i]);
 			let note = this.convertRectToNote(this.rectangleList[i],bpm);
 			out.push(note);	
 		}
@@ -1273,4 +1274,84 @@ class AudioClipCanvas
 		this.beatsPerCell = state.beatsPerCell;
 		this.draw();
 	}
+
+	// Demo code to print the sampler associated to this audio canvas to the console
+	renderInstrument()
+	{
+
+		// Print the ftable entries for this instrument
+		for (let i = 0; i < this.audioFiles.length; i++)
+			console.log(";gi"+this.audioFiles[i][0].replace("\.","")+" ftgen 0, 0, 0, 1, \""+this.audioFiles[i][0]+"\", 0, 0, 0");
+
+		// Output the basic instrument code
+		console.log("instr track"+this.trackName+"instrument");
+		console.log("\tiamp = p5");
+		console.log("\tikey = p4");
+
+		// No point in printing the conditionals if there are no instruments
+		if (this.audioFiles.length > 0)
+		{
+			for (let i = 0; i < this.audioFiles.length; i++)
+			{
+				let item = this.audioFiles[i][0];
+				if (i == 0) 
+				{
+					console.log("\tif (ikey == "+i+") then");
+					console.log("\t\tasamp loscil iamp, 1, gi"+item.replace("\.","")+", 1");
+				}
+				else
+				{
+					console.log("\telseif (ikey == "+i+") then");
+					console.log("\t\tasamp loscil iamp, 1, gi"+item.replace("\.","")+", 1");
+				}
+			}
+			console.log("\tendif");
+		}
+
+		// print the output and end the instrument
+		console.log("\touts asamp, asamp");
+		console.log("endin");
+	}
+
+	renderToText()
+	{
+		let outStr = "";
+
+		// Print the ftable entries for this instrument
+		for (let i = 0; i < this.audioFiles.length; i++)
+			outStr += ";gi"+this.audioFiles[i][0].replace("\.","")+" ftgen 0, 0, 0, 1, \""+this.audioFiles[i][0]+"\", 0, 0, 0\n";
+
+
+		// Output the basic instrument code
+		outStr += "instr track"+this.trackName+"instrument\n";
+		outStr += "\tiamp = p5\n";
+		outStr += "\tikey = p4\n";
+
+		// No point in printing the conditionals if there are no instruments
+		if (this.audioFiles.length > 0)
+		{
+			for (let i = 0; i < this.audioFiles.length; i++)
+			{
+				let item = this.audioFiles[i][0];
+				if (i == 0) 
+				{
+					outStr += "\tif (ikey == "+i+") then\n";
+					outStr += "\t\tasamp loscil iamp, 1, gi"+item.replace("\.","")+", 1\n";
+				}
+				else
+				{
+					outStr += "\telseif (ikey == "+i+") then\n";
+					outStr += "\t\tasamp loscil iamp, 1, gi"+item.replace("\.","")+", 1\n";
+				}
+			}
+			outStr += "\tendif\n";
+		}
+
+		// print the output and end the instrument
+		outStr += "\touts asamp, asamp\n";
+		outStr += "endin\n";
+
+		return outStr
+	}
+
 }

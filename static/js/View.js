@@ -505,14 +505,17 @@ class View
 		newCanvas.setAttribute("id","track-p0-"+name);
 		newCanvas.style.display = "inline";
 		instDiv.appendChild(newCanvas);
-		tempCanv.push(new AudioClipCanvas("track-p0-"+name,name,hCells,vCells,beatsPerCell,this.audioFiles));
+		let clipCanvas = new AudioClipCanvas("track-p0-"+name,name,hCells,vCells,beatsPerCell,this.audioFiles);
+		tempCanv.push(clipCanvas);
 
 		// Add the new track to our map of all tracks
 		this.trackMap.set(this.CleanName(name),tempCanv);
+		this.instrumentMap.set(this.CleanName(name),clipCanvas);
 		//this.trackMap.set(this.CleanName(name),[tempCanv]);
 
 		// Register the instruments with each other. There is only one in this case.
-		tempCanv[0].registerInstrument(tempCanv,"track-"+name+"-instrument");
+		//tempCanv[0].registerInstrument(tempCanv,"track-"+name+"-instrument");
+		tempCanv[0].registerInstrument(tempCanv,"track"+name+"instrument");
 
 		// Set up the canvas trigger modes
 		tempCanv[0].setTriggerMode(true);
@@ -1430,10 +1433,14 @@ class View
 				// Append file contents to our list of audio files
 				audioFileHelper(file.name,dat,this.audioFiles);
 
+				// Make the file accessible via the score header
+				let headerEntry = "\ngi"+file.name.replace("\.","")+" ftgen 0, 0, 0, 1, \""+file.name+"\", 0, 0, 0";
+				document.getElementById("orchestra-header").value += headerEntry;
 
 			}
 		}
 		input.click();
+		//console.log(this.audioFiles);
 	}
 	/**
 	* Returns the array of audio files that View keeps track of.
