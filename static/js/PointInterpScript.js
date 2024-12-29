@@ -12,6 +12,7 @@ You should have received a copy of the GNU General Public License along with Sea
 //		other parameter widgets elegantly
 class PointInterpolationCanvas 
 {
+	widgetType = "PointInterpolationCanvas";
 	coord = {x:0, y:0}; // the coords of the mouse
 	leftClickStart = {x:0, y:0}; // the coords of the mouse at the start of a click
 	leftClickEnd = {x:0, y:0}; // the coords of the mouse at the release of a click
@@ -146,7 +147,10 @@ class PointInterpolationCanvas
 		for (let i = 0; i < this.pointList.length; i++) this.circleCoord(this.pointList[i]);
 
 	}
-
+	getObjectType()
+	{
+		return this.widgetType;
+	}
 }
 // Draw the divisions
 //let pointInterpolationObject = new PointInterpolationCanvas(".pointInterpCanvas",100,100,"line");

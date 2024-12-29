@@ -975,6 +975,10 @@ class SliderCanvas
 		this.rectangleStyle = state.rectangleStyle;
 		this.draw();
 	}
+	getObjectType()
+	{
+		return this.widgetType;
+	}
 }
 
 //let sliderObject = new SliderCanvas(".sliderCanvas",20,20,"lollipop");

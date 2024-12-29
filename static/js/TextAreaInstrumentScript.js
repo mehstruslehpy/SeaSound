@@ -15,6 +15,7 @@ You should have received a copy of the GNU General Public License along with Sea
 */
 class TextAreaInstrumentCanvas
 {
+	widgetType = "TextAreaInstrumentCanvas";
 	/**
 	* The name of this instrument.
 	*/
@@ -87,5 +88,9 @@ class TextAreaInstrumentCanvas
 		this.instrumentId = file[0][2];
 		document.getElementById(this.instrumentId).value = file[0][3].replace(/\\n/g,"\n");
 		//this.draw();
+	}
+	getObjectType()
+	{
+		return this.widgetType;
 	}
 }

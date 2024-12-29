@@ -793,6 +793,11 @@ class CodedEventCanvas
 		this.cellWidth = state.cellWidth;
 		this.draw();
 	}
+
+	getObjectType()
+	{
+		return this.widgetType;
+	}
 }
 // Draw the divisions
 //let codedEventObject= new CodedEventCanvas(".codedEventCanvas",40);

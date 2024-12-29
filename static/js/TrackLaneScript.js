@@ -17,6 +17,7 @@ You should have received a copy of the GNU General Public License along with Sea
 */
 class TrackLaneCanvas
 {
+	widgetType = "TrackLaneCanvas";
 	/**
 	* The coords of the mouse.
 	*/
@@ -825,5 +826,9 @@ class TrackLaneCanvas
 		}
 		this.rectangleFontSize = 0.75*this.rectangleFontSize; // We scale by a padding factor of 75% for vertical fitting
 		this.draw();
+	}
+	getObjectType()
+	{
+		return this.widgetType;
 	}
 }

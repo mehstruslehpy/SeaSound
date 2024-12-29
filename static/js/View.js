@@ -1202,6 +1202,8 @@ class View
 				workingWidget = new SliderCanvas("track-p"+i+"-"+filename,trackName,0,0,0,"lollipop");
 			else if (temp[i].widgetType == "CodedEventCanvas")
 				workingWidget = new CodedEventCanvas("track-p"+i+"-"+filename,trackName,0,0);
+			else if (temp[i].widgetType == "AudioClipCanvas")
+				workingWidget = new AudioClipCanvas("track-p0-"+filename,trackName,0,0,0,this.audioFiles);
 			else console.log("ERROR: invalid parameter type on track load.");
 			workingWidget.reconfigure(temp[i]);
 			workingWidget.setInstrument(instr);
@@ -1210,6 +1212,8 @@ class View
 		instDiv.style.display = "none";
 		
 		this.trackMap.set(this.CleanName(filename),instr);
+		if (instr[0].getObjectType() == "AudioClipCanvas")
+			this.instrumentMap.set(this.CleanName(filename),instr[0]);
 	}	
 	/**
 	* Create a zip file containing the full state of the current project and download it
@@ -1222,7 +1226,8 @@ class View
 
 		// Add the instruments to the zip file
 		for (const val of this.instrumentMap.values())
-			zip.file(projName+"/instruments/"+val.getName()+".synth", val.toText());
+			if (val.getObjectType() != "AudioClipCanvas")
+				zip.file(projName+"/instruments/"+val.getName()+".synth", val.toText());
 
 		// Add the tracks to the zipfile
 		for (const val of this.trackMap.values())
@@ -1236,6 +1241,8 @@ class View
 				else return value;
 			});
 
+			console.log("Output track JSON;");
+			console.log(text);
 			zip.file(projName+"/tracks/"+val[0].getTrack()+".track", text);
 		}
 		

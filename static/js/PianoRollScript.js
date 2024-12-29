@@ -1040,4 +1040,9 @@ class PianoRollCanvas
 		this.beatsPerCell = state.beatsPerCell;
 		this.draw();
 	}
+
+	getObjectType()
+	{
+		return this.widgetType;
+	}
 }

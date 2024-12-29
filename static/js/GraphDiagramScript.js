@@ -18,6 +18,8 @@ You should have received a copy of the GNU General Public License along with Sea
 */
 class GraphDiagramCanvas
 {
+
+	widgetType = "GraphDiagramCanvas";
 	/**
 	* The coords of the mouse.
 	*/
@@ -689,6 +691,11 @@ class GraphDiagramCanvas
 
 		// redraw the screen
 		this.draw();
+	}
+
+	getObjectType()
+	{
+		return this.widgetType;
 	}
 }
 

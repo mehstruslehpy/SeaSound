@@ -143,6 +143,7 @@ class AudioClipCanvas
 
 	constructor(query,trackName,horizontalCells,verticalCells,beatsPerCell,audioFiles)
 	{
+		console.log(query);
 		this.trackName = trackName;
 		this.audioFiles = audioFiles;
 		// Set Up the canvas
@@ -1272,6 +1273,10 @@ class AudioClipCanvas
 
 		// For unit conversion later
 		this.beatsPerCell = state.beatsPerCell;
+
+		// Do not reset this, it is set up in the constructor
+		//this.audioFiles = state.audioFiles;
+
 		this.draw();
 	}
 
@@ -1352,6 +1357,11 @@ class AudioClipCanvas
 		outStr += "endin\n";
 
 		return outStr
+	}
+
+	getObjectType()
+	{
+		return this.widgetType;
 	}
 
 }
