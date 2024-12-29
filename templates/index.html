@@ -117,6 +117,9 @@ You should have received a copy of the GNU General Public License along with Sea
 			<button class="tab-button" onclick="reinitCsound();">
 				Reinit
 			</button>
+			<button class="tab-button" onclick="console.log('about button pressed');">
+				About
+			</button>
 	
 		</div>
 		<div class="tab-container" id="tab-container">
@@ -134,6 +137,11 @@ You should have received a copy of the GNU General Public License along with Sea
 					id="track-editor-tab" 
 					onclick="viewObj.OpenTab('TrackEditor','track-editor-tab');">
 				Track Editor
+			</button>
+			<button class="tab-button" 
+					id="mixer-editor-tab" 
+					onclick="viewObj.OpenTab('MixerEditor','mixer-editor-tab');">
+				Mixer Editor
 			</button>
 			<button class="tab-button" 
 					id="config-tab" 
@@ -393,19 +401,138 @@ You should have received a copy of the GNU General Public License along with Sea
 			</form>
 			</dialog>
 
-			<label>Score Header:</label> </br>
-			<textarea cols="160" rows="5" id="score-header" spellcheck="false"></textarea> </br>
-			<label>Score Footer:</label> </br>
-			<textarea cols="160" rows="5" id="score-footer" spellcheck="false"></textarea> </br>
-			<label>Orchestra Header:</label> </br>
-			<textarea cols="160" rows="5" id="orchestra-header" spellcheck="false">
+			<div id="header-tabs">
+				<br>
+				<label>Section:</label>
+				<button onclick="viewObj.HeaderTab('score-header-tab');">
+					Score Header	
+				</button>
+				<button onclick="viewObj.HeaderTab('score-footer-tab');">
+					Score Footer 
+				</button>
+				<button onclick="viewObj.HeaderTab('orchestra-header-tab');">
+					Orchestra Header
+				</button>
+				<button onclick="viewObj.HeaderTab('orchestra-footer-tab');">
+					Orchestra Footer 
+				</button>
+				</br>
+	
+				<div id="score-header-tab" class="header-tab" style="display:block">
+					<label>Score Header:</label> </br>
+					<textarea style="width:100%; height:50vh;" id="score-header" spellcheck="false"></textarea> </br>
+				</div>
+				<div id="score-footer-tab" class="header-tab" style="display:none">
+					<label>Score Footer:</label> </br>
+					<textarea style="width:100%; height:50vh;" id="score-footer" spellcheck="false"></textarea> </br>
+				</div>
+				<div id="orchestra-header-tab" class="header-tab" style="display:none">
+					<label>Orchestra Header:</label> </br>
+					<textarea style="width:100%; height:50vh;" id="orchestra-header" spellcheck="false">
 sr = 44100 
 ksmps = 32 
 nchnls = 2 
 0dbfs  = 1
-			</textarea> </br>
-			<label>Orchestra Footer:</label> </br>
-			<textarea cols="160" rows="5" id="orchestra-footer" spellcheck="false"></textarea> </br>
+					</textarea> </br>
+				</div>
+				<div id="orchestra-footer-tab" class="header-tab" style="display:none">
+					<label>Orchestra Footer:</label> </br>
+					<textarea style="width:100%; height:50vh;" id="orchestra-footer" spellcheck="false"></textarea> </br>
+				</div>
+			</div>
+		</div>
+
+		<!-- GraphDiagram tab -->
+		<div id="MixerEditor" class="tab" style="display:none">
+
+			<!-- SEE INSTRUMENT CONTROLS FOR AN IDEA OF HOW THIS SHOULD WORK -->
+			<!-- Div for mixer tab controls -->
+			<div class="menu-control-container" id="mixer-controls">
+				<!-- Selector for choosing an mixer to edit -->
+				<label class="lr-pad">Select channel:</label>
+				<!-- Options are added dynamically here -->
+				<select class="lr-pad" 
+						id="mixer-canvases-select" 
+						onchange="console.log('drop down changed: '+this.value);">
+					<option value="NULL">NULL</option>
+					<option value="NULL">CHANNEL A</option>
+					<option value="NULL">CHANNEL B</option>
+					<option value="NULL">DEMO-MASTER-OUT</option>
+				</select> 
+				<!-- Button for deleting current mixer -->
+				<button class="lr-pad" onclick="console.log('channel delete button pressed');">
+					Delete
+				</button>
+				<!-- Button for adding an mixer -->
+ 				<div class="lr-pad">
+  					<label>New channel:</label>
+				
+  					<input type="text submit" 
+							id="mixer-name" 
+							name="mixer-name" 
+							onkeypress="console.log('mixer text input: '+document.getElementById('mixer-name').value)">
+				</div> 
+	
+				<button class="lr-pad" 
+						onclick="console.log('mixer add input via button: '+document.getElementById('mixer-name').value)">
+					Add
+				</button>
+
+			
+				<!-- Button for outputting mixer code -->
+				<button class="lr-pad" onclick="console.log('render channel');">
+					Render Channel
+				</button>
+				<button class="lr-pad" onclick="console.log('save channel')">
+					Save Channel
+				</button>
+				<button class="lr-pad" onclick="console.log('load channel');">
+					Load Channel
+				</button>
+			</div>
+			<hr class="rounded"> 
+			<!-- the individual mixer channels go here -->
+			<div id="mixer-channels">
+				<!-- each mixer channel has its own controls and a collection of effects -->
+				<div id="mixer-channel-0">
+					<!--<input type="range" orient="vertical" />-->
+					<label class="lr-pad">Channel Volume:</label>
+					<input style="width:80vw" type="range"/>
+					</br>
+	
+					<label class="lr-pad">New Slot Name:</label>
+  					<input type="text submit" 
+							id="slot-name" 
+							name="slot-name" 
+							onkeypress="console.log('slot name input: '+document.getElementById('slot-name').value)">
+	
+					<!--<label class="lr-pad">Fx Slot Controls:</label>-->
+					<button class="lr-pad" onclick="console.log('add above effect button')"> Add Above </button>
+					<button class="lr-pad" onclick="console.log('add below effect button')"> Add Below </button>
+					<button class="lr-pad" onclick="console.log('delete effect button')"> Delete Selection</button>
+					<button class="lr-pad" onclick="console.log('up effect button')"> Up </button>
+					<button class="lr-pad" onclick="console.log('down effect button')"> Down </button>
+					</br>
+					</br>
+					<label class="lr-pad">Channel Effects Slots :</label>
+					</br>
+					<div "mixer-channel-0-fx" style="overflow-y: scroll;">
+						<label class="lr-pad">* Slot 0: </label>
+						<button class="lr-pad" onclick="console.log('edit slot code')"> Edit </button> </br>
+						<label class="lr-pad">Slot 1: </label>
+						<button class="lr-pad" onclick="console.log('edit slot code')"> Edit </button> </br>
+						<label class="lr-pad">Slot 2: </label>
+						<button class="lr-pad" onclick="console.log('edit slot code')"> Edit </button> </br>
+						<label class="lr-pad">Slot 3: </label>
+						<button class="lr-pad" onclick="console.log('edit slot code')"> Edit </button> </br>
+						<label class="lr-pad">Slot 4: </label>
+						<button class="lr-pad" onclick="console.log('edit slot code')"> Edit </button> </br>
+						<label class="lr-pad">Slot 5: </label>
+						<button class="lr-pad" onclick="console.log('edit slot code')"> Edit </button> </br>
+					</div>
+				</div>
+
+			</div>
 		</div>
 
 		<!-- GraphDiagram tab -->
