@@ -39,6 +39,11 @@ class View
 	instrumentMap = new Map();
 
 	/**
+	* The mixer map contains all the mixer channels keyed by name.
+	*/
+	mixerMap = new Map();
+
+	/**
 	* The track map contains all tracks keyed by name
 	*/
 	trackMap = new Map();
@@ -90,6 +95,20 @@ class View
 		this.ResetParameter();
 	}
 
+	HeaderTab(tabName) 
+	{
+		var i;
+		var x = document.getElementsByClassName("header-tab");
+
+		// Hide all the tabs
+		for (i = 0; i < x.length; i++) x[i].style.display = "none";
+
+		// Display the selected tab and color in its corresponding button
+		document.getElementById(tabName).style.display = "block";
+
+		// Reset the parameters on the track editor tab for consistency
+		this.ResetParameter();
+	}
 	ChangeTrackEditorModalTab(tab,button)
 	{
 		let modalTabs = ["track-audio-canvas-tab", "track-instrument-canvas-tab"]
@@ -119,8 +138,11 @@ class View
 		let children = document.getElementById(divId).children;
 		// Hide whichever canvases are not currently selected and display the one that is
 		for (let i = 0; i < children.length; i++)
+		{
+			console.log(children[i]);
 			if (children[i].id == value) children[i].style.display = "inline";
 			else children[i].style.display = "none";
+		}
 		// Changes track editor tab parameter back to 0 regardless of which tab we call this from
 		this.ResetParameter();
 	}
@@ -1455,6 +1477,222 @@ class View
 	getAudioFiles()
 	{
 		return this.audioFiles;
+	}
+	MixerEnterHandler(e,name)
+	{
+		if (e && e.keyCode == 13) this.AddMixerChannel(name);
+	}
+	AddMixerChannel(name)
+	{
+		console.log("Add mixer channel "+name);
+
+		// Create the main mixer channel div
+		name = this.CleanName(name);
+		let channelDiv = document.createElement("div");
+		channelDiv.id = "mixer-channel-"+name;
+
+		// Create the text for the default channel slot
+		let initialSlotText = "";
+			initialSlotText += "instr "+name+"Slot0\n";
+			initialSlotText += "\t; The volume macro below is expanded to the slider value between 0 and 1\n";
+			initialSlotText += "\taleftin inleta \"leftin\"\n";
+			initialSlotText += "\tarightin inleta \"rightin\"\n";
+			initialSlotText += "\touts @VOLUME * aleftin, @VOLUME * arightin\n";
+			initialSlotText += "endin";	
+			
+
+		
+		// Create html to fill main div in with
+		let contentString = "";
+			contentString += "<label class='lr-pad'>Channel Name: " +name+ "</label>";
+			contentString += "<label class='lr-pad'>New Slot Name: </label>";
+  			contentString += "<input type='text submit' ";
+			contentString += "id='"+name+"-slot-name' ";
+			contentString += "name='"+name+"-slot-name' ";
+			contentString += "onkeypress='console.log(\"slot name input: \"+document.getElementById(\""+name+"-slot-name\").value)'>";
+	
+			contentString += "<button class='lr-pad' onclick='viewObj.MixerAddAbove(\""+name+"\")'> Add Above </button>";
+			contentString += "<button class='lr-pad' onclick='viewObj.MixerAddBelow(\""+name+"\")'> Add Below </button>";
+			contentString += "<button class='lr-pad' onclick='console.log(\"delete effect button\")'> Delete Selection</button>";
+			contentString += "<button class='lr-pad' onclick='viewObj.MixerUpButton(\""+name+"\")'> Up </button>";
+			contentString += "<button class='lr-pad' onclick='viewObj.MixerDownButton(\""+name+"\")'> Down </button>";
+			//contentString += "<button class='lr-pad' onclick='console.log(\"mute button\")'> Mute </button>";
+			contentString += "</br>";
+			contentString += "<label class='lr-pad'>Channel Volume:</label></br>";
+			contentString += "<input id=\""+name+"-channel-volume\" onchange='viewObj.MixerUpdateVolume(\""+name+"\",this.value)' style='width:80vw' type='range' min='0' max='100'/>";
+			contentString += "</br>";
+			//contentString += "<hr class='rounded'>";
+
+			contentString += "<div class='split-left'>";
+			contentString += "<label class='lr-pad'>Channel Effects Slots :</label>";
+			contentString += "</br>";
+			contentString += "<div id='"+name+"-slot-labels'>";
+			contentString += "<div id='mixer-channel-" + name + "-master-slot' style='overflow-y: scroll;'>";
+			contentString += "<label id='"+name+"-slot-master-label' class='lr-pad'>*Slot: master</label>";
+			contentString += "<button id='"+name+"-slot-master-edit' class='lr-pad' onclick='viewObj.EditMixerSlot(\""+name+"\",\"master\")'> Edit </button> </br>";
+			contentString += "</div>";
+			contentString += "</div>";
+			contentString += "</div>";
+					
+			contentString += "<div class='split-right'>";
+			contentString += "<label id='"+name+"-slot-label-code'>Slot Name: master</label></br>";
+			contentString += "<textarea id='"+name+"-effects-slot-code-output' style='width:70vw; height:55vh;'"
+			contentString += "spellcheck='false'"
+			contentString += "onchange='viewObj.UpdateMixerSlotCode(\""+name+"\",\"Master-Slot\",this.value)'>";
+			contentString += initialSlotText;
+			contentString += "</textarea>";
+			contentString += "</div>";
+
+			// Insert the code into the dom
+			channelDiv.innerHTML = contentString;
+			document.getElementById('mixer-channels').appendChild(channelDiv);
+
+			// Add a drop down entry
+			let selectTag = document.getElementById("mixer-canvases-select");
+			let optionTag = document.createElement("option");
+			optionTag.value = "mixer-channel-"+name;
+			optionTag.innerText= name;
+			selectTag.append(optionTag);
+			this.MixerDropDown("mixer-channel-"+name);
+
+			// Create a new mixer channel object
+			this.mixerMap.set(name,new MixerChannel(name));
+			// Add a channel to the mixer channel object
+			this.mixerMap.get(name).addSlot("master",initialSlotText);
+
+	}
+	UpdateMixerSlotCode(channelName,slotName,text)
+	{
+		this.mixerMap.get(channelName).writeSlot(slotName,text);
+		console.log(this.mixerMap.get(channelName).getSlot(slotName));
+	}
+
+	RenderMixerChannel(sel)
+	{
+		let name = sel[sel.selectedIndex].value;
+		name = this.CleanName(name);
+		console.log("Render mixer channel "+name);
+	}
+
+	SaveMixerChannel(sel)
+	{
+		let name = sel[sel.selectedIndex].value;
+		name = this.CleanName(name);
+		console.log("Save mixer channel "+name);
+	}
+	LoadMixerChannel()
+	{
+		console.log("Load mixer channel");
+	}
+	DeleteMixerChannel(sel)
+	{
+		let name = sel[sel.selectedIndex].value;
+		name = this.CleanName(name);
+		console.log("Delete mixer channel "+name);
+	}
+	MixerDropDown(value)
+	{
+		console.log("Mixer drop down "+value);
+		// Get the children canvases
+		let children = document.getElementById("mixer-channels").children;
+		// Hide whichever canvases are not currently selected and display the one that is
+		for (let i = 0; i < children.length; i++)
+		{
+			console.log(children[i]);
+			if (children[i].id == value) children[i].style.display = "inline";
+			else children[i].style.display = "none";
+		}
+		// Changes track editor tab parameter back to 0 regardless of which tab we call this from
+		this.ResetParameter();
+	}
+	MixerAddAbove(name)
+	{
+		let slotName = document.getElementById(name+'-slot-name').value;
+		let selected = this.mixerMap.get(name).getSlotIndex();
+		this.mixerMap.get(name).addAbove(selected,slotName);
+
+		// Get the div we are adding stuff to
+		let labelDiv = document.getElementById(name+'-slot-labels');
+		// Create the div to add
+		let slotDiv = document.createElement("div");
+		slotDiv.setAttribute("id","mixer-channel-"+name+"-"+slotName+"-slot");
+		slotDiv.setAttribute("style","overflow-y: scroll;");
+		let newLabel = document.createElement("label");
+		newLabel.setAttribute("class","lr-pad");
+		newLabel.setAttribute("id",name+"-slot-"+slotName+"-label");
+		newLabel.innerText = "Slot: "+slotName;
+		let newButton = document.createElement("button");
+		newButton.setAttribute("id",name+"-slot-"+slotName+"-edit");
+		newButton.setAttribute("class","lr-pad");
+		newButton.setAttribute("onclick",'viewObj.EditMixerSlot("'+name+'","'+slotName+'")');
+		//"<button id='' class='' onclick='viewObj.EditMixerSlot(\""+name+"\",\"master\")'> Edit </button> </br>";
+		newButton.innerText = "Edit";
+		slotDiv.appendChild(newLabel);
+		slotDiv.appendChild(newButton);
+		//labelDiv.appendChild(slotDiv);
+		labelDiv.insertBefore(slotDiv,labelDiv.children[selected]);
+		this.mixerMap.get(name).incrSlotIndex();
+	}
+	MixerAddBelow(name)
+	{
+		let slotName = document.getElementById(name+'-slot-name').value;
+		let selected = this.mixerMap.get(name).getSlotIndex();
+		this.mixerMap.get(name).addBelow(selected,slotName);
+
+		// Get the div we are adding stuff to
+		let labelDiv = document.getElementById(name+'-slot-labels');
+		// Create the div to add
+		let slotDiv = document.createElement("div");
+		slotDiv.setAttribute("id","mixer-channel-"+name+"-"+slotName+"-slot");
+		slotDiv.setAttribute("style","overflow-y: scroll;");
+		let newLabel = document.createElement("label");
+		newLabel.setAttribute("class","lr-pad");
+		newLabel.setAttribute("id",name+"-slot-"+slotName+"-label");
+		newLabel.innerText = "Slot: "+slotName;
+		let newButton = document.createElement("button");
+		newButton.setAttribute("id",name+"-slot-"+slotName+"-edit");
+		newButton.setAttribute("class","lr-pad");
+		//newButton.setAttribute("onclick",'console.log(\"edit slot code\")');
+		newButton.setAttribute("onclick",'viewObj.EditMixerSlot("'+name+'","'+slotName+'")');
+		newButton.innerText = "Edit";
+		slotDiv.appendChild(newLabel);
+		slotDiv.appendChild(newButton);
+		//labelDiv.appendChild(slotDiv);
+		labelDiv.insertBefore(slotDiv,labelDiv.children[selected+1]);
+	}
+	MixerUpButton(name)
+	{
+		let selected = this.mixerMap.get(name).getSlotIndex();
+		if (selected == 0) return;
+		this.mixerMap.get(name).decrSlotIndex();
+		let labelDiv = document.getElementById(name+'-slot-labels');
+		labelDiv.children[selected].children[0].innerText = labelDiv.children[selected].children[0].innerText.substring(1);
+		labelDiv.children[selected-1].children[0].innerText = "*" + labelDiv.children[selected-1].children[0].innerText;
+	}
+	MixerDownButton(name)
+	{
+		let selected = this.mixerMap.get(name).getSlotIndex();
+		let labelDiv = document.getElementById(name+'-slot-labels');
+		if (selected == labelDiv.children.length - 1) return;
+		this.mixerMap.get(name).incrSlotIndex();
+		labelDiv.children[selected].children[0].innerText = labelDiv.children[selected].children[0].innerText.substring(1);
+		labelDiv.children[selected+1].children[0].innerText = "*" + labelDiv.children[selected+1].children[0].innerText;
+	}
+	EditMixerSlot(name,slotname)
+	{
+		console.log("name:"+name+" slotname:"+slotname);
+		let labelDiv = document.getElementById(name+'-slot-label-code');
+		labelDiv.innerText = "Name: "+slotname;
+		let textArea = document.getElementById(name+'-effects-slot-code-output');
+		let initialText = this.mixerMap.get(name).getSlot(slotname);
+		textArea.value = initialText;
+		textArea.innerHTML = initialText;
+		textArea.setAttribute("onchange","viewObj.UpdateMixerSlotCode(\""+name+"\",\""+slotname+"\",this.value)");
+	}
+	MixerUpdateVolume(name,val)
+	{
+		console.log("name: "+name+" val: "+val);
+		this.mixerMap.get(name).setVolume(val/100);
 	}
 }
 /**

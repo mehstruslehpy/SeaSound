@@ -39,3 +39,15 @@ body
   padding-bottom: 5px;
   padding-left: 10px;
 }
+
+/* Split the screen in half */
+
+.split-left {
+  float: left;
+  width:20%;
+}
+
+.split-right {
+  float: right;
+  width:80%;
+}

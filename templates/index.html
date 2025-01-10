@@ -84,6 +84,7 @@ You should have received a copy of the GNU General Public License along with Sea
 	<!-- My scripts are loaded next -->
 	<!-- Library scripts are loaded  before the main script -->
 	<!-- This ensures View.js has access to all the libraries defined in the above scripts -->
+    <script src="../static/js/MixerChannel.js" defer></script>
     <script src="../static/js/SliderScript.js" defer></script>
     <script src="../static/js/CodedEventScript.js" defer></script>
     <script src="../static/js/PointInterpScript.js" defer></script>
@@ -117,7 +118,7 @@ You should have received a copy of the GNU General Public License along with Sea
 			<button class="tab-button" onclick="reinitCsound();">
 				Reinit
 			</button>
-			<button class="tab-button" onclick="console.log('about button pressed');">
+			<button class="tab-button" onclick="alert('Seasound: A csound based digital audio editor for the browser.\n\nCopyright (C) 2024  Mehstruslehpy\n\nThis program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.\n\n This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.\n\n You should have received a copy of the GNU General Public License along with this program.  If not, see <https://www.gnu.org/licenses/>.');">
 				About
 			</button>
 	
@@ -442,7 +443,7 @@ nchnls = 2
 			</div>
 		</div>
 
-		<!-- GraphDiagram tab -->
+		<!-- Mixer Editor tab -->
 		<div id="MixerEditor" class="tab" style="display:none">
 
 			<!-- SEE INSTRUMENT CONTROLS FOR AN IDEA OF HOW THIS SHOULD WORK -->
@@ -453,14 +454,15 @@ nchnls = 2
 				<!-- Options are added dynamically here -->
 				<select class="lr-pad" 
 						id="mixer-canvases-select" 
-						onchange="console.log('drop down changed: '+this.value);">
+						onchange="viewObj.MixerDropDown(this.value);">
 					<option value="NULL">NULL</option>
+					<!--
 					<option value="NULL">CHANNEL A</option>
 					<option value="NULL">CHANNEL B</option>
-					<option value="NULL">DEMO-MASTER-OUT</option>
+					<option value="NULL">DEMO-MASTER-OUT</option> -->
 				</select> 
 				<!-- Button for deleting current mixer -->
-				<button class="lr-pad" onclick="console.log('channel delete button pressed');">
+				<button class="lr-pad" onclick="viewObj.DeleteMixerChannel(document.getElementById('mixer-canvases-select'));">
 					Delete
 				</button>
 				<!-- Button for adding an mixer -->
@@ -470,32 +472,32 @@ nchnls = 2
   					<input type="text submit" 
 							id="mixer-name" 
 							name="mixer-name" 
-							onkeypress="console.log('mixer text input: '+document.getElementById('mixer-name').value)">
+							onkeypress="viewObj.MixerEnterHandler(event, 
+															document.getElementById('mixer-name').value)">
 				</div> 
 	
 				<button class="lr-pad" 
-						onclick="console.log('mixer add input via button: '+document.getElementById('mixer-name').value)">
+						onclick="viewObj.AddMixerChannel(document.getElementById('mixer-name').value)">
 					Add
 				</button>
 
 			
 				<!-- Button for outputting mixer code -->
-				<button class="lr-pad" onclick="console.log('render channel');">
+				<button class="lr-pad" onclick="viewObj.RenderMixerChannel(document.getElementById('mixer-canvases-select'));">
 					Render Channel
 				</button>
-				<button class="lr-pad" onclick="console.log('save channel')">
+				<button class="lr-pad" onclick="viewObj.SaveMixerChannel(document.getElementById('mixer-canvases-select'));">
 					Save Channel
 				</button>
-				<button class="lr-pad" onclick="console.log('load channel');">
+				<button class="lr-pad" onclick="viewObj.LoadMixerChannel();">
 					Load Channel
 				</button>
 			</div>
 			<hr class="rounded"> 
 			<!-- the individual mixer channels go here -->
 			<div id="mixer-channels">
-				<!-- each mixer channel has its own controls and a collection of effects -->
+				<!--
 				<div id="mixer-channel-0">
-					<!--<input type="range" orient="vertical" />-->
 					<label class="lr-pad">Channel Volume:</label>
 					<input style="width:80vw" type="range"/>
 					</br>
@@ -506,31 +508,40 @@ nchnls = 2
 							name="slot-name" 
 							onkeypress="console.log('slot name input: '+document.getElementById('slot-name').value)">
 	
-					<!--<label class="lr-pad">Fx Slot Controls:</label>-->
 					<button class="lr-pad" onclick="console.log('add above effect button')"> Add Above </button>
 					<button class="lr-pad" onclick="console.log('add below effect button')"> Add Below </button>
 					<button class="lr-pad" onclick="console.log('delete effect button')"> Delete Selection</button>
 					<button class="lr-pad" onclick="console.log('up effect button')"> Up </button>
 					<button class="lr-pad" onclick="console.log('down effect button')"> Down </button>
+					<button class="lr-pad" onclick="console.log('mute button')"> Mute </button>
 					</br>
 					</br>
-					<label class="lr-pad">Channel Effects Slots :</label>
-					</br>
-					<div "mixer-channel-0-fx" style="overflow-y: scroll;">
-						<label class="lr-pad">* Slot 0: </label>
-						<button class="lr-pad" onclick="console.log('edit slot code')"> Edit </button> </br>
-						<label class="lr-pad">Slot 1: </label>
-						<button class="lr-pad" onclick="console.log('edit slot code')"> Edit </button> </br>
-						<label class="lr-pad">Slot 2: </label>
-						<button class="lr-pad" onclick="console.log('edit slot code')"> Edit </button> </br>
-						<label class="lr-pad">Slot 3: </label>
-						<button class="lr-pad" onclick="console.log('edit slot code')"> Edit </button> </br>
-						<label class="lr-pad">Slot 4: </label>
-						<button class="lr-pad" onclick="console.log('edit slot code')"> Edit </button> </br>
-						<label class="lr-pad">Slot 5: </label>
-						<button class="lr-pad" onclick="console.log('edit slot code')"> Edit </button> </br>
+
+					<div class="split-left">
+						<label class="lr-pad">Channel Effects Slots :</label>
+						</br>
+						<div "mixer-channel-0-fx" style="overflow-y: scroll;">
+							<label class="lr-pad">* Slot 0: </label>
+							<button class="lr-pad" onclick="console.log('edit slot code')"> Edit </button> </br>
+							<label class="lr-pad">Slot 1: </label>
+							<button class="lr-pad" onclick="console.log('edit slot code')"> Edit </button> </br>
+							<label class="lr-pad">Slot 2: </label>
+							<button class="lr-pad" onclick="console.log('edit slot code')"> Edit </button> </br>
+							<label class="lr-pad">Slot 3: </label>
+							<button class="lr-pad" onclick="console.log('edit slot code')"> Edit </button> </br>
+							<label class="lr-pad">Slot 4: </label>
+							<button class="lr-pad" onclick="console.log('edit slot code')"> Edit </button> </br>
+							<label class="lr-pad">Slot 5: </label>
+							<button class="lr-pad" onclick="console.log('edit slot code')"> Edit </button> </br>
+						</div>
 					</div>
-				</div>
+					
+					<div class="split-right">
+						<label>Slot Name: SLOT-NAME-HERE</label></br>
+						<textarea readonly id="effects-slot-code-output" style="width:70vw; height:55vh;" spellcheck="false">
+						</textarea>
+					</div>
+				</div>-->
 
 			</div>
 		</div>

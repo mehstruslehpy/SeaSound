@@ -15,9 +15,10 @@ You should have received a copy of the GNU General Public License along with Sea
 //		c is the index of the corresponding audio clip of the rectangle
 //		d is the start index in samples that the clip is read from
 // TODO: Need to remove code where we are iterating across instruments array when there is only the AudioClipCanvas.
-// TODO: Need to completely redo all documentation comments for this widget.
+// TODO: Need to fix documentation across project
 // TODO: Need to set up save and load code for projects with audio clip canvas objects
 // TODO: Need to allow dragging to snap to grid
+// TODO: Need to make output of generated code configurable so that we can wire up to the mixer
 class AudioClipCanvas
 {
 	/**
